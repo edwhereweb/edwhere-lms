@@ -21,6 +21,10 @@ export async function POST(
       return new NextResponse("Course not found", { status: 404 });
     }
 
+    if (!course.price || course.price <= 0) {
+      return new NextResponse("Invalid course price", { status: 400 });
+    }
+
     const existingPurchase = await db.purchase.findUnique({
       where: {
         userId_courseId: {
@@ -34,7 +38,7 @@ export async function POST(
       return new NextResponse("Already purchased", { status: 400 });
     }
 
-    const amountInPaise = Math.round((course.price ?? 0) * 100);
+    const amountInPaise = Math.round(course.price * 100);
 
     const order = await razorpay.orders.create({
       amount: amountInPaise,

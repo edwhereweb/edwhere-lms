@@ -23,6 +23,20 @@ export async function POST(req: Request) {
       return new NextResponse("Invalid signature", { status: 400 });
     }
 
+    // Check if purchase already exists to prevent duplicates
+    const existingPurchase = await db.purchase.findUnique({
+      where: {
+        userId_courseId: {
+          userId: user.id,
+          courseId: courseId,
+        },
+      },
+    });
+
+    if (existingPurchase) {
+      return NextResponse.json({ success: true });
+    }
+
     // Create purchase record
     await db.purchase.create({
       data: {
