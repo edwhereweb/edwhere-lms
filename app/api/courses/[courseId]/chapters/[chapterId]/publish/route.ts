@@ -38,13 +38,12 @@ export async function PATCH(
       },
     });
 
-    if (
-      !chapter ||
-      !muxData ||
-      !chapter.title ||
-      !chapter.description ||
-      !chapter.videoUrl
-    ) {
+    // A chapter can be published if it has a title, description, and EITHER
+    // a Mux-uploaded video (videoUrl + muxData) OR a YouTube video (youtubeVideoId)
+    const hasVideo =
+      (!!chapter.videoUrl && !!muxData) || !!chapter.youtubeVideoId;
+
+    if (!chapter || !chapter.title || !chapter.description || !hasVideo) {
       return new NextResponse("Missing required fields", { status: 400 });
     }
 
