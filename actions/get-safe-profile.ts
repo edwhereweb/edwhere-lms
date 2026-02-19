@@ -12,7 +12,7 @@ export default async function getSafeProfile() {
       return redirect("/sign-in");
     }
 
-    const currentProfile = await db.profile.findUnique({
+    let currentProfile = await db.profile.findUnique({
       where: {
         userId,
       },
@@ -29,7 +29,27 @@ export default async function getSafeProfile() {
     });
 
     if (!currentProfile) {
-      return null;
+      const clerkUser = await currentUser();
+      if (!clerkUser) return redirect("/sign-in");
+
+      currentProfile = await db.profile.create({
+        data: {
+          userId,
+          name: `${clerkUser.firstName ?? ""} ${clerkUser.lastName ?? ""}`.trim() || clerkUser.username || "User",
+          imageUrl: clerkUser.imageUrl ?? "",
+          email: clerkUser.emailAddresses[0]?.emailAddress ?? "",
+        },
+        select: {
+          id: true,
+          userId: true,
+          name: true,
+          imageUrl: true,
+          email: true,
+          role: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
     }
 
     // Convert createdAt and updatedAt to ISO strings
