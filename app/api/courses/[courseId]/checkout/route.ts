@@ -40,10 +40,14 @@ export async function POST(
 
     const amountInPaise = Math.round(course.price * 100);
 
+    // Razorpay receipt max = 40 chars.
+    // courseId slice (16) + '_' + base36 timestamp (~9) = ~26 chars
+    const receipt = `${params.courseId.slice(-16)}_${Date.now().toString(36)}`;
+
     const order = await razorpay.orders.create({
       amount: amountInPaise,
       currency: "INR",
-      receipt: `receipt_${params.courseId}_${user.id}`,
+      receipt,
       notes: {
         courseId: params.courseId,
         userId: user.id,
