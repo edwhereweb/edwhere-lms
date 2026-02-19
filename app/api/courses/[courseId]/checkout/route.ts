@@ -57,7 +57,7 @@ export async function POST(
       keyId: process.env.RAZORPAY_KEY_ID,
       courseName: course.title,
       userEmail: user.emailAddresses[0].emailAddress,
-      userName: `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim(),
+      userName: `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() || user.emailAddresses[0].emailAddress.split("@")[0],
     });
   } catch (error) {
     console.error("[CHECKOUT_ERROR]", error);
