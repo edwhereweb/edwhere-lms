@@ -18,7 +18,7 @@ This project uses the following major dependencies:
 - **Prisma**: 5.22.0 (ORM)
 - **Mux**: 7.3.1 (Video Processing)
 - **React Quill**: 2.0.0 (Rich Text Editor)
-- **Stripe**: 13.7.0 (Payments)
+- **Razorpay**: (Payments)
 - **Uploadthing**: 5.7.4 (File Uploads)
 - **Tailwind CSS**: 3.3.3 (Styling)
 - **TypeScript**: 5.2.2
@@ -39,7 +39,7 @@ If you're a budding developer looking for an exciting project:
 **Key Features:**
 
 * Browse and filter courses
-* Purchase courses using Stripe
+* Purchase courses using Razorpay
 * Mark chapters as completed or uncompleted
 * Progress calculation of each course
 * Student dashboard
@@ -87,7 +87,7 @@ Schema! And Copilot did all the heavy lifting.
 
 UploadThing https://uploadthing.com/ for serverless upload storage.
 
-Stripe Payments: https://stripe.com
+Razorpay Payments: https://razorpay.com
 
 If you need further instruction on configuring these services, they are all covered in the course
 video https://www.youtube.com/watch?v=Big_aFLmekI. 
