@@ -114,12 +114,13 @@ export async function PATCH(
     }
 
     // Whitelist only safe chapter fields — prevents mass-assignment of courseId, position, id etc.
-    const { title, description, videoUrl, isFree } = body;
+    const { title, description, videoUrl, isFree, youtubeVideoId } = body;
     const safeData: Record<string, unknown> = {};
     if (title !== undefined) safeData.title = title;
     if (description !== undefined) safeData.description = description;
     if (videoUrl !== undefined) safeData.videoUrl = videoUrl;
     if (isFree !== undefined) safeData.isFree = isFree;
+    if (youtubeVideoId !== undefined) safeData.youtubeVideoId = youtubeVideoId ?? null;
 
     const chapter = await db.chapter.update({
       where: {

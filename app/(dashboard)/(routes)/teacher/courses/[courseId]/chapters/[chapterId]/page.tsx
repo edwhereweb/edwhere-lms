@@ -4,12 +4,13 @@ import { redirect } from "next/navigation";
 
 import { db } from "@/lib/db";
 import Link from "next/link";
-import { ArrowLeft, Eye, LayoutDashboard, Video } from "lucide-react";
+import { ArrowLeft, Eye, LayoutDashboard, Video, Youtube } from "lucide-react";
 import { IconBadge } from "@/components/icon-badge";
 import { ChapterTitleForm } from "./_components/chatper-title-form";
 import { ChapterDescriptionForm } from "./_components/chapter-description-form";
 import { ChapterAccessForm } from "./_components/chapter-access-form";
 import { ChapterVideoForm } from "./_components/chapter-video-form";
+import { ChapterYoutubeForm } from "./_components/chapter-youtube-form";
 import { Banner } from "@/components/banner";
 import { ChapterActions } from "./_components/chatper-actions";
 
@@ -42,11 +43,14 @@ const ChapterIdPage: React.FC<ChapterIdPageProps> = async ({ params }) => {
     return redirect("/teacher/courses");
   }
 
+  // Either a Mux-uploaded video OR a YouTube video satisfies the video requirement
+  const hasVideo = !!(chapter.videoUrl || chapter.youtubeVideoId);
+
   const requiredFields = [
     chapter.title,
     chapter.description,
-    chapter.videoUrl,
-  ]
+    hasVideo,
+  ];
 
   const totalFields = requiredFields.length;
   const completedFields = requiredFields.filter(Boolean).length;
@@ -118,9 +122,18 @@ const ChapterIdPage: React.FC<ChapterIdPageProps> = async ({ params }) => {
         <div className="space-y-4">
           <div className="flex items-center gap-x-2">
             <IconBadge icon={Video} />
-            <h2 className="text-xl font-medium">Add a video</h2>
+            <h2 className="text-xl font-medium">Upload Video (Mux)</h2>
           </div>
           <ChapterVideoForm
+            initialData={chapter}
+            courseId={params.courseId}
+            chapterId={params.chapterId}
+          />
+          <div className="flex items-center gap-x-2 mt-4">
+            <IconBadge icon={Youtube} />
+            <h2 className="text-xl font-medium">Or embed YouTube</h2>
+          </div>
+          <ChapterYoutubeForm
             initialData={chapter}
             courseId={params.courseId}
             chapterId={params.chapterId}
