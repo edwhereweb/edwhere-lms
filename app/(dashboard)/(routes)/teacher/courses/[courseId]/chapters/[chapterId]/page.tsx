@@ -67,8 +67,7 @@ const ChapterIdPage: React.FC<ChapterIdPageProps> = async ({ params }) => {
         <div className="w-full">
           <Link
             href={`/teacher/courses/${params.courseId}`}
-            className="flex items-center text-sm hover:opacity-75 transition mb-6"
-            legacyBehavior>
+            className="flex items-center text-sm hover:opacity-75 transition mb-6">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to course setup
           </Link>

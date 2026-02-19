@@ -61,7 +61,7 @@ export const columns: ColumnDef<Profile, keyof Profile>[] = [
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <Link href={`/teacher/users/${id}`} legacyBehavior>
+            <Link href={`/teacher/users/${id}`}>
               <DropdownMenuItem>
                 <Pencil className="h-4 w-4 mr-2" />
                 Edit

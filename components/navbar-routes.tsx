@@ -29,14 +29,14 @@ export const NavbarRoutes: React.FC<NavbarRoutesProps> = ({
     )}
     <div className="flex gap-x-2 ml-auto">
       {isTeacherPage || isPlayerPage ? (
-        <Link href="/dashboard" legacyBehavior>
+        <Link href="/dashboard">
           <Button size="sm" variant="ghost">
             <LogOut className="h-4 w-4 mr-2" />
             Exit
           </Button>
         </Link>
       ) : isTeacher ? (
-        <Link href="/teacher/courses" legacyBehavior>
+        <Link href="/teacher/courses">
           <Button size="sm" variant="ghost">
             Teacher Mode
           </Button>
