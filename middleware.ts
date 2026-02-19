@@ -1,12 +1,4 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { NextResponse } from 'next/server';
-
-// Define route matchers
-const isProtectedRoute = createRouteMatcher([
-  "/teacher/(.*)",
-  "/courses/(.*)",
-  "/dashboard/(.*)"
-]);
 
 const isPublicRoute = createRouteMatcher([
   "/sign-in(.*)",
@@ -16,19 +8,9 @@ const isPublicRoute = createRouteMatcher([
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
-  // Check if it's a public route first
-  if (isPublicRoute(req)) {
-    return NextResponse.next();
-  }
-
-  // For all other routes (including protected and root), ensure user is authenticated
-  try {
+  // Let Clerk handle redirects to sign-in automatically via NEXT_PUBLIC_CLERK_SIGN_IN_URL
+  if (!isPublicRoute(req)) {
     await auth.protect();
-    return NextResponse.next();
-  } catch (error) {
-    const signInUrl = new URL('/sign-in', req.url);
-    signInUrl.searchParams.set('redirect_url', req.url);
-    return NextResponse.redirect(signInUrl);
   }
 });
 
@@ -38,4 +20,3 @@ export const config = {
     "/api/:path*"
   ]
 };
- 
