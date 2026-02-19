@@ -11,7 +11,7 @@ const CoursesPage = async () => {
     const userId = session?.userId;
 
     if (!userId) {
-        return redirect("/");
+        return redirect("/sign-in");
     }
 
     const courses = await db.course.findMany({

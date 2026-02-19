@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";;
+import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
 import { db } from "@/lib/db";
@@ -18,11 +18,11 @@ const CourseLayout = async ({
 }) => {
   const { userId } = await auth();
   if (!userId) {
-    return redirect("/")
+    return redirect("/sign-in")
   }
   const safeProfile = await getSafeProfile();
   if (!safeProfile) {
-    return redirect("/");
+    return redirect("/dashboard");
   }
 
   const course = await db.course.findUnique({
@@ -49,7 +49,7 @@ const CourseLayout = async ({
   });
 
   if (!course) {
-    return redirect("/");
+    return redirect("/dashboard");
   }
 
   // @ts-ignore

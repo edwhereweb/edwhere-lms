@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";;
+import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
 import { db } from "@/lib/db";
@@ -21,7 +21,7 @@ const SearchPage = async ({
   const { userId } = await auth();
 
   if (!userId) {
-    return redirect("/");
+    return redirect("/sign-in");
   }
 
   const categories = await db.category.findMany({

@@ -8,11 +8,11 @@ import Link from "next/link";
 import { SearchInput } from "./search-input";
 import { SafeProfile } from "@/types";
 
-interface NavbarRoutesProps  {
+interface NavbarRoutesProps {
   currentProfile?: SafeProfile | null
 }
 
-export const NavbarRoutes : React.FC<NavbarRoutesProps> = ({
+export const NavbarRoutes: React.FC<NavbarRoutesProps> = ({
   currentProfile
 }) => {
   const pathname = usePathname();
@@ -29,7 +29,7 @@ export const NavbarRoutes : React.FC<NavbarRoutesProps> = ({
     )}
     <div className="flex gap-x-2 ml-auto">
       {isTeacherPage || isPlayerPage ? (
-        <Link href="/" legacyBehavior>
+        <Link href="/dashboard" legacyBehavior>
           <Button size="sm" variant="ghost">
             <LogOut className="h-4 w-4 mr-2" />
             Exit
@@ -43,7 +43,7 @@ export const NavbarRoutes : React.FC<NavbarRoutesProps> = ({
         </Link>
       ) : null}
 
-     <UserButton afterSignOutUrl="/" />
+      <UserButton afterSignOutUrl="/" />
     </div>
   </>);
 };

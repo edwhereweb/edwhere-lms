@@ -1,5 +1,5 @@
 import React from "react";
-import { auth } from "@clerk/nextjs/server";;
+import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
 import { db } from "@/lib/db";
@@ -25,7 +25,7 @@ const ChapterIdPage: React.FC<ChapterIdPageProps> = async ({ params }) => {
   const { userId } = await auth();
 
   if (!userId) {
-    return redirect("/");
+    return redirect("/sign-in");
   }
 
   const chapter = await db.chapter.findUnique({
@@ -39,7 +39,7 @@ const ChapterIdPage: React.FC<ChapterIdPageProps> = async ({ params }) => {
   });
 
   if (!chapter) {
-    return redirect("/");
+    return redirect("/teacher/courses");
   }
 
   const requiredFields = [

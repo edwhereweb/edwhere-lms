@@ -8,7 +8,7 @@ const STUDENTRoutes = [
     {
         icon: Layout,
         label: "Dashboard",
-        href: "/",
+        href: "/dashboard",
     },
     {
         icon: Compass,
@@ -39,7 +39,7 @@ const teacherRoutes = [
 export const SidebarRoutes = () => {
 
     const pathname = usePathname();
-    
+
     const isTeacherPage = pathname?.startsWith("/teacher");
 
     const routes = isTeacherPage ? teacherRoutes : STUDENTRoutes;
@@ -47,13 +47,13 @@ export const SidebarRoutes = () => {
     return (
         <div className="flex flex-col w-full">
             {routes.map((route, index) => (
-                <SidebarItem 
+                <SidebarItem
                     key={index}
                     icon={route.icon}
                     label={route.label}
                     href={route.href}
                 />
-            ))}            
+            ))}
         </div>
     )
 }
