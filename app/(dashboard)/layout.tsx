@@ -1,14 +1,15 @@
 import { Sidebar } from "./_components/Sidebar";
 import { Navbar } from "./_components/navbar";
-import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import getSafeProfile from "@/actions/get-safe-profile";
 
 const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
   const { userId } = await auth();
 
+  // Unauthenticated users (e.g. landing page at /) — just render children,
+  // no sidebar/navbar wrapper. Middleware already blocks protected routes.
   if (!userId) {
-    return redirect("/sign-in");
+    return <>{children}</>;
   }
 
   const safeProfile = await getSafeProfile();
