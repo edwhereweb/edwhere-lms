@@ -1,14 +1,21 @@
-import { SidebarIcon } from "lucide-react";
 import { Sidebar } from "./_components/Sidebar";
 import { Navbar } from "./_components/navbar";
 import { redirect } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
 import getSafeProfile from "@/actions/get-safe-profile";
 
 const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return redirect("/sign-in");
+  }
+
   const safeProfile = await getSafeProfile();
 
   if (!safeProfile) {
-    return redirect("/sign-in");
+    // DB unreachable — throw instead of redirect to avoid infinite loop
+    throw new Error("Unable to load profile. Please check your database connection.");
   }
 
   return (
@@ -20,8 +27,6 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
       <div className="hidden md:flex h-full w-56 flex-col fixed inset-y-0 z-50 dark:bg-gray-900">
         <Sidebar />
       </div>
-      {/* pt or pull top pushes the content down accounting for the height of the navbar  
-            1:26:33 / 10:41:03 - https://youtu.be/Big_aFLmekI?si=P2rTnadq2IYS_90F */}
       <main className="md:pl-56 pt-[80px] h-full dark:bg-gray-900">
         {children}
       </main>
