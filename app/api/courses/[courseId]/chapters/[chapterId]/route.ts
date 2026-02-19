@@ -96,7 +96,7 @@ export async function PATCH(
 ) {
   try {
     const { userId } = await auth();
-    const { isPublished, ...values } = await req.json();
+    const body = await req.json();
 
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
@@ -113,17 +113,23 @@ export async function PATCH(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    // Whitelist only safe chapter fields — prevents mass-assignment of courseId, position, id etc.
+    const { title, description, videoUrl, isFree } = body;
+    const safeData: Record<string, unknown> = {};
+    if (title !== undefined) safeData.title = title;
+    if (description !== undefined) safeData.description = description;
+    if (videoUrl !== undefined) safeData.videoUrl = videoUrl;
+    if (isFree !== undefined) safeData.isFree = isFree;
+
     const chapter = await db.chapter.update({
       where: {
         id: params.chapterId,
         courseId: params.courseId,
       },
-      data: {
-        ...values,
-      },
+      data: safeData,
     });
 
-    if (values.videoUrl) {
+    if (safeData.videoUrl) {
       const existingMuxData = await db.muxData.findFirst({
         where: {
           chapterId: params.chapterId,
@@ -145,7 +151,7 @@ export async function PATCH(
 
       try {
         const asset = await Video.Assets.create({
-          input: values.videoUrl,
+          input: safeData.videoUrl as string,
           playback_policy: "public",
           test: false,
         });

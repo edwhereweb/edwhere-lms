@@ -9,20 +9,27 @@ export async function PATCH(
   try {
     const { userId } = await auth();
     const { courseId } = params;
-    const values = await req.json();
+    const body = await req.json();
 
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
+
+    // Whitelist only safe, editable fields — prevents mass-assignment
+    const { title, description, imageUrl, price, categoryId } = body;
+    const safeData: Record<string, unknown> = {};
+    if (title !== undefined) safeData.title = title;
+    if (description !== undefined) safeData.description = description;
+    if (imageUrl !== undefined) safeData.imageUrl = imageUrl;
+    if (price !== undefined) safeData.price = price;
+    if (categoryId !== undefined) safeData.categoryId = categoryId;
 
     const course = await db.course.update({
       where: {
         id: courseId,
         userId,
       },
-      data: {
-        ...values,
-      },
+      data: safeData,
     });
 
     return NextResponse.json(course);

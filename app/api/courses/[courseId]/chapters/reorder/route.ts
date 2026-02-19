@@ -29,7 +29,7 @@ export async function PUT(
 
     for (let item of list) {
       await db.chapter.update({
-        where: { id: item.id },
+        where: { id: item.id, courseId: params.courseId },
         data: { position: item.position },
       });
     }

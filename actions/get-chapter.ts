@@ -1,4 +1,4 @@
-import { AttachmentForm } from "@/app/(dashboard)/(routes)/teacher/courses/[courseId]/_components/attachment-form";
+
 import { db } from "@/lib/db";
 import { Attachment, Chapter } from "@prisma/client";
 
@@ -9,16 +9,16 @@ interface getChapterProps {
     chapterId: string;
 };
 
-export const getChapter = async ({ 
-    userId, 
-    courseId, 
-    chapterId 
+export const getChapter = async ({
+    userId,
+    courseId,
+    chapterId
 }: getChapterProps) => {
     try {
 
         const purchase = await db.purchase.findUnique({
             where: {
-                userId_courseId: { 
+                userId_courseId: {
                     userId,
                     courseId,
                 },
@@ -44,7 +44,7 @@ export const getChapter = async ({
 
         if (!chapter || !course) {
             throw new Error("Chapter or course not found");
-        } 
+        }
 
         let muxData = null;
         let attachments: Attachment[] = [];

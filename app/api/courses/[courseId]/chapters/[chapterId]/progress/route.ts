@@ -15,6 +15,23 @@ export async function PUT(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    // Verify the chapter is accessible: either free or user has purchased the course
+    const chapter = await db.chapter.findUnique({
+      where: { id: params.chapterId, courseId: params.courseId, isPublished: true },
+    });
+
+    const purchase = await db.purchase.findUnique({
+      where: { userId_courseId: { userId, courseId: params.courseId } },
+    });
+
+    if (!chapter) {
+      return new NextResponse("Not Found", { status: 404 });
+    }
+
+    if (!chapter.isFree && !purchase) {
+      return new NextResponse("Forbidden", { status: 403 });
+    }
+
     const userProgress = await db.userProgress.upsert({
       where: {
         userId_chapterId: {
@@ -38,3 +55,4 @@ export async function PUT(
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
+

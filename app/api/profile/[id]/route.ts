@@ -8,11 +8,12 @@ export async function PATCH(
 ) {
   try {
     const { userId } = await auth();
-    const { ...values } = await req.json();
 
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
+
+    const { name, imageUrl } = await req.json();
 
     const ownProfile = await db.profile.findUnique({
       where: {
@@ -24,12 +25,15 @@ export async function PATCH(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    // Update only the authenticated user's own profile, never by params.id
+    // Only allow safe fields — role, userId, email cannot be changed here
     const profile = await db.profile.update({
       where: {
-        id: params.id,
+        userId,
       },
       data: {
-        ...values,
+        ...(name !== undefined && { name }),
+        ...(imageUrl !== undefined && { imageUrl }),
       },
     });
 

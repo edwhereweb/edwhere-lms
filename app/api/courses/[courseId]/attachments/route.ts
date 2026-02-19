@@ -27,7 +27,7 @@ export async function POST(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    var name = url ? url.split("/").pop() : "Untitled";
+    let name = url ? url.split("/").pop() : "Untitled";
     if (originalFilename) {
       name = originalFilename;
     }

@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { isTeacher } from "@/lib/teacher";
 
 export async function POST(req: Request) {
   try {
@@ -9,6 +10,12 @@ export async function POST(req: Request) {
 
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    // Only teachers and admins can create courses
+    const teacherAccess = await isTeacher();
+    if (!teacherAccess) {
+      return new NextResponse("Forbidden", { status: 403 });
     }
 
     const course = await db.course.create({

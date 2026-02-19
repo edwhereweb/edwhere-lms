@@ -29,7 +29,7 @@ export const ourFileRouter = {
             console.log("Course attachment upload complete for userId:", metadata.userId);
             console.log("file url", file.url);
         }),
-    chapterVideo: f({ video: { maxFileCount: 1, maxFileSize: "512GB" } })
+    chapterVideo: f({ video: { maxFileCount: 1, maxFileSize: "2GB" } })
         .middleware(async () => await handleAuth())
         .onUploadComplete(async ({ metadata, file }) => {
             console.log("Chapter video upload complete for userId:", metadata.userId);
