@@ -2,13 +2,13 @@ import { SidebarIcon } from "lucide-react";
 import { Sidebar } from "./_components/Sidebar";
 import { Navbar } from "./_components/navbar";
 import { redirect } from "next/navigation";
-import getSafeProfile  from "@/actions/get-safe-profile";
+import getSafeProfile from "@/actions/get-safe-profile";
 
 const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
   const safeProfile = await getSafeProfile();
 
   if (!safeProfile) {
-    return redirect("/");
+    return redirect("/sign-in");
   }
 
   return (
