@@ -18,7 +18,7 @@ This project uses the following major dependencies:
 - **Prisma**: 5.22.0 (ORM)
 - **Mux**: 7.3.1 (Video Processing)
 - **React Quill**: 2.0.0 (Rich Text Editor)
-- **Razorpay**: (Payments)
+- **Razorpay**: 2.9.6 (Payments)
 - **Uploadthing**: 5.7.4 (File Uploads)
 - **Tailwind CSS**: 3.3.3 (Styling)
 - **TypeScript**: 5.2.2
