@@ -14,7 +14,6 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
   const safeProfile = await getSafeProfile();
 
   if (!safeProfile) {
-    // DB unreachable — throw instead of redirect to avoid infinite loop
     throw new Error("Unable to load profile. Please check your database connection.");
   }
 
