@@ -1,18 +1,23 @@
-import { db } from "@/lib/db";
+import { db } from '@/lib/db';
 
-export interface Logging {
-    id?: string;
-    url: string;
-    method: string;
-    body?: string;
-    response?: string;
-    statusCode?: number;
-    errorMessage?: string;
-    createdAt: Date;
+export interface LogEntry {
+  url: string;
+  method: string;
+  body?: string;
+  response?: string;
+  statusCode?: number;
+  errorMessage?: string;
+}
+
+export async function logRequest(entry: LogEntry): Promise<void> {
+  try {
+    await db.logging.create({
+      data: {
+        ...entry,
+        createdAt: new Date()
+      }
+    });
+  } catch {
+    console.error('[LOGGING_WRITE_FAILED]', entry.url);
   }
-
-export async function createLogging(logging: Logging): Promise<void> {
-  await db.logging.create({
-    data: logging,
-  });
 }

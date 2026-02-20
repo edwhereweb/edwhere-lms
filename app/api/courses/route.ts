@@ -1,33 +1,36 @@
-import { db } from "@/lib/db";
-import { auth } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
-import { isTeacher } from "@/lib/teacher";
+import { db } from '@/lib/db';
+import { auth } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
+import { isTeacher } from '@/lib/teacher';
+import { createCourseSchema } from '@/lib/validations';
+import { validateBody, apiError, handleApiError } from '@/lib/api-utils';
 
 export async function POST(req: Request) {
   try {
     const { userId } = await auth();
-    const { title } = await req.json();
 
     if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 });
+      return apiError('Unauthorized', 401);
     }
 
-    // Only teachers and admins can create courses
     const teacherAccess = await isTeacher();
     if (!teacherAccess) {
-      return new NextResponse("Forbidden", { status: 403 });
+      return apiError('Forbidden', 403);
     }
+
+    const body = await req.json();
+    const validation = validateBody(createCourseSchema, body);
+    if (!validation.success) return validation.response;
 
     const course = await db.course.create({
       data: {
         userId,
-        title,
-      },
+        title: validation.data.title
+      }
     });
 
     return NextResponse.json(course);
   } catch (error) {
-    console.log("[COURSES]", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
+    return handleApiError('COURSES', error);
   }
 }

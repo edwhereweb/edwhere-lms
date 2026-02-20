@@ -1,30 +1,27 @@
-"use client";
-import * as z from "zod";
-import axios from "axios";
-import { Pencil, PlusCircle, ImageIcon, File, Loader2, X } from "lucide-react";
-import { useState } from "react";
-import toast from "react-hot-toast";
-import { useRouter } from "next/navigation";
-import { Attachment, Course } from "@prisma/client";
+'use client';
+import * as z from 'zod';
+import axios from 'axios';
+import { PlusCircle, File, Loader2, X } from 'lucide-react';
+import { useState } from 'react';
+import toast from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
+import { type Attachment, type Course } from '@prisma/client';
 
-import { Button } from "@/components/ui/button";
-import { FileUpload } from "@/components/file-upload";
-import { cn } from "@/lib/utils";
+import { Button } from '@/components/ui/button';
+import { FileUpload } from '@/components/file-upload';
 
 interface AttachmentFormProps {
   initialData: Course & { attachments?: Attachment[] };
   courseId: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const formSchema = z.object({
   url: z.string().min(1),
-  originalFilename: z.string().min(1),
+  originalFilename: z.string().min(1)
 });
 
-export const AttachmentForm = ({
-  initialData,
-  courseId,
-}: AttachmentFormProps) => {
+export const AttachmentForm = ({ initialData, courseId }: AttachmentFormProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -35,11 +32,11 @@ export const AttachmentForm = ({
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       await axios.post(`/api/courses/${courseId}/attachments`, values);
-      toast.success("Course updated");
+      toast.success('Course updated');
       toggleEdit();
       router.refresh();
     } catch {
-      toast.error("Something went wrong");
+      toast.error('Something went wrong');
     }
   };
 
@@ -47,10 +44,10 @@ export const AttachmentForm = ({
     try {
       setDeletingId(id);
       await axios.delete(`/api/courses/${courseId}/attachments/${id}`);
-      toast.success("Attachment deleted");
+      toast.success('Attachment deleted');
       router.refresh();
     } catch {
-      toast.error("Something went wrong");
+      toast.error('Something went wrong');
     } finally {
       setDeletingId(null);
     }
@@ -61,9 +58,7 @@ export const AttachmentForm = ({
       <div className="font-medium flex items-center justify-between">
         Course attachments
         <Button onClick={toggleEdit} variant="ghost">
-          {isEditing && (
-            <>Cancel</>
-          )}
+          {isEditing && <>Cancel</>}
           {!isEditing && (
             <>
               <PlusCircle className="h-4 w-4 mr-2" />
@@ -75,9 +70,7 @@ export const AttachmentForm = ({
       {!isEditing && (
         <>
           {initialData.attachments && initialData.attachments.length === 0 && (
-            <p className="text-sm mt-2 text-slate-500 italic">
-              No attachments yet
-            </p>
+            <p className="text-sm mt-2 text-slate-500 italic">No attachments yet</p>
           )}
           {initialData.attachments && initialData.attachments.length > 0 && (
             <div className="space-y-2">
@@ -117,14 +110,14 @@ export const AttachmentForm = ({
       )}
       {isEditing && (
         <div>
-            <FileUpload
-              endpoint="courseAttachment"
-              onChange={(url, originalFilename) => {
-                if (url && originalFilename) {
-                  onSubmit({ url: url, originalFilename: originalFilename });
-                }
-              }}
-            />
+          <FileUpload
+            endpoint="courseAttachment"
+            onChange={(url, originalFilename) => {
+              if (url && originalFilename) {
+                onSubmit({ url: url, originalFilename: originalFilename });
+              }
+            }}
+          />
           <div className="text-xs text-muted-foreground mt-4">
             Add anything your students might need to complete the course.
           </div>

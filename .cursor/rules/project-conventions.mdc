@@ -1,0 +1,6 @@
+---
+description: Core project conventions for the Edwhere LMS codebase
+alwaysApply: true
+---
+
+Follow all conventions defined in `AGENTS.md` at the project root. That file is the single source of truth for coding standards, architecture patterns, naming conventions, and anti-patterns. Read it before making any changes.

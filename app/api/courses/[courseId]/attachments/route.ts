@@ -1,33 +1,34 @@
-import { db } from "@/lib/db";
-import { auth } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
-import { checkCourseEdit } from "@/lib/course-auth";
+import { db } from '@/lib/db';
+import { auth } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
+import { checkCourseEdit } from '@/lib/course-auth';
+import { attachmentSchema } from '@/lib/validations';
+import { validateBody, handleApiError } from '@/lib/api-utils';
 
-export async function POST(
-  req: Request,
-  { params }: { params: { courseId: string } }
-) {
+export async function POST(req: Request, { params }: { params: { courseId: string } }) {
   try {
     const { userId } = await auth();
-    const { url, originalFilename } = await req.json();
 
     const denied = await checkCourseEdit(userId, params.courseId);
     if (denied) return denied;
 
-    let name = url ? url.split("/").pop() : "Untitled";
-    if (originalFilename) name = originalFilename;
+    const body = await req.json();
+    const validation = validateBody(attachmentSchema, body);
+    if (!validation.success) return validation.response;
+
+    const { url, originalFilename } = validation.data;
+    const name = originalFilename || url.split('/').pop() || 'Untitled';
 
     const attachment = await db.attachment.create({
       data: {
         url,
         name,
-        courseId: params.courseId,
-      },
+        courseId: params.courseId
+      }
     });
 
     return NextResponse.json(attachment);
   } catch (error) {
-    console.log("COURSE_ID_ATTACHMENTS", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return handleApiError('COURSE_ID_ATTACHMENTS', error);
   }
 }

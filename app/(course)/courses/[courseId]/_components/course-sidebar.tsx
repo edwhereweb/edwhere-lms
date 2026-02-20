@@ -1,36 +1,33 @@
-import { auth } from "@clerk/nextjs/server";
-import { Chapter, Course, UserProgress } from "@prisma/client"
-import { redirect } from "next/navigation";
+import { auth } from '@clerk/nextjs/server';
+import { type Chapter, type Course, type UserProgress } from '@prisma/client';
+import { redirect } from 'next/navigation';
 
-import { db } from "@/lib/db";
-import { CourseProgress } from "@/components/course-progress";
+import { db } from '@/lib/db';
+import { CourseProgress } from '@/components/course-progress';
 
-import { CourseSidebarItem } from "./course-sidebar-item";
+import { CourseSidebarItem } from './course-sidebar-item';
 
 interface CourseSidebarProps {
   course: Course & {
     chapters: (Chapter & {
       userProgress: UserProgress[] | null;
-    })[]
+    })[];
   };
   progressCount: number;
-};
+}
 
-export const CourseSidebar = async ({
-  course,
-  progressCount,
-}: CourseSidebarProps) => {
+export const CourseSidebar = async ({ course, progressCount }: CourseSidebarProps) => {
   const { userId } = await auth();
 
   if (!userId) {
-    return redirect("/sign-in");
+    return redirect('/sign-in');
   }
 
   const purchase = await db.purchase.findUnique({
     where: {
       userId_courseId: {
         userId,
-        courseId: course.id,
+        courseId: course.id
       }
     }
   });
@@ -38,15 +35,10 @@ export const CourseSidebar = async ({
   return (
     <div className="flex flex-col h-full overflow-y-auto border-r shadow-sm">
       <div className="flex flex-col p-8 border-b">
-        <h1 className="font-semibold">
-          {course.title}
-        </h1>
+        <h1 className="font-semibold">{course.title}</h1>
         {purchase && (
           <div className="mt-10">
-            <CourseProgress
-              variant="success"
-              value={progressCount}
-            />
+            <CourseProgress variant="success" value={progressCount} />
           </div>
         )}
       </div>
@@ -63,5 +55,5 @@ export const CourseSidebar = async ({
         ))}
       </div>
     </div>
-  )
-}
+  );
+};

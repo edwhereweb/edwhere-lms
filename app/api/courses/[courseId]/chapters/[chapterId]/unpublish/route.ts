@@ -1,7 +1,8 @@
-import { auth } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { checkCourseEdit } from "@/lib/course-auth";
+import { auth } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
+import { db } from '@/lib/db';
+import { checkCourseEdit } from '@/lib/course-auth';
+import { handleApiError } from '@/lib/api-utils';
 
 export async function PATCH(
   req: Request,
@@ -14,36 +15,23 @@ export async function PATCH(
     if (denied) return denied;
 
     const unpublishedChapter = await db.chapter.update({
-      where: {
-        id: params.chapterId,
-        courseId: params.courseId,
-      },
-      data: {
-        isPublished: false,
-      },
+      where: { id: params.chapterId, courseId: params.courseId },
+      data: { isPublished: false }
     });
 
-    const publishedChaptersInCourse = await db.chapter.findMany({
-      where: {
-        courseId: params.courseId,
-        isPublished: true,
-      },
+    const publishedCount = await db.chapter.count({
+      where: { courseId: params.courseId, isPublished: true }
     });
 
-    if (!publishedChaptersInCourse.length) {
+    if (publishedCount === 0) {
       await db.course.update({
-        where: {
-          id: params.courseId,
-        },
-        data: {
-          isPublished: false,
-        },
+        where: { id: params.courseId },
+        data: { isPublished: false }
       });
     }
 
     return NextResponse.json(unpublishedChapter);
   } catch (error) {
-    console.log("[CHAPTER_UNPUBLISH]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return handleApiError('CHAPTER_UNPUBLISH', error);
   }
 }

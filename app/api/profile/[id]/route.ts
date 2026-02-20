@@ -1,45 +1,30 @@
-import { db } from "@/lib/db";
-import { auth } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
+import { db } from '@/lib/db';
+import { auth } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
+import { profileUpdateSchema } from '@/lib/validations';
+import { validateBody, apiError, handleApiError } from '@/lib/api-utils';
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(req: Request, { params: _params }: { params: { id: string } }) {
   try {
     const { userId } = await auth();
 
     if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 });
+      return apiError('Unauthorized', 401);
     }
 
-    const { name, imageUrl } = await req.json();
+    const body = await req.json();
+    const validation = validateBody(profileUpdateSchema, body);
+    if (!validation.success) return validation.response;
 
-    const ownProfile = await db.profile.findUnique({
-      where: {
-        userId,
-      },
-    });
+    const { role: _role, ...safeFields } = validation.data;
 
-    if (!ownProfile) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
-
-    // Update only the authenticated user's own profile, never by params.id
-    // Only allow safe fields — role, userId, email cannot be changed here
     const profile = await db.profile.update({
-      where: {
-        userId,
-      },
-      data: {
-        ...(name !== undefined && { name }),
-        ...(imageUrl !== undefined && { imageUrl }),
-      },
+      where: { userId },
+      data: safeFields
     });
 
     return NextResponse.json(profile);
   } catch (error) {
-    console.log("[PROFILE_ID]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return handleApiError('PROFILE_ID', error);
   }
 }

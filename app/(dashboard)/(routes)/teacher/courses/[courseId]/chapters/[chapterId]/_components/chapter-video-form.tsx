@@ -1,32 +1,29 @@
-"use client";
+'use client';
 
-import * as z from "zod";
-import axios from "axios";
-import MuxPlayer from "@mux/mux-player-react";
-import { Pencil, PlusCircle, Video } from "lucide-react";
-import { useState } from "react";
-import toast from "react-hot-toast";
-import { useRouter } from "next/navigation";
-import { Chapter, MuxData } from "@prisma/client";
+import * as z from 'zod';
+import axios from 'axios';
+import MuxPlayer from '@mux/mux-player-react';
+import { Pencil, PlusCircle, Video } from 'lucide-react';
+import { useState } from 'react';
+import toast from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
+import { type Chapter, type MuxData } from '@prisma/client';
 
-import { Button } from "@/components/ui/button";
-import { FileUpload } from "@/components/file-upload";
+import { Button } from '@/components/ui/button';
+import { FileUpload } from '@/components/file-upload';
 
 interface ChapterVideoFormProps {
   initialData: Chapter & { muxData?: MuxData | null };
   courseId: string;
   chapterId: string;
-};
+}
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const formSchema = z.object({
-  videoUrl: z.string().min(1),
+  videoUrl: z.string().min(1)
 });
 
-export const ChapterVideoForm = ({
-  initialData,
-  courseId,
-  chapterId,
-}: ChapterVideoFormProps) => {
+export const ChapterVideoForm = ({ initialData, courseId, chapterId }: ChapterVideoFormProps) => {
   const [isEditing, setIsEditing] = useState(false);
 
   const toggleEdit = () => setIsEditing((current) => !current);
@@ -36,26 +33,20 @@ export const ChapterVideoForm = ({
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       await axios.patch(`/api/courses/${courseId}/chapters/${chapterId}`, values);
-      toast.success("Chapter updated");
+      toast.success('Chapter updated');
       toggleEdit();
-      //router.refresh();
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
-      const url = `${baseUrl}/teacher/courses/${courseId}/chapters/${chapterId}`;
-      window.location.assign(url);
-
+      router.refresh();
     } catch {
-      toast.error("Something went wrong");
+      toast.error('Something went wrong');
     }
-  }
+  };
 
   return (
     <div className="mt-6 border bg-slate-100 rounded-md p-4  dark:bg-gray-800 dark:text-slate-300">
       <div className="font-medium flex items-center justify-between">
         Chapter video
         <Button onClick={toggleEdit} variant="ghost">
-          {isEditing && (
-            <>Cancel</>
-          )}
+          {isEditing && <>Cancel</>}
           {!isEditing && !initialData.videoUrl && (
             <>
               <PlusCircle className="h-4 w-4 mr-2" />
@@ -70,19 +61,16 @@ export const ChapterVideoForm = ({
           )}
         </Button>
       </div>
-      {!isEditing && (
-        !initialData.videoUrl ? (
+      {!isEditing &&
+        (!initialData.videoUrl ? (
           <div className="flex items-center justify-center h-60 bg-slate-200 rounded-md  dark:bg-gray-800 dark:text-slate-300">
             <Video className="h-10 w-10 text-slate-500" />
           </div>
         ) : (
           <div className="relative aspect-video mt-2">
-            <MuxPlayer
-              playbackId={initialData?.muxData?.playbackId || ""}
-            /> 
+            <MuxPlayer playbackId={initialData?.muxData?.playbackId || ''} />
           </div>
-        )
-      )}
+        ))}
       {isEditing && (
         <div>
           <FileUpload
@@ -93,9 +81,7 @@ export const ChapterVideoForm = ({
               }
             }}
           />
-          <div className="text-xs text-muted-foreground mt-4">
-           Upload this chapter&apos;s video
-          </div>
+          <div className="text-xs text-muted-foreground mt-4">Upload this chapter&apos;s video</div>
         </div>
       )}
       {initialData.videoUrl && !isEditing && (
@@ -104,5 +90,5 @@ export const ChapterVideoForm = ({
         </div>
       )}
     </div>
-  )
-}
+  );
+};
