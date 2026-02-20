@@ -3,6 +3,7 @@ import { columns } from './_components/columns';
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { db } from '@/lib/db';
+import { isTeacher } from '@/lib/teacher';
 
 const CoursesPage = async () => {
   const session = await auth();
@@ -10,6 +11,11 @@ const CoursesPage = async () => {
 
   if (!userId) {
     return redirect('/sign-in');
+  }
+
+  const isAuthorized = await isTeacher();
+  if (!isAuthorized) {
+    return redirect('/');
   }
 
   const courses = await db.course.findMany({

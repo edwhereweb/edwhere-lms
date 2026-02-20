@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 
 import { db } from '@/lib/db';
 import Link from 'next/link';
+import { checkCourseEdit } from '@/lib/course-auth';
 import { ArrowLeft, Eye, LayoutDashboard, Video, Youtube } from 'lucide-react';
 import { IconBadge } from '@/components/icon-badge';
 import { ChapterTitleForm } from './_components/chapter-title-form';
@@ -27,6 +28,9 @@ const ChapterIdPage: React.FC<ChapterIdPageProps> = async ({ params }) => {
   if (!userId) {
     return redirect('/sign-in');
   }
+
+  const denied = await checkCourseEdit(userId, params.courseId);
+  if (denied) return redirect('/');
 
   const chapter = await db.chapter.findUnique({
     where: {

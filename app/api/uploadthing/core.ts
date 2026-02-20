@@ -1,12 +1,17 @@
 import { auth } from '@clerk/nextjs/server';
 import { createUploadthing, type FileRouter } from 'uploadthing/next';
 import { debug } from '@/lib/debug';
+import { isTeacher } from '@/lib/teacher';
 
 const f = createUploadthing();
 
 const handleAuth = async () => {
   const session = await auth();
   if (!session || !session.userId) throw new Error('Unauthorized');
+
+  const isAuthorized = await isTeacher();
+  if (!isAuthorized) throw new Error('Unauthorized');
+
   return { userId: session.userId };
 };
 
