@@ -25,14 +25,14 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
     const { role, ...safeFields } = validation.data;
 
-    // Prevent non-admins from making themselves an ADMIN
-    if (!isAdmin && role === 'ADMIN') {
-      return apiError('Forbidden. Cannot elevate role to ADMIN.', 403);
+    // Prevent non-admins from changing roles at all
+    if (!isAdmin && role) {
+      return apiError('Forbidden. Only admins can change roles.', 403);
     }
 
     const updateData = {
       ...safeFields,
-      ...(role ? { role: role as "ADMIN" | "TEACHER" | "STUDENT" } : {})
+      ...(role ? { role: role as 'ADMIN' | 'TEACHER' | 'STUDENT' } : {})
     };
 
     const updatedProfile = await db.profile.update({

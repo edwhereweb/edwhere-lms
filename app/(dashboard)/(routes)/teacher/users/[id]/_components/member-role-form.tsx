@@ -19,6 +19,7 @@ import { Combobox } from '@/components/ui/combobox';
 interface MemberRoleFormProps {
   initialData: Profile;
   id: string;
+  isAdmin: boolean;
 }
 
 const formSchema = z.object({
@@ -30,7 +31,7 @@ const options = Object.values(MemberRole).map((role) => ({
   value: role
 }));
 
-export const MemberRoleForm = ({ initialData, id }: MemberRoleFormProps) => {
+export const MemberRoleForm = ({ initialData, id, isAdmin }: MemberRoleFormProps) => {
   const [isEditing, setIsEditing] = useState(false);
 
   const toggleEdit = () => setIsEditing((current) => !current);
@@ -64,23 +65,25 @@ export const MemberRoleForm = ({ initialData, id }: MemberRoleFormProps) => {
     <div className="mt-6 border bg-slate-100 rounded-md p-4 dark:bg-gray-800">
       <div className="font-medium flex items-center justify-between">
         Profile Role
-        <Button onClick={toggleEdit} variant="ghost">
-          {isEditing ? (
-            <>Cancel</>
-          ) : (
-            <>
-              <Pencil className="h-4 w-4 mr-2" />
-              Edit role
-            </>
-          )}
-        </Button>
+        {isAdmin && (
+          <Button onClick={toggleEdit} variant="ghost">
+            {isEditing ? (
+              <>Cancel</>
+            ) : (
+              <>
+                <Pencil className="h-4 w-4 mr-2" />
+                Edit role
+              </>
+            )}
+          </Button>
+        )}
       </div>
       {!isEditing && (
         <p className={cn('text-sm mt-2', !initialData.role && 'text-slate-500 italic')}>
           {selectedOption?.label || 'No role'}
         </p>
       )}
-      {isEditing && (
+      {isEditing && isAdmin && (
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">
             <FormField

@@ -1,7 +1,7 @@
-import { Sidebar } from "./_components/Sidebar";
-import { Navbar } from "./_components/navbar";
-import { auth } from "@clerk/nextjs/server";
-import getSafeProfile from "@/actions/get-safe-profile";
+import { Sidebar } from './_components/Sidebar';
+import { Navbar } from './_components/navbar';
+import { auth } from '@clerk/nextjs/server';
+import getSafeProfile from '@/actions/get-safe-profile';
 
 const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
   const { userId } = await auth();
@@ -15,7 +15,7 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
   const safeProfile = await getSafeProfile();
 
   if (!safeProfile) {
-    throw new Error("Unable to load profile. Please check your database connection.");
+    throw new Error('Unable to load profile. Please check your database connection.');
   }
 
   return (
@@ -25,11 +25,9 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
       </div>
 
       <div className="hidden md:flex h-full w-56 flex-col fixed inset-y-0 z-50 dark:bg-gray-900">
-        <Sidebar />
+        <Sidebar currentProfile={safeProfile} />
       </div>
-      <main className="md:pl-56 pt-[80px] h-full dark:bg-gray-900">
-        {children}
-      </main>
+      <main className="md:pl-56 pt-[80px] h-full dark:bg-gray-900">{children}</main>
     </div>
   );
 };

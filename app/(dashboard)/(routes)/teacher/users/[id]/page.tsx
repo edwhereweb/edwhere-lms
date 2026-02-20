@@ -35,7 +35,11 @@ const ProfileIdPage: React.FC<ProfileIdPageProps> = async ({ params }) => {
 
   return (
     <div className="flex-1 p-6">
-      <MemberRoleForm initialData={targetProfile} id={targetProfile.id} />
+      <MemberRoleForm
+        initialData={targetProfile}
+        id={targetProfile.id}
+        isAdmin={profile.role === 'ADMIN'}
+      />
     </div>
   );
 };
