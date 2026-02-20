@@ -58,7 +58,9 @@ export const SidebarRoutes = ({ currentProfile }: SidebarRoutesProps) => {
   let routes = isTeacherPage ? teacherRoutes : STUDENTRoutes;
 
   if (currentProfile?.role !== 'ADMIN') {
-    routes = routes.filter((route) => !['Manage Users', 'Categories'].includes(route.label));
+    routes = routes.filter(
+      (route) => !['Manage Users', 'Categories', 'Pending Approvals'].includes(route.label)
+    );
   }
 
   return (
