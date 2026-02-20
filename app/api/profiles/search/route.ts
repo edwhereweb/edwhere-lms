@@ -17,6 +17,8 @@ export async function GET(req: Request) {
     const q = searchParams.get('q')?.trim() ?? '';
     if (q.length < 1) return NextResponse.json([]);
 
+    // MongoDB does not support mode:"insensitive" on non-fulltext fields.
+    // Fetch a broader set and filter in JS instead.
     const allProfiles = await db.profile.findMany({
       where: { NOT: { userId } },
       select: {
@@ -31,7 +33,11 @@ export async function GET(req: Request) {
 
     const lower = q.toLowerCase();
     const results = allProfiles
-      .filter((p) => p.name.toLowerCase().includes(lower) || p.email.toLowerCase().includes(lower))
+      .filter(
+        (p) =>
+          ['TEACHER', 'ADMIN'].includes(p.role) &&
+          (p.name.toLowerCase().includes(lower) || p.email.toLowerCase().includes(lower))
+      )
       .slice(0, 10);
 
     return NextResponse.json(results);
