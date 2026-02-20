@@ -1,32 +1,34 @@
-import { db } from "@/lib/db";
-import { redirect } from "next/navigation";
+import { db } from '@/lib/db';
+import { redirect } from 'next/navigation';
 
-const CourseIdPage = async ({
-  params
-}: {
-  params: { courseId: string; }
-}) => {
+const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
   const course = await db.course.findUnique({
     where: {
-      id: params.courseId,
+      id: params.courseId
     },
     include: {
+      // Get ALL published chapters regardless of module assignment
+      // so we can always find the first one to redirect to
       chapters: {
         where: {
-          isPublished: true,
+          isPublished: true
         },
         orderBy: {
-          position: "asc"
+          position: 'asc'
         }
       }
     }
   });
 
   if (!course) {
-    return redirect("/dashboard");
+    return redirect('/dashboard');
+  }
+
+  if (!course.chapters.length) {
+    return redirect('/dashboard');
   }
 
   return redirect(`/courses/${course.id}/chapters/${course.chapters[0].id}`);
-}
+};
 
 export default CourseIdPage;

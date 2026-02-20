@@ -30,9 +30,27 @@ const CourseLayout = async ({
       id: params.courseId
     },
     include: {
+      // Include all modules (not filtering by isPublished) so students see
+      // chapters even when the parent module is in draft state.
+      // Only the chapter's own isPublished matters for student visibility.
+      modules: {
+        orderBy: { position: 'asc' },
+        include: {
+          chapters: {
+            where: { isPublished: true },
+            include: {
+              userProgress: {
+                where: { userId }
+              }
+            },
+            orderBy: { position: 'asc' }
+          }
+        }
+      },
       chapters: {
         where: {
-          isPublished: true
+          isPublished: true,
+          moduleId: null
         },
         include: {
           userProgress: {
@@ -55,15 +73,25 @@ const CourseLayout = async ({
   const progressCount: number = await getProgress(userId, course.id);
 
   return (
-    <div className="h-full">
-      <div className="h-[80px] md:pl-80 fixed inset-y-0 w-full z-50">
+    <>
+      {/* Fixed top navbar */}
+      <div className="h-[80px] md:pl-80 fixed inset-x-0 top-0 w-full z-50">
         <CourseNavbar course={course} progressCount={progressCount} currentProfile={safeProfile} />
       </div>
-      <div className="hidden md:flex h-full w-80 flex-col fixed inset-y-0 z-50">
+
+      {/* Fixed left sidebar — full height, under navbar */}
+      <div className="hidden md:flex w-80 flex-col fixed inset-y-0 z-40">
         <CourseSidebar course={course} progressCount={progressCount} />
       </div>
-      <main className="md:pl-80 pt-[80px] h-full">{children}</main>
-    </div>
+
+      {/* Main content — fixed position so it CANNOT bleed under the navbar */}
+      <main
+        className="fixed overflow-y-auto md:left-80 left-0 right-0 bottom-0"
+        style={{ top: '80px' }}
+      >
+        {children}
+      </main>
+    </>
   );
 };
 

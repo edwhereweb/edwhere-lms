@@ -7,6 +7,7 @@ import { db } from '@/lib/db';
 import { canEditCourse } from '@/lib/course-auth';
 import { IconBadge } from '@/components/icon-badge';
 import { ChaptersForm } from '../_components/chapters-form';
+import { ModulesForm } from '../_components/modules-form';
 
 const CourseStructurePage = async ({ params }: { params: { courseId: string } }) => {
   const { userId } = await auth();
@@ -19,7 +20,16 @@ const CourseStructurePage = async ({ params }: { params: { courseId: string } })
   const course = await db.course.findUnique({
     where: { id: params.courseId },
     include: {
-      chapters: { orderBy: { position: 'asc' } }
+      modules: {
+        orderBy: { position: 'asc' },
+        include: {
+          chapters: { orderBy: { position: 'asc' } }
+        }
+      },
+      chapters: {
+        where: { moduleId: null },
+        orderBy: { position: 'asc' }
+      }
     }
   });
 
@@ -42,12 +52,28 @@ const CourseStructurePage = async ({ params }: { params: { courseId: string } })
           </span>
         </div>
       </div>
-      <div className="mt-8 max-w-3xl">
-        <div className="flex items-center gap-x-2 mb-6">
-          <IconBadge icon={ListChecks} />
-          <h2 className="text-xl">Course chapters</h2>
+      <div className="mt-8 max-w-3xl space-y-8">
+        <div>
+          <div className="flex items-center gap-x-2 mb-6">
+            <IconBadge icon={ListChecks} />
+            <h2 className="text-xl">Course Modules</h2>
+          </div>
+          <ModulesForm initialData={course} courseId={course.id} />
         </div>
-        <ChaptersForm initialData={course} courseId={course.id} />
+
+        <div>
+          <div className="flex items-center gap-x-2 mb-6 text-slate-500">
+            <IconBadge icon={ListChecks} />
+            <h2 className="text-xl">Unassigned Content</h2>
+          </div>
+          <div className="bg-slate-50 dark:bg-slate-900 border rounded-md p-4">
+            <p className="text-xs text-muted-foreground mb-4">
+              These chapters are not assigned to any module and will appear at the root of the
+              course.
+            </p>
+            <ChaptersForm initialData={course} courseId={course.id} moduleId={undefined} />
+          </div>
+        </div>
       </div>
     </div>
   );

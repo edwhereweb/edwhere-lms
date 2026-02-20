@@ -17,18 +17,26 @@ export const updateChapterSchema = z.object({
   description: z.string().max(10000).optional(),
   videoUrl: z.string().url().optional(),
   isFree: z.boolean().optional(),
-  youtubeVideoId: z.string().max(50).nullable().optional()
+  youtubeVideoId: z.string().max(50).nullable().optional(),
+  content: z.string().max(100000).nullable().optional(),
+  htmlContent: z.string().max(500000).nullable().optional(),
+  pdfUrl: z.string().url().nullable().optional()
 });
 
 export const createChapterSchema = z.object({
-  title: z.string().min(1, 'Title is required').max(200)
+  title: z.string().min(1, 'Title is required').max(200),
+  moduleId: z.string().optional().nullable(),
+  contentType: z
+    .enum(['VIDEO_MUX', 'VIDEO_YOUTUBE', 'TEXT', 'HTML_EMBED', 'PDF_DOCUMENT'])
+    .optional()
 });
 
 export const reorderChaptersSchema = z.object({
   list: z.array(
     z.object({
       id: z.string(),
-      position: z.number().int().min(0)
+      position: z.number().int().min(0),
+      moduleId: z.string().optional().nullable()
     })
   )
 });

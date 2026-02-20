@@ -35,6 +35,11 @@ export const ourFileRouter = {
     .middleware(async () => await handleAuth())
     .onUploadComplete(({ metadata, file }) => {
       debug('UPLOAD_CHAPTER_VIDEO', metadata.userId, file.url);
+    }),
+  chapterPdf: f({ pdf: { maxFileCount: 1, maxFileSize: '16MB' } })
+    .middleware(async () => await handleAuth())
+    .onUploadComplete(({ metadata, file }) => {
+      debug('UPLOAD_CHAPTER_PDF', metadata.userId, file.url);
     })
 } satisfies FileRouter;
 

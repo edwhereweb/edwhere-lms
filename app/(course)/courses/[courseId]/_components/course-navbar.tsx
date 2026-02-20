@@ -1,4 +1,4 @@
-import { type Chapter, type Course, type UserProgress } from '@prisma/client';
+import { type Module, type Chapter, type Course, type UserProgress } from '@prisma/client';
 
 import { NavbarRoutes } from '@/components/navbar-routes';
 
@@ -7,6 +7,11 @@ import { SafeProfile } from '@/types';
 
 interface CourseNavbarProps {
   course: Course & {
+    modules: (Module & {
+      chapters: (Chapter & {
+        userProgress: UserProgress[] | null;
+      })[];
+    })[];
     chapters: (Chapter & {
       userProgress: UserProgress[] | null;
     })[];

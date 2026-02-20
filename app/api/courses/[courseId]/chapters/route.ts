@@ -17,7 +17,10 @@ export async function POST(req: Request, { params }: { params: { courseId: strin
     if (!validation.success) return validation.response;
 
     const lastChapter = await db.chapter.findFirst({
-      where: { courseId: params.courseId },
+      where: {
+        courseId: params.courseId,
+        moduleId: validation.data.moduleId || null
+      },
       orderBy: { position: 'desc' }
     });
 
@@ -27,6 +30,8 @@ export async function POST(req: Request, { params }: { params: { courseId: strin
       data: {
         title: validation.data.title,
         courseId: params.courseId,
+        moduleId: validation.data.moduleId || null,
+        contentType: validation.data.contentType ?? 'VIDEO_MUX',
         position: newPosition
       }
     });

@@ -27,10 +27,30 @@ export async function PATCH(
       return apiError('Missing required fields', 400);
     }
 
-    const hasVideo = (!!chapter.videoUrl && !!muxData) || !!chapter.youtubeVideoId;
+    const contentType = chapter.contentType ?? 'VIDEO_MUX';
 
-    if (!hasVideo) {
-      return apiError('Missing required fields', 400);
+    if (contentType === 'TEXT') {
+      if (!chapter.content) {
+        return apiError('Missing body content', 400);
+      }
+    } else if (contentType === 'VIDEO_YOUTUBE') {
+      if (!chapter.youtubeVideoId) {
+        return apiError('Missing YouTube video', 400);
+      }
+    } else if (contentType === 'HTML_EMBED') {
+      if (!(chapter as unknown as { htmlContent?: string }).htmlContent) {
+        return apiError('Missing HTML content', 400);
+      }
+    } else if (contentType === 'PDF_DOCUMENT') {
+      if (!(chapter as unknown as { pdfUrl?: string }).pdfUrl) {
+        return apiError('Missing PDF document', 400);
+      }
+    } else {
+      // VIDEO_MUX (default / legacy)
+      const hasVideo = (!!chapter.videoUrl && !!muxData) || !!chapter.youtubeVideoId;
+      if (!hasVideo) {
+        return apiError('Missing required fields', 400);
+      }
     }
 
     const publishedChapter = await db.chapter.update({

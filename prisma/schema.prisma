@@ -40,6 +40,7 @@ model Course {
   categoryId  String?    @db.ObjectId
   category    Category?  @relation(fields: [categoryId], references: [id])
   attachments Attachment[]
+  modules     Module[]
   chapters    Chapter[]
   purchases   Purchase[]
   instructors CourseInstructor[]
@@ -87,12 +88,35 @@ model CourseInstructor {
   @@index([profileId])
 }
 
+model Module {
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String?
+  position    Int
+  isPublished Boolean    @default(false)
+  isFree      Boolean    @default(false)
+
+  courseId    String     @db.ObjectId
+  course      Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  
+  chapters    Chapter[]
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([courseId])
+}
+
 model Chapter {
   id          String     @id @default(auto()) @map("_id") @db.ObjectId
   title       String
   description String?
   videoUrl    String?
   youtubeVideoId String?
+  content     String?
+  htmlContent String?
+  pdfUrl      String?
+  contentType String?   @default("VIDEO_MUX")
   position    Int
   isPublished Boolean    @default(false)
   isFree      Boolean    @default(false)
@@ -102,12 +126,16 @@ model Chapter {
   courseId    String     @db.ObjectId
   course      Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
+  moduleId    String?    @db.ObjectId
+  module      Module?    @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
   userProgress UserProgress[]
 
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
   @@index([courseId])
+  @@index([moduleId])
 }
 
 model MuxData {

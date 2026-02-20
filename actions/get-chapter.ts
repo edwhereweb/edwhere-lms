@@ -1,11 +1,13 @@
 import { db } from '@/lib/db';
-import { type Attachment, type Chapter } from '@prisma/client';
+import { type Attachment, type Chapter, type Module } from '@prisma/client';
 
 interface GetChapterProps {
   userId: string;
   courseId: string;
   chapterId: string;
 }
+
+type ChapterWithModule = Chapter & { module: Module | null };
 
 export const getChapter = async ({ userId, courseId, chapterId }: GetChapterProps) => {
   try {
@@ -36,21 +38,39 @@ export const getChapter = async ({ userId, courseId, chapterId }: GetChapterProp
     const hasAccess = chapter.isFree || !!purchase;
 
     if (hasAccess) {
-      const [mux, atts, next] = await Promise.all([
+      const [mux, atts, allChapters] = await Promise.all([
         db.muxData.findUnique({ where: { chapterId } }),
         purchase ? db.attachment.findMany({ where: { courseId } }) : Promise.resolve([]),
-        db.chapter.findFirst({
+        db.chapter.findMany({
           where: {
             courseId,
-            isPublished: true,
-            position: { gt: chapter.position }
+            isPublished: true
           },
-          orderBy: { position: 'asc' }
-        })
+          include: {
+            module: true
+          }
+        }) as Promise<ChapterWithModule[]>
       ]);
       muxData = mux;
       attachments = atts;
-      nextChapter = next;
+
+      const sortedChapters = allChapters.sort((a, b) => {
+        if (a.moduleId && b.moduleId) {
+          if (a.moduleId === b.moduleId) return a.position - b.position;
+          const moduleAPos = a.module?.position ?? 0;
+          const moduleBPos = b.module?.position ?? 0;
+          return moduleAPos - moduleBPos;
+        }
+        if (a.moduleId && !b.moduleId) return -1; // Module chapters come first
+        if (!a.moduleId && b.moduleId) return 1;
+        return a.position - b.position;
+      });
+
+      const currentIndex = sortedChapters.findIndex((c) => c.id === chapterId);
+      nextChapter =
+        currentIndex !== -1 && currentIndex + 1 < sortedChapters.length
+          ? sortedChapters[currentIndex + 1]
+          : null;
     }
 
     return {

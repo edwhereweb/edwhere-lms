@@ -20,7 +20,10 @@ export async function PUT(req: Request, { params }: { params: { courseId: string
       validation.data.list.map((item) =>
         db.chapter.update({
           where: { id: item.id, courseId: params.courseId },
-          data: { position: item.position }
+          data: {
+            position: item.position,
+            moduleId: item.moduleId || null
+          }
         })
       )
     );
