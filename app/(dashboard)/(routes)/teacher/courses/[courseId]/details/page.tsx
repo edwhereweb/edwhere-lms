@@ -1,57 +1,52 @@
-import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
-import { CircleDollarSign, File, LayoutDashboard, ListChecks, Users } from "lucide-react";
+import { auth } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
+import Link from 'next/link';
+import { CircleDollarSign, File, LayoutDashboard, Users, ArrowLeft } from 'lucide-react';
 
-import { db } from "@/lib/db";
-import { canEditCourse } from "@/lib/course-auth";
-import { IconBadge } from "@/components/icon-badge";
-import { Banner } from "@/components/banner";
+import { db } from '@/lib/db';
+import { canEditCourse } from '@/lib/course-auth';
+import { IconBadge } from '@/components/icon-badge';
+import { Banner } from '@/components/banner';
 
-import { TitleForm } from "./_components/title-form";
-import { DescriptionForm } from "./_components/description-form";
-import { ImageForm } from "./_components/image-form";
-import { CategoryForm } from "./_components/category-form";
-import { PriceForm } from "./_components/price-form";
-import { AttachmentForm } from "./_components/attachment-form";
-import { ChaptersForm } from "./_components/chapters-form";
-import { Actions } from "./_components/actions";
-import { CourseInstructorsForm } from "./_components/course-instructors-form";
+import { TitleForm } from '../_components/title-form';
+import { DescriptionForm } from '../_components/description-form';
+import { ImageForm } from '../_components/image-form';
+import { CategoryForm } from '../_components/category-form';
+import { PriceForm } from '../_components/price-form';
+import { AttachmentForm } from '../_components/attachment-form';
+import { Actions } from '../_components/actions';
+import { CourseInstructorsForm } from '../_components/course-instructors-form';
 
-const CourseIdPage = async ({
-  params
-}: {
-  params: { courseId: string }
-}) => {
+const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
   const { userId } = await auth();
-  if (!userId) return redirect("/sign-in");
+  if (!userId) return redirect('/sign-in');
 
   // Check permissions — owner, instructor, or admin
   const allowed = await canEditCourse(userId, params.courseId);
-  if (!allowed) return redirect("/teacher/courses");
+  if (!allowed) return redirect('/teacher/courses');
 
   const profile = await db.profile.findUnique({ where: { userId } });
-  const isAdmin = profile?.role === "ADMIN";
+  const isAdmin = profile?.role === 'ADMIN';
 
   const course = await db.course.findUnique({
     where: { id: params.courseId },
     include: {
-      chapters: { orderBy: { position: "asc" } },
-      attachments: { orderBy: { createdAt: "desc" } },
-      instructors: { include: { profile: true } },
-    },
+      chapters: { orderBy: { position: 'asc' } },
+      attachments: { orderBy: { createdAt: 'desc' } },
+      instructors: { include: { profile: true } }
+    }
   });
 
-  if (!course) return redirect("/teacher/courses");
+  if (!course) return redirect('/teacher/courses');
 
-  const categories = await db.category.findMany({ orderBy: { name: "asc" } });
+  const categories = await db.category.findMany({ orderBy: { name: 'asc' } });
 
   const requiredFields = [
     course.title,
     course.description,
     course.imageUrl,
     course.price,
-    course.categoryId,
-    course.chapters.some((chapter) => chapter.isPublished),
+    course.categoryId
   ];
 
   const totalFields = requiredFields.length;
@@ -69,20 +64,22 @@ const CourseIdPage = async ({
         />
       )}
       {!course.isPublished && !course.pendingApproval && (
-        <Banner
-          label="This course is unpublished. It will not be visible to the students."
-        />
+        <Banner label="This course is unpublished. It will not be visible to the students." />
       )}
       {course.isPublished && (
-        <Banner
-          label="This course is live and visible to students."
-          variant="success"
-        />
+        <Banner label="This course is live and visible to students." variant="success" />
       )}
       <div className="p-6">
+        <Link
+          href={`/teacher/courses`}
+          className="flex items-center text-sm hover:opacity-75 transition mb-6"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to courses
+        </Link>
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-y-2">
-            <h1 className="text-2xl font-medium">Course setup</h1>
+            <h1 className="text-2xl font-medium">Course details</h1>
             <span className="text-sm text-slate-700 dark:text-slate-300">
               Complete all fields {completionText}
             </span>
@@ -122,13 +119,6 @@ const CourseIdPage = async ({
             )}
           </div>
           <div className="space-y-6">
-            <div>
-              <div className="flex items-center gap-x-2">
-                <IconBadge icon={ListChecks} />
-                <h2 className="text-xl">Course chapters</h2>
-              </div>
-              <ChaptersForm initialData={course} courseId={course.id} />
-            </div>
             <div>
               <div className="flex items-center gap-x-2">
                 <IconBadge icon={CircleDollarSign} />

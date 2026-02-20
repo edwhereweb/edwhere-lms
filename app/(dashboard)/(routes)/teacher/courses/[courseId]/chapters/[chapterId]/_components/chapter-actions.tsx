@@ -48,7 +48,7 @@ export const ChapterActions = ({
       setIsLoading(true);
       await axios.delete(`/api/courses/${courseId}/chapters/${chapterId}`);
       toast.success('Chapter deleted');
-      router.push(`/teacher/courses/${courseId}`);
+      router.push(`/teacher/courses/${courseId}/structure`);
       router.refresh();
     } catch {
       toast.error('Something went wrong');
