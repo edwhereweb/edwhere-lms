@@ -7,31 +7,41 @@ export async function GET(req: Request) {
         const { userId } = await auth();
         if (!userId) return new NextResponse("Unauthorized", { status: 401 });
 
-        const profile = await db.profile.findUnique({ where: { userId } });
-        if (!profile || !["ADMIN", "TEACHER"].includes(profile.role)) {
+        const myProfile = await db.profile.findUnique({ where: { userId } });
+        if (!myProfile || !["ADMIN", "TEACHER"].includes(myProfile.role)) {
             return new NextResponse("Forbidden", { status: 403 });
         }
 
         const { searchParams } = new URL(req.url);
-        const q = searchParams.get("q")?.trim();
-        if (!q || q.length < 2) {
-            return NextResponse.json([]);
-        }
+        const q = searchParams.get("q")?.trim() ?? "";
+        if (q.length < 1) return NextResponse.json([]);
 
-        const profiles = await db.profile.findMany({
+        // MongoDB does not support mode:"insensitive" on non-fulltext fields.
+        // Fetch a broader set and filter in JS instead.
+        const allProfiles = await db.profile.findMany({
             where: {
-                OR: [
-                    { name: { contains: q, mode: "insensitive" } },
-                    { email: { contains: q, mode: "insensitive" } },
-                ],
-                NOT: { userId },          // exclude self
-                role: { in: ["TEACHER", "ADMIN"] }, // only teachers/admins can be instructors
+                NOT: { userId }, // exclude self
             },
-            select: { id: true, name: true, email: true, imageUrl: true },
-            take: 10,
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                imageUrl: true,
+                role: true,
+            },
+            take: 200, // reasonable upper bound
         });
 
-        return NextResponse.json(profiles);
+        const lower = q.toLowerCase();
+        const results = allProfiles
+            .filter(
+                (p) =>
+                    p.name.toLowerCase().includes(lower) ||
+                    p.email.toLowerCase().includes(lower)
+            )
+            .slice(0, 10);
+
+        return NextResponse.json(results);
     } catch (error) {
         console.log("[PROFILES_SEARCH]", error);
         return new NextResponse("Internal Error", { status: 500 });
