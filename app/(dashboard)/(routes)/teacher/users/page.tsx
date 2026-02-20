@@ -4,6 +4,8 @@ import { db } from '@/lib/db';
 import getSafeProfile from '@/actions/get-safe-profile';
 import { redirect } from 'next/navigation';
 
+export const dynamic = 'force-dynamic';
+
 const UsersPage = async () => {
   const profile = await getSafeProfile();
 
