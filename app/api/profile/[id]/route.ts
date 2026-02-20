@@ -30,10 +30,10 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       return apiError('Forbidden. Cannot elevate role to ADMIN.', 403);
     }
 
-    let updateData = { ...safeFields };
-    if (role) {
-      updateData = { ...updateData, role: role as 'ADMIN' | 'TEACHER' | 'USER' };
-    }
+    const updateData = {
+      ...safeFields,
+      ...(role ? { role: role as "ADMIN" | "TEACHER" | "STUDENT" } : {})
+    };
 
     const updatedProfile = await db.profile.update({
       where: { id: params.id },
