@@ -36,8 +36,9 @@ export async function GET(req: Request) {
         const results = allProfiles
             .filter(
                 (p) =>
-                    p.name.toLowerCase().includes(lower) ||
-                    p.email.toLowerCase().includes(lower)
+                    ["TEACHER", "ADMIN"].includes(p.role) && // only staff can be instructors
+                    (p.name.toLowerCase().includes(lower) ||
+                        p.email.toLowerCase().includes(lower))
             )
             .slice(0, 10);
 
