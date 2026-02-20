@@ -1,29 +1,46 @@
 import { db } from '@/lib/db';
-import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { profileUpdateSchema } from '@/lib/validations';
 import { validateBody, apiError, handleApiError } from '@/lib/api-utils';
+import getSafeProfile from '@/actions/get-safe-profile';
 
-export async function PATCH(req: Request, { params: _params }: { params: { id: string } }) {
+export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   try {
-    const { userId } = await auth();
+    const profile = await getSafeProfile();
 
-    if (!userId) {
+    if (!profile) {
       return apiError('Unauthorized', 401);
+    }
+
+    const isAdmin = profile.role === 'ADMIN';
+    const isSelf = profile.id === params.id;
+
+    if (!isAdmin && !isSelf) {
+      return apiError('Forbidden. You do not have permission to edit this profile.', 403);
     }
 
     const body = await req.json();
     const validation = validateBody(profileUpdateSchema, body);
     if (!validation.success) return validation.response;
 
-    const { role: _role, ...safeFields } = validation.data;
+    const { role, ...safeFields } = validation.data;
 
-    const profile = await db.profile.update({
-      where: { userId },
-      data: safeFields
+    // Prevent non-admins from making themselves an ADMIN
+    if (!isAdmin && role === 'ADMIN') {
+      return apiError('Forbidden. Cannot elevate role to ADMIN.', 403);
+    }
+
+    let updateData = { ...safeFields };
+    if (role) {
+      updateData = { ...updateData, role: role as 'ADMIN' | 'TEACHER' | 'USER' };
+    }
+
+    const updatedProfile = await db.profile.update({
+      where: { id: params.id },
+      data: updateData
     });
 
-    return NextResponse.json(profile);
+    return NextResponse.json(updatedProfile);
   } catch (error) {
     return handleApiError('PROFILE_ID', error);
   }
