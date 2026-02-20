@@ -1,37 +1,38 @@
-import { auth } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { checkCourseEdit } from "@/lib/course-auth";
+import { auth } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
+import { db } from '@/lib/db';
+import { checkCourseEdit } from '@/lib/course-auth';
+import { createChapterSchema } from '@/lib/validations';
+import { validateBody, handleApiError } from '@/lib/api-utils';
 
-export async function POST(
-  req: Request,
-  { params }: { params: { courseId: string } }
-) {
+export async function POST(req: Request, { params }: { params: { courseId: string } }) {
   try {
     const { userId } = await auth();
-    const { title } = await req.json();
 
     const denied = await checkCourseEdit(userId, params.courseId);
     if (denied) return denied;
 
+    const body = await req.json();
+    const validation = validateBody(createChapterSchema, body);
+    if (!validation.success) return validation.response;
+
     const lastChapter = await db.chapter.findFirst({
       where: { courseId: params.courseId },
-      orderBy: { position: "desc" },
+      orderBy: { position: 'desc' }
     });
 
     const newPosition = lastChapter ? lastChapter.position + 1 : 1;
 
     const chapter = await db.chapter.create({
       data: {
-        title,
+        title: validation.data.title,
         courseId: params.courseId,
-        position: newPosition,
-      },
+        position: newPosition
+      }
     });
 
     return NextResponse.json(chapter);
   } catch (error) {
-    console.log("[CHAPTERS]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return handleApiError('CHAPTERS', error);
   }
 }

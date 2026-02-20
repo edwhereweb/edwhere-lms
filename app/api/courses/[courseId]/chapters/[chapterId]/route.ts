@@ -1,13 +1,15 @@
-import Mux from "@mux/mux-node";
-import { auth } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { checkCourseEdit } from "@/lib/course-auth";
+import Mux from '@mux/mux-node';
+import { auth } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
+import { db } from '@/lib/db';
+import { checkCourseEdit } from '@/lib/course-auth';
+import { updateChapterSchema } from '@/lib/validations';
+import { validateBody, apiError, handleApiError } from '@/lib/api-utils';
 
-const { Video } = new Mux(
-  process.env.MUX_TOKEN_ID!,
-  process.env.MUX_TOKEN_SECRET!
-);
+function getMuxVideo() {
+  const { Video } = new Mux(process.env.MUX_TOKEN_ID!, process.env.MUX_TOKEN_SECRET!);
+  return Video;
+}
 
 export async function DELETE(
   req: Request,
@@ -22,59 +24,47 @@ export async function DELETE(
     const chapter = await db.chapter.findUnique({
       where: {
         id: params.chapterId,
-        courseId: params.courseId,
-      },
+        courseId: params.courseId
+      }
     });
 
     if (!chapter) {
-      return new NextResponse("Not Found", { status: 404 });
+      return apiError('Not Found', 404);
     }
 
     if (chapter.videoUrl) {
       const existingMuxData = await db.muxData.findFirst({
-        where: {
-          chapterId: params.chapterId,
-        },
+        where: { chapterId: params.chapterId }
       });
 
       if (existingMuxData) {
-        await Video.Assets.del(existingMuxData.assetId);
-        await db.muxData.delete({
-          where: {
-            id: existingMuxData.id,
-          },
-        });
+        try {
+          await getMuxVideo().Assets.del(existingMuxData.assetId);
+        } catch {
+          // Mux asset may already be deleted — safe to continue
+        }
+        await db.muxData.delete({ where: { id: existingMuxData.id } });
       }
     }
 
     const deletedChapter = await db.chapter.delete({
-      where: {
-        id: params.chapterId,
-      },
+      where: { id: params.chapterId }
     });
 
-    const publishedChaptersInCourse = await db.chapter.findMany({
-      where: {
-        courseId: params.courseId,
-        isPublished: true,
-      },
+    const publishedCount = await db.chapter.count({
+      where: { courseId: params.courseId, isPublished: true }
     });
 
-    if (!publishedChaptersInCourse.length) {
+    if (publishedCount === 0) {
       await db.course.update({
-        where: {
-          id: params.courseId,
-        },
-        data: {
-          isPublished: false,
-        },
+        where: { id: params.courseId },
+        data: { isPublished: false }
       });
     }
 
     return NextResponse.json(deletedChapter);
   } catch (error) {
-    console.log("[CHAPTER_ID_DELETE]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return handleApiError('CHAPTER_ID_DELETE', error);
   }
 }
 
@@ -89,49 +79,41 @@ export async function PATCH(
     if (denied) return denied;
 
     const body = await req.json();
+    const validation = validateBody(updateChapterSchema, body);
+    if (!validation.success) return validation.response;
 
-    // Whitelist only safe chapter fields — prevents mass-assignment of courseId, position, id etc.
-    const { title, description, videoUrl, isFree, youtubeVideoId } = body;
-    const safeData: Record<string, unknown> = {};
-    if (title !== undefined) safeData.title = title;
-    if (description !== undefined) safeData.description = description;
-    if (videoUrl !== undefined) safeData.videoUrl = videoUrl;
-    if (isFree !== undefined) safeData.isFree = isFree;
-    if (youtubeVideoId !== undefined) safeData.youtubeVideoId = youtubeVideoId ?? null;
+    const safeData = {
+      ...validation.data,
+      youtubeVideoId: validation.data.youtubeVideoId ?? null
+    };
 
     const chapter = await db.chapter.update({
       where: {
         id: params.chapterId,
-        courseId: params.courseId,
+        courseId: params.courseId
       },
-      data: safeData,
+      data: safeData
     });
 
-    if (safeData.videoUrl) {
+    if (validation.data.videoUrl) {
       const existingMuxData = await db.muxData.findFirst({
-        where: {
-          chapterId: params.chapterId,
-        },
+        where: { chapterId: params.chapterId }
       });
 
       if (existingMuxData) {
         try {
-          await Video.Assets.del(existingMuxData.assetId);
-        } catch (error) {
-          console.log("[Mux Asset Delete]", error);
+          await getMuxVideo().Assets.del(existingMuxData.assetId);
+        } catch {
+          // Mux asset may already be deleted
         }
-        await db.muxData.delete({
-          where: {
-            id: existingMuxData.id,
-          },
-        });
+        await db.muxData.delete({ where: { id: existingMuxData.id } });
       }
 
       try {
-        const asset = await Video.Assets.create({
-          input: safeData.videoUrl as string,
-          playback_policy: "public",
-          test: false,
+        const asset = await getMuxVideo().Assets.create({
+          input: validation.data.videoUrl,
+          playback_policy: 'public',
+          test: false
         });
 
         if (asset) {
@@ -139,18 +121,17 @@ export async function PATCH(
             data: {
               chapterId: params.chapterId,
               assetId: asset.id,
-              playbackId: asset.playback_ids?.[0]?.id,
-            },
+              playbackId: asset.playback_ids?.[0]?.id
+            }
           });
         }
       } catch (error) {
-        console.log("[Mux Asset Create]", error);
+        console.error('[MUX_ASSET_CREATE]', error instanceof Error ? error.message : error);
       }
     }
 
     return NextResponse.json(chapter);
   } catch (error) {
-    console.log("[COURSES_CHAPTER_ID]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return handleApiError('COURSES_CHAPTER_ID', error);
   }
 }

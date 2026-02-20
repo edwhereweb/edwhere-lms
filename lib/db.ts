@@ -1,18 +1,17 @@
-// The purpose of this file is to prevent the overflow error 
-// of Prisma in development mode vs production mode. In development
-// mode, the prisma client is instantiated once and then reused
-// in production mode, the prisma client is instantiated for each
-// request. This is a workaround for the overflow error.
-// https://youtu.be/Big_aFLmekI?t=6746
-
 import { PrismaClient } from '@prisma/client';
 
-declare global {
-    var prisma: PrismaClient | undefined;
-}
+const prismaClientSingleton = () => {
+  return new PrismaClient({
+    log: process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error']
+  });
+};
 
-export const db = globalThis.prisma || new PrismaClient();
+declare const globalThis: {
+  prisma: ReturnType<typeof prismaClientSingleton>;
+} & typeof global;
 
-if (process.env.NODE_ENV === 'development') {
+export const db = globalThis.prisma ?? prismaClientSingleton();
+
+if (process.env.NODE_ENV !== 'production') {
   globalThis.prisma = db;
 }

@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import axios from "axios";
-import { useState } from "react";
-import toast from "react-hot-toast";
-import { Button } from "@/components/ui/button";
+import axios from 'axios';
+import { useState } from 'react';
+import toast from 'react-hot-toast';
+import { Button } from '@/components/ui/button';
 
 interface CourseEnrollButtonProps {
   courseId: string;
@@ -12,6 +12,7 @@ interface CourseEnrollButtonProps {
 
 declare global {
   interface Window {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Razorpay: any;
   }
 }
@@ -33,10 +34,10 @@ export const CourseEnrollButton = ({ courseId, price }: CourseEnrollButtonProps)
             return;
           }
 
-          const script = document.createElement("script");
-          script.src = "https://checkout.razorpay.com/v1/checkout.js";
+          const script = document.createElement('script');
+          script.src = 'https://checkout.razorpay.com/v1/checkout.js';
           script.onload = () => resolve();
-          script.onerror = () => reject(new Error("Failed to load Razorpay SDK"));
+          script.onerror = () => reject(new Error('Failed to load Razorpay SDK'));
           document.body.appendChild(script);
         });
       };
@@ -48,54 +49,53 @@ export const CourseEnrollButton = ({ courseId, price }: CourseEnrollButtonProps)
         amount: data.amount,
         currency: data.currency,
         name: data.courseName,
-        description: "Course Enrollment",
+        description: 'Course Enrollment',
         order_id: data.orderId,
         prefill: {
           email: data.userEmail,
-          name: data.userName,
+          name: data.userName
         },
-        handler: async (response: any) => {
+        handler: async (response: {
+          razorpay_order_id: string;
+          razorpay_payment_id: string;
+          razorpay_signature: string;
+        }) => {
           try {
-            await axios.post("/api/razorpay/verify", {
+            await axios.post('/api/razorpay/verify', {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
-              courseId,
+              courseId
             });
-            toast.success("Payment successful! You are now enrolled.");
+            toast.success('Payment successful! You are now enrolled.');
             window.location.reload();
           } catch (error) {
-            console.error("[PAYMENT_VERIFICATION_ERROR]", error);
-            toast.error("Payment verification failed.");
+            console.error('[PAYMENT_VERIFICATION_ERROR]', error);
+            toast.error('Payment verification failed.');
             setIsLoading(false);
           }
         },
         modal: {
           ondismiss: () => {
             setIsLoading(false);
-          },
+          }
         },
         theme: {
-          color: "#0369a1",
-        },
+          color: '#0369a1'
+        }
       };
 
       const rzp = new window.Razorpay(options);
       rzp.open();
     } catch (error) {
-      console.error("[CHECKOUT_ERROR]", error);
-      toast.error("Failed to initiate payment. Please try again.");
+      console.error('[CHECKOUT_ERROR]', error);
+      toast.error('Failed to initiate payment. Please try again.');
       setIsLoading(false);
     }
   };
 
   return (
-    <Button
-      onClick={onClick}
-      disabled={isLoading}
-      size="sm"
-      className="w-full md:w-auto"
-    >
+    <Button onClick={onClick} disabled={isLoading} size="sm" className="w-full md:w-auto">
       Enroll for ₹{price}
     </Button>
   );

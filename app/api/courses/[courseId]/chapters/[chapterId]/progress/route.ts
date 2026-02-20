@@ -1,7 +1,8 @@
-import { auth } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
-
-import { db } from "@/lib/db";
+import { auth } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
+import { db } from '@/lib/db';
+import { progressSchema } from '@/lib/validations';
+import { validateBody, apiError, handleApiError } from '@/lib/api-utils';
 
 export async function PUT(
   req: Request,
@@ -9,50 +10,46 @@ export async function PUT(
 ) {
   try {
     const { userId } = await auth();
-    const { isCompleted } = await req.json();
 
     if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 });
+      return apiError('Unauthorized', 401);
     }
 
-    // Verify the chapter is accessible: either free or user has purchased the course
-    const chapter = await db.chapter.findUnique({
-      where: { id: params.chapterId, courseId: params.courseId, isPublished: true },
-    });
+    const body = await req.json();
+    const validation = validateBody(progressSchema, body);
+    if (!validation.success) return validation.response;
 
-    const purchase = await db.purchase.findUnique({
-      where: { userId_courseId: { userId, courseId: params.courseId } },
-    });
+    const [chapter, purchase] = await Promise.all([
+      db.chapter.findUnique({
+        where: { id: params.chapterId, courseId: params.courseId, isPublished: true }
+      }),
+      db.purchase.findUnique({
+        where: { userId_courseId: { userId, courseId: params.courseId } }
+      })
+    ]);
 
     if (!chapter) {
-      return new NextResponse("Not Found", { status: 404 });
+      return apiError('Not Found', 404);
     }
 
     if (!chapter.isFree && !purchase) {
-      return new NextResponse("Forbidden", { status: 403 });
+      return apiError('Forbidden', 403);
     }
 
     const userProgress = await db.userProgress.upsert({
       where: {
-        userId_chapterId: {
-          userId,
-          chapterId: params.chapterId,
-        },
+        userId_chapterId: { userId, chapterId: params.chapterId }
       },
-      update: {
-        isCompleted,
-      },
+      update: { isCompleted: validation.data.isCompleted },
       create: {
         userId,
         chapterId: params.chapterId,
-        isCompleted,
-      },
+        isCompleted: validation.data.isCompleted
+      }
     });
 
     return NextResponse.json(userProgress);
   } catch (error) {
-    console.log("[CHAPTER_ID_PROGRESS]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return handleApiError('CHAPTER_ID_PROGRESS', error);
   }
 }
-

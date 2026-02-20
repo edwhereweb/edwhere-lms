@@ -1,15 +1,13 @@
-import Link from "next/link";
-import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
-import { BookOpen, GraduationCap, Users, Zap } from "lucide-react";
-import { UserButton } from "@clerk/nextjs";
-
+import Link from 'next/link';
+import { auth } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
+import { BookOpen, GraduationCap, Users, Zap } from 'lucide-react';
 export default async function LandingPage() {
   const { userId } = await auth();
 
   // Redirect signed-in users straight to the dashboard
   if (userId) {
-    redirect("/dashboard");
+    redirect('/dashboard');
   }
 
   return (
@@ -46,14 +44,14 @@ export default async function LandingPage() {
           Next-gen Learning Management System
         </div>
         <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight max-w-4xl leading-tight">
-          Learn anything,{" "}
+          Learn anything,{' '}
           <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
             anywhere
           </span>
         </h1>
         <p className="mt-6 text-lg md:text-xl text-slate-400 max-w-2xl">
-          edwhere is a modern LMS for teachers and students — create courses,
-          track progress, and learn at your own pace.
+          edwhere is a modern LMS for teachers and students — create courses, track progress, and
+          learn at your own pace.
         </p>
         <div className="mt-10 flex flex-col sm:flex-row gap-4">
           <Link
@@ -76,19 +74,19 @@ export default async function LandingPage() {
         {[
           {
             icon: BookOpen,
-            title: "Rich Course Builder",
-            desc: "Create multi-chapter courses with video, attachments, and pricing — all in one place.",
+            title: 'Rich Course Builder',
+            desc: 'Create multi-chapter courses with video, attachments, and pricing — all in one place.'
           },
           {
             icon: GraduationCap,
-            title: "Track Your Progress",
-            desc: "Students can see exactly where they are and pick up right where they left off.",
+            title: 'Track Your Progress',
+            desc: 'Students can see exactly where they are and pick up right where they left off.'
           },
           {
             icon: Users,
-            title: "Role-Based Access",
-            desc: "Teachers manage their own courses; admins oversee the entire platform.",
-          },
+            title: 'Role-Based Access',
+            desc: 'Teachers manage their own courses; admins oversee the entire platform.'
+          }
         ].map(({ icon: Icon, title, desc }) => (
           <div
             key={title}

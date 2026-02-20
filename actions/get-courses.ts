@@ -1,9 +1,6 @@
-import { Category, Course } from "@prisma/client";
-
-import { getProgress } from "@/actions/get-progress";
-import { db } from "@/lib/db";
-
-import { CourseWithProgressWithCategory } from "@/types";
+import { getProgressBatch } from '@/actions/get-progress';
+import { db } from '@/lib/db';
+import { CourseWithProgressWithCategory } from '@/types';
 
 type GetCourses = {
   userId: string;
@@ -20,54 +17,34 @@ export const getCourses = async ({
     const courses = await db.course.findMany({
       where: {
         isPublished: true,
-        title: {
-                    contains: title,
-                    mode: "insensitive",
-        },
-        categoryId,
+        ...(title && {
+          title: { contains: title, mode: 'insensitive' as const }
+        }),
+        ...(categoryId && { categoryId })
       },
       include: {
         category: true,
         chapters: {
-          where: {
-            isPublished: true,
-          },
-          select: {
-            id: true,
-          }
+          where: { isPublished: true },
+          select: { id: true }
         },
         purchases: {
-          where: {
-            userId,
-          }
+          where: { userId }
         }
       },
-      orderBy: {
-        createdAt: "desc",
-      }
+      orderBy: { createdAt: 'desc' }
     });
-    
-    const coursesWithProgress: CourseWithProgressWithCategory[] = await Promise.all(
-      courses.map(async (course) => {
-        if (course.purchases.length === 0) {
-          return {
-            ...course,
-            progress: null, // make progress possibly null
-          };
-        }
-    
-        const progressPercentage = await getProgress(userId, course.id);
-    
-        return {
-          ...course,
-          progress: progressPercentage,
-        };
-      })
-    );
 
-    return coursesWithProgress;
+    const purchasedCourseIds = courses.filter((c) => c.purchases.length > 0).map((c) => c.id);
+
+    const progressMap = await getProgressBatch(userId, purchasedCourseIds);
+
+    return courses.map((course) => ({
+      ...course,
+      progress: course.purchases.length === 0 ? null : (progressMap.get(course.id) ?? 0)
+    }));
   } catch (error) {
-    console.log("[GET_COURSES]", error);
+    console.error('[GET_COURSES]', error instanceof Error ? error.message : error);
     return [];
   }
-}
+};
