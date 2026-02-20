@@ -1,8 +1,9 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { CircleDollarSign, File, LayoutDashboard, ListChecks } from "lucide-react";
+import { CircleDollarSign, File, LayoutDashboard, ListChecks, Users } from "lucide-react";
 
 import { db } from "@/lib/db";
+import { canEditCourse } from "@/lib/course-auth";
 import { IconBadge } from "@/components/icon-badge";
 import { Banner } from "@/components/banner";
 
@@ -14,6 +15,7 @@ import { PriceForm } from "./_components/price-form";
 import { AttachmentForm } from "./_components/attachment-form";
 import { ChaptersForm } from "./_components/chapters-form";
 import { Actions } from "./_components/actions";
+import { CourseInstructorsForm } from "./_components/course-instructors-form";
 
 const CourseIdPage = async ({
   params
@@ -21,39 +23,27 @@ const CourseIdPage = async ({
   params: { courseId: string }
 }) => {
   const { userId } = await auth();
+  if (!userId) return redirect("/sign-in");
 
-  if (!userId) {
-    return redirect("/sign-in");
-  }
+  // Check permissions — owner, instructor, or admin
+  const allowed = await canEditCourse(userId, params.courseId);
+  if (!allowed) return redirect("/teacher/courses");
+
+  const profile = await db.profile.findUnique({ where: { userId } });
+  const isAdmin = profile?.role === "ADMIN";
 
   const course = await db.course.findUnique({
-    where: {
-      id: params.courseId,
-      userId
-    },
+    where: { id: params.courseId },
     include: {
-      chapters: {
-        orderBy: {
-          position: "asc",
-        },
-      },
-      attachments: {
-        orderBy: {
-          createdAt: "desc",
-        },
-      },
+      chapters: { orderBy: { position: "asc" } },
+      attachments: { orderBy: { createdAt: "desc" } },
+      instructors: { include: { profile: true } },
     },
   });
 
-  const categories = await db.category.findMany({
-    orderBy: {
-      name: "asc",
-    },
-  });
+  if (!course) return redirect("/teacher/courses");
 
-  if (!course) {
-    return redirect("/teacher/courses");
-  }
+  const categories = await db.category.findMany({ orderBy: { name: "asc" } });
 
   const requiredFields = [
     course.title,
@@ -61,30 +51,39 @@ const CourseIdPage = async ({
     course.imageUrl,
     course.price,
     course.categoryId,
-    course.chapters.some(chapter => chapter.isPublished),
+    course.chapters.some((chapter) => chapter.isPublished),
   ];
 
   const totalFields = requiredFields.length;
   const completedFields = requiredFields.filter(Boolean).length;
-
   const completionText = `(${completedFields} / ${totalFields})`;
-
   const isComplete = requiredFields.every(Boolean);
+  const isOwner = course.userId === userId;
 
   return (
     <>
-      {!course.isPublished && (
+      {course.pendingApproval && (
+        <Banner
+          label="This course is pending admin approval before it goes live."
+          variant="warning"
+        />
+      )}
+      {!course.isPublished && !course.pendingApproval && (
         <Banner
           label="This course is unpublished. It will not be visible to the students."
+        />
+      )}
+      {course.isPublished && (
+        <Banner
+          label="This course is live and visible to students."
+          variant="success"
         />
       )}
       <div className="p-6">
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-y-2">
-            <h1 className="text-2xl font-medium">
-              Course setup
-            </h1>
-            <span className="text-sm text-slate-700">
+            <h1 className="text-2xl font-medium">Course setup</h1>
+            <span className="text-sm text-slate-700 dark:text-slate-300">
               Complete all fields {completionText}
             </span>
           </div>
@@ -92,79 +91,63 @@ const CourseIdPage = async ({
             disabled={!isComplete}
             courseId={params.courseId}
             isPublished={course.isPublished}
+            pendingApproval={course.pendingApproval}
+            isAdmin={isAdmin}
           />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-16">
           <div>
             <div className="flex items-center gap-x-2">
               <IconBadge icon={LayoutDashboard} />
-              <h2 className="text-xl">
-                Customize your course
-              </h2>
+              <h2 className="text-xl">Customize your course</h2>
             </div>
-            <TitleForm
-              initialData={course}
-              courseId={course.id}
-            />
-            <DescriptionForm
-              initialData={course}
-              courseId={course.id}
-            />
-            <ImageForm
-              initialData={course}
-              courseId={course.id}
-            />
+            <TitleForm initialData={course} courseId={course.id} />
+            <DescriptionForm initialData={course} courseId={course.id} />
+            <ImageForm initialData={course} courseId={course.id} />
             <CategoryForm
               initialData={course}
               courseId={course.id}
-              options={categories.map((category) => ({
-                label: category.name,
-                value: category.id,
-              }))}
+              options={categories.map((c) => ({ label: c.name, value: c.id }))}
             />
+
+            {/* Instructors — visible to owner and admin only */}
+            {(isOwner || isAdmin) && (
+              <>
+                <div className="flex items-center gap-x-2 mt-6">
+                  <IconBadge icon={Users} />
+                  <h2 className="text-xl">Instructors</h2>
+                </div>
+                <CourseInstructorsForm courseId={course.id} />
+              </>
+            )}
           </div>
           <div className="space-y-6">
             <div>
               <div className="flex items-center gap-x-2">
                 <IconBadge icon={ListChecks} />
-                <h2 className="text-xl">
-                  Course chapters
-                </h2>
+                <h2 className="text-xl">Course chapters</h2>
               </div>
-              <ChaptersForm
-                initialData={course}
-                courseId={course.id}
-              />
+              <ChaptersForm initialData={course} courseId={course.id} />
             </div>
             <div>
               <div className="flex items-center gap-x-2">
                 <IconBadge icon={CircleDollarSign} />
-                <h2 className="text-xl">
-                  Sell your course
-                </h2>
+                <h2 className="text-xl">Sell your course</h2>
               </div>
-              <PriceForm
-                initialData={course}
-                courseId={course.id}
-              />
+              <PriceForm initialData={course} courseId={course.id} />
             </div>
             <div>
               <div className="flex items-center gap-x-2">
                 <IconBadge icon={File} />
-                <h2 className="text-xl">
-                  Resources & Attachments
-                </h2>
+                <h2 className="text-xl">Resources & Attachments</h2>
               </div>
-              <AttachmentForm
-                initialData={course}
-                courseId={course.id}
-              />
+              <AttachmentForm initialData={course} courseId={course.id} />
             </div>
           </div>
         </div>
       </div>
     </>
   );
-}
+};
 
 export default CourseIdPage;

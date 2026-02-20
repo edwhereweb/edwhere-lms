@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-
 import { db } from "@/lib/db";
+import { checkCourseEdit } from "@/lib/course-auth";
 
 export async function PATCH(
   req: Request,
@@ -10,20 +10,15 @@ export async function PATCH(
   try {
     const { userId } = await auth();
 
-    if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
+    const denied = await checkCourseEdit(userId, params.courseId);
+    if (denied) return denied;
 
+    // Verify required fields before submitting for approval
     const course = await db.course.findUnique({
-      where: {
-        id: params.courseId,
-        userId,
-      },
+      where: { id: params.courseId },
       include: {
         chapters: {
-          include: {
-            muxData: true,
-          },
+          include: { muxData: true },
         },
       },
     });
@@ -32,9 +27,7 @@ export async function PATCH(
       return new NextResponse("Not found", { status: 404 });
     }
 
-    const hasPublishedChapter = course.chapters.some(
-      (chapter) => chapter.isPublished
-    );
+    const hasPublishedChapter = course.chapters.some((c) => c.isPublished);
 
     if (
       !course.title ||
@@ -46,17 +39,16 @@ export async function PATCH(
       return new NextResponse("Missing required fields", { status: 401 });
     }
 
-    const publishedCourse = await db.course.update({
-      where: {
-        id: params.courseId,
-        userId,
-      },
+    // Submit for admin review instead of publishing directly
+    const updatedCourse = await db.course.update({
+      where: { id: params.courseId },
       data: {
-        isPublished: true,
+        pendingApproval: true,
+        isPublished: false,
       },
     });
 
-    return NextResponse.json(publishedCourse);
+    return NextResponse.json(updatedCourse);
   } catch (error) {
     console.log("[COURSE_ID_PUBLISH]", error);
     return new NextResponse("Internal Error", { status: 500 });

@@ -22,31 +22,33 @@ model Profile {
   email String  
 
   role MemberRole @default(STUDENT)
+  courseInstructors CourseInstructor[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Course {
-  id          String     @id @default(auto()) @map("_id") @db.ObjectId
-  userId      String
-  title       String
-  description String?
-  imageUrl    String?
-  price       Float?
-  isPublished Boolean    @default(false)
+  id              String     @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String
+  title           String
+  description     String?
+  imageUrl        String?
+  price           Float?
+  isPublished     Boolean    @default(false)
+  pendingApproval Boolean    @default(false)
 
   categoryId  String?    @db.ObjectId
   category    Category?  @relation(fields: [categoryId], references: [id])
   attachments Attachment[]
-  chapters    Chapter[] 
-  purchases Purchase[]
+  chapters    Chapter[]
+  purchases   Purchase[]
+  instructors CourseInstructor[]
 
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
   @@index([categoryId])
   @@fulltext([title])
-  
 }
 
 model Attachment {
@@ -70,6 +72,19 @@ model Category {
 
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
+}
+
+model CourseInstructor {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  courseId  String   @db.ObjectId
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  profileId String   @db.ObjectId
+  profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([courseId, profileId])
+  @@index([courseId])
+  @@index([profileId])
 }
 
 model Chapter {

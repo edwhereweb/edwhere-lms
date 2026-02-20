@@ -1,8 +1,8 @@
 import Mux from "@mux/mux-node";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-
 import { db } from "@/lib/db";
+import { checkCourseEdit } from "@/lib/course-auth";
 
 const { Video } = new Mux(
   process.env.MUX_TOKEN_ID!,
@@ -16,20 +16,8 @@ export async function DELETE(
   try {
     const { userId } = await auth();
 
-    if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
-
-    const ownCourse = await db.course.findUnique({
-      where: {
-        id: params.courseId,
-        userId,
-      },
-    });
-
-    if (!ownCourse) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
+    const denied = await checkCourseEdit(userId, params.courseId);
+    if (denied) return denied;
 
     const chapter = await db.chapter.findUnique({
       where: {
@@ -96,22 +84,11 @@ export async function PATCH(
 ) {
   try {
     const { userId } = await auth();
+
+    const denied = await checkCourseEdit(userId, params.courseId);
+    if (denied) return denied;
+
     const body = await req.json();
-
-    if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
-
-    const ownCourse = await db.course.findUnique({
-      where: {
-        id: params.courseId,
-        userId,
-      },
-    });
-
-    if (!ownCourse) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
 
     // Whitelist only safe chapter fields — prevents mass-assignment of courseId, position, id etc.
     const { title, description, videoUrl, isFree, youtubeVideoId } = body;

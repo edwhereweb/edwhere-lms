@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { checkCourseEdit } from "@/lib/course-auth";
 
 export async function PATCH(
   req: Request,
@@ -11,9 +12,8 @@ export async function PATCH(
     const { courseId } = params;
     const body = await req.json();
 
-    if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
+    const denied = await checkCourseEdit(userId, courseId);
+    if (denied) return denied;
 
     // Whitelist only safe, editable fields — prevents mass-assignment
     const { title, description, imageUrl, price, categoryId } = body;
@@ -25,10 +25,7 @@ export async function PATCH(
     if (categoryId !== undefined) safeData.categoryId = categoryId;
 
     const course = await db.course.update({
-      where: {
-        id: courseId,
-        userId,
-      },
+      where: { id: courseId },
       data: safeData,
     });
 
