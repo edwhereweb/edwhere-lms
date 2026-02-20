@@ -8,7 +8,8 @@ import {
   FcMusic,
   FcOldTimeCamera,
   FcSalesPerformance,
-  FcSportsMode
+  FcSportsMode,
+  FcCommandLine
 } from 'react-icons/fc';
 import { IconType } from 'react-icons';
 
@@ -18,14 +19,15 @@ interface CategoriesProps {
   items: Category[];
 }
 
-const iconMap: Record<Category['name'], IconType> = {
+const iconMap: Record<string, IconType> = {
   Music: FcMusic,
   Photography: FcOldTimeCamera,
   Fitness: FcSportsMode,
   Accounting: FcSalesPerformance,
   'Computer Science': FcMultipleDevices,
   Filming: FcFilmReel,
-  Engineering: FcEngineering
+  Engineering: FcEngineering,
+  Uncategorized: FcCommandLine
 };
 
 export const Categories = ({ items }: CategoriesProps) => {

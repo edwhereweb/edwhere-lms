@@ -20,7 +20,11 @@ export const getCourses = async ({
         ...(title && {
           title: { contains: title, mode: 'insensitive' as const }
         }),
-        ...(categoryId && { categoryId })
+        ...(categoryId === 'uncategorized'
+          ? { categoryId: null }
+          : categoryId
+            ? { categoryId }
+            : {})
       },
       include: {
         category: true,

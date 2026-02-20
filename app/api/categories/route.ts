@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     if (!userId) return apiError('Unauthorized', 401);
 
     const profile = await db.profile.findUnique({ where: { userId } });
-    if (!profile || !['ADMIN', 'TEACHER'].includes(profile.role)) {
+    if (!profile || profile.role !== 'ADMIN') {
       return apiError('Forbidden', 403);
     }
 
