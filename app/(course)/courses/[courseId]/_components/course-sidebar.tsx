@@ -55,8 +55,8 @@ export const CourseSidebar = async ({ course, progressCount }: CourseSidebarProp
         {course.modules.map((module) => (
           <div key={module.id} className="flex flex-col w-full">
             {/* Module Header */}
-            <div className="px-4 py-3 border-b border-t border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800">
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <div className="px-4 py-3 border-b border-t border-border bg-muted">
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 {module.title}
               </p>
             </div>
@@ -75,7 +75,7 @@ export const CourseSidebar = async ({ course, progressCount }: CourseSidebarProp
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-slate-400 dark:text-slate-500 px-6 py-3 italic">
+              <p className="text-xs text-muted-foreground px-6 py-3 italic">
                 No chapters in this module yet.
               </p>
             )}
@@ -86,8 +86,8 @@ export const CourseSidebar = async ({ course, progressCount }: CourseSidebarProp
         {course.chapters.length > 0 && (
           <div className="flex flex-col w-full">
             {course.modules.length > 0 && (
-              <div className="px-4 py-3 border-b border-t border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800">
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <div className="px-4 py-3 border-b border-t border-border bg-muted">
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   Course Contents
                 </p>
               </div>

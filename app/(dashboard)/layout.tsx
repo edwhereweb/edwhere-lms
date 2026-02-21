@@ -3,6 +3,8 @@ import { Navbar } from './_components/navbar';
 import { auth } from '@clerk/nextjs/server';
 import getSafeProfile from '@/actions/get-safe-profile';
 
+export const dynamic = 'force-dynamic';
+
 const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
   const { userId } = await auth();
 
@@ -19,15 +21,15 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
   }
 
   return (
-    <div className="h-full dark:bg-gray-900">
-      <div className="h-[80px] md:pl-56 fixed inset-y-0 w-full z-50 dark:bg-gray-900">
+    <div className="h-full bg-background">
+      <div className="h-[80px] md:pl-56 fixed inset-y-0 w-full z-50">
         <Navbar currentProfile={safeProfile} />
       </div>
 
-      <div className="hidden md:flex h-full w-56 flex-col fixed inset-y-0 z-50 dark:bg-gray-900">
+      <div className="hidden md:flex h-full w-56 flex-col fixed inset-y-0 z-50">
         <Sidebar currentProfile={safeProfile} />
       </div>
-      <main className="md:pl-56 pt-[80px] h-full dark:bg-gray-900">{children}</main>
+      <main className="md:pl-56 pt-[80px] h-full bg-background">{children}</main>
     </div>
   );
 };
