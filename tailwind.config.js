@@ -15,6 +15,11 @@ module.exports = {
         "2xl": "1400px",
       },
     },
+    fontFamily: {
+      poppins: ['var(--font-poppins)', 'sans-serif'],
+      opensans: ['var(--font-opensans)', 'sans-serif'],
+      inter: ['var(--font-inter)', 'sans-serif'],
+    },
     extend: {
       colors: {
         border: "hsl(var(--border))",
