@@ -12,6 +12,7 @@ enum MemberRole {
   ADMIN
   TEACHER
   STUDENT
+  MARKETER
 }
 
 model Profile {
@@ -23,6 +24,7 @@ model Profile {
 
   role MemberRole @default(STUDENT)
   courseInstructors CourseInstructor[]
+  courseMessages    CourseMessage[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -44,6 +46,7 @@ model Course {
   chapters    Chapter[]
   purchases   Purchase[]
   instructors CourseInstructor[]
+  messages    CourseMessage[]
 
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
@@ -196,4 +199,62 @@ model Logging {
   statusCode Int?
   errorMessage String?
   createdAt DateTime @default(now())
+}
+
+model Lead {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  name       String
+  phone      String
+  email      String
+  message    String
+  source     String   @default("GENERAL_WEBSITE_ENQUIRY")
+  status     String   @default("DECISION_PENDING")
+  notes      String?
+  assignedTo String?
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([status])
+  @@index([source])
+}
+
+model CourseMessage {
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  content  String
+
+  courseId         String  @db.ObjectId
+  course           Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  authorId         String  @db.ObjectId
+  author           Profile @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  // Which student's private thread this message belongs to
+  threadStudentId  String  @db.ObjectId
+
+  createdAt DateTime @default(now())
+
+  @@index([courseId])
+  @@index([courseId, threadStudentId])
+}
+
+model MentorLastRead {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  instructorId String   @db.ObjectId
+  courseId     String   @db.ObjectId
+  studentId    String?  @db.ObjectId   // optional to handle legacy null records
+  lastReadAt   DateTime @default(now())
+
+  @@unique([instructorId, courseId, studentId])
+  @@index([instructorId])
+}
+
+model StudentLastRead {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  studentId  String   @db.ObjectId
+  courseId   String   @db.ObjectId
+  lastReadAt DateTime @default(now())
+
+  @@unique([studentId, courseId])
+  @@index([studentId])
 }

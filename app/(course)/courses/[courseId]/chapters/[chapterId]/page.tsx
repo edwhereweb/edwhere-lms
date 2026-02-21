@@ -48,28 +48,6 @@ const ChapterIdPage = async ({ params }: { params: { courseId: string; chapterId
     <CourseEnrollButton courseId={params.courseId} price={course.price!} />
   );
 
-  const attachmentList = attachments && attachments.length > 0 && (
-    <>
-      <Separator />
-      <div className="p-4 md:p-6">
-        <p className="text-sm font-semibold mb-3 text-slate-600 dark:text-slate-400 uppercase tracking-wide">
-          Attachments
-        </p>
-        {attachments.map((attachment) => (
-          <a
-            href={attachment.url}
-            target="_blank"
-            key={attachment.id}
-            className="flex items-center gap-2 p-3 mb-2 w-full bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-800 rounded-md text-sky-700 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900/40 transition text-sm"
-          >
-            <File className="h-4 w-4 flex-shrink-0" />
-            <p className="line-clamp-1">{attachment.name}</p>
-          </a>
-        ))}
-      </div>
-    </>
-  );
-
   /* ── TEXT chapter layout ───────────────────────────────────────────── */
   if (isTextChapter) {
     return (
@@ -133,8 +111,6 @@ const ChapterIdPage = async ({ params }: { params: { courseId: string; chapterId
               )}
             </>
           )}
-
-          {attachmentList}
 
           {/* Bottom complete button for easy access */}
           {!isLocked && <div className="mt-10 flex justify-end">{progressOrEnrollButton}</div>}
@@ -215,8 +191,6 @@ const ChapterIdPage = async ({ params }: { params: { courseId: string; chapterId
             </>
           )}
 
-          {attachmentList}
-
           {!isLocked && <div className="mt-10 flex justify-end">{progressOrEnrollButton}</div>}
         </div>
       </div>
@@ -268,8 +242,6 @@ const ChapterIdPage = async ({ params }: { params: { courseId: string; chapterId
             <p className="text-center py-10 text-slate-400 italic">No PDF available yet.</p>
           )}
 
-          {attachmentList}
-
           {!isLocked && <div className="mt-8 flex justify-end">{progressOrEnrollButton}</div>}
         </div>
       </div>
@@ -307,7 +279,6 @@ const ChapterIdPage = async ({ params }: { params: { courseId: string; chapterId
           <div>
             <Preview value={chapter.description!} />
           </div>
-          {attachmentList}
         </div>
       </div>
     </div>

@@ -3,65 +3,59 @@ import { redirect } from 'next/navigation';
 import { db } from '@/lib/db';
 import { isTeacher } from '@/lib/teacher';
 import getSafeProfile from '@/actions/get-safe-profile';
-import { TeacherCourseCard } from './_components/teacher-course-card';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import Link from 'next/link';
+import { CourseFilterGrid } from './_components/course-filter-grid';
 
 const CoursesPage = async () => {
   const session = await auth();
   const userId = session?.userId;
 
-  if (!userId) {
-    return redirect('/sign-in');
-  }
+  if (!userId) return redirect('/sign-in');
 
   const isAuthorized = await isTeacher();
-  if (!isAuthorized) {
-    return redirect('/');
-  }
+  if (!isAuthorized) return redirect('/');
 
   const profile = await getSafeProfile();
-  if (!profile) {
-    return redirect('/');
-  }
+  if (!profile) return redirect('/');
 
   const includeConfig = {
     category: true,
-    chapters: {
-      select: { id: true }
-    }
+    chapters: { select: { id: true } }
   };
 
   let courses = [];
 
   if (profile.role === 'ADMIN') {
-    // Admins see all courses
     courses = await db.course.findMany({
       include: includeConfig,
-      orderBy: {
-        createdAt: 'desc'
-      }
+      orderBy: { createdAt: 'desc' }
     });
   } else {
-    // Teachers see courses they own OR courses they are assigned to as an instructor
     courses = await db.course.findMany({
       where: {
-        OR: [
-          { userId },
-          {
-            instructors: {
-              some: { profileId: profile.id }
-            }
-          }
-        ]
+        OR: [{ userId }, { instructors: { some: { profileId: profile.id } } }]
       },
       include: includeConfig,
-      orderBy: {
-        createdAt: 'desc'
-      }
+      orderBy: { createdAt: 'desc' }
     });
   }
+
+  const categories = await db.category.findMany({
+    orderBy: { name: 'asc' }
+  });
+
+  // Flatten to the shape CourseFilterGrid expects
+  const flatCourses = courses.map((c) => ({
+    id: c.id,
+    title: c.title,
+    imageUrl: c.imageUrl ?? null,
+    chaptersLength: c.chapters.length,
+    price: c.price ?? null,
+    category: c.category?.name ?? null,
+    isPublished: c.isPublished
+  }));
 
   return (
     <div className="p-6">
@@ -75,24 +69,7 @@ const CoursesPage = async () => {
         </Link>
       </div>
 
-      {courses.length === 0 && (
-        <div className="text-center text-sm text-muted-foreground mt-10">No courses found</div>
-      )}
-
-      <div className="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4 gap-4">
-        {courses.map((course) => (
-          <TeacherCourseCard
-            key={course.id}
-            id={course.id}
-            title={course.title}
-            imageUrl={course.imageUrl}
-            chaptersLength={course.chapters.length}
-            price={course.price}
-            category={course?.category?.name || null}
-            isPublished={course.isPublished}
-          />
-        ))}
-      </div>
+      <CourseFilterGrid courses={flatCourses} categories={categories} />
     </div>
   );
 };

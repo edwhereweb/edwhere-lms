@@ -110,8 +110,8 @@ const CTA_CARDS = [
 
 const NAV_LINKS = [
   { label: 'Courses', href: '/search' },
-  { label: 'About Us', href: '#about' },
-  { label: 'Contact Us', href: '#contact' },
+  { label: 'About Us', href: 'https://edwhere.com/about-us/' },
+  { label: 'Contact Us', href: '/contact' },
   { label: 'Webinars', href: '#' }
 ];
 

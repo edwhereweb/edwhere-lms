@@ -72,6 +72,22 @@ const CourseLayout = async ({
 
   const progressCount: number = await getProgress(userId, course.id);
 
+  // Check unread messages for this student in Mentor Connect
+  let unreadCount = 0;
+  if (safeProfile) {
+    const lastRead = await db.studentLastRead.findUnique({
+      where: { studentId_courseId: { studentId: safeProfile.id, courseId: course.id } }
+    });
+    unreadCount = await db.courseMessage.count({
+      where: {
+        courseId: course.id,
+        threadStudentId: safeProfile.id,
+        NOT: { authorId: safeProfile.id }, // from mentors
+        ...(lastRead ? { createdAt: { gt: lastRead.lastReadAt } } : {})
+      }
+    });
+  }
+
   return (
     <>
       {/* Fixed top navbar */}
@@ -81,7 +97,7 @@ const CourseLayout = async ({
 
       {/* Fixed left sidebar — full height, under navbar */}
       <div className="hidden md:flex w-80 flex-col fixed inset-y-0 z-40">
-        <CourseSidebar course={course} progressCount={progressCount} />
+        <CourseSidebar course={course} progressCount={progressCount} unreadCount={unreadCount} />
       </div>
 
       {/* Main content — fixed position so it CANNOT bleed under the navbar */}
