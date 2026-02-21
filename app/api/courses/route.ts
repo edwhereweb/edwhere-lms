@@ -5,6 +5,8 @@ import { isTeacher } from '@/lib/teacher';
 import { createCourseSchema } from '@/lib/validations';
 import { validateBody, apiError, handleApiError } from '@/lib/api-utils';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: Request) {
   try {
     const { userId } = await auth();

@@ -3,6 +3,8 @@ import { Navbar } from './_components/navbar';
 import { auth } from '@clerk/nextjs/server';
 import getSafeProfile from '@/actions/get-safe-profile';
 
+export const dynamic = 'force-dynamic';
+
 const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
   const { userId } = await auth();
 
