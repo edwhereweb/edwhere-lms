@@ -98,7 +98,12 @@ const CourseLayout = async ({
     <>
       {/* Fixed top navbar */}
       <div className="h-[80px] md:pl-80 fixed inset-x-0 top-0 w-full z-50">
-        <CourseNavbar course={course} progressCount={progressCount} currentProfile={safeProfile} />
+        <CourseNavbar
+          course={course}
+          progressCount={progressCount}
+          currentProfile={safeProfile}
+          unreadCount={unreadCount}
+        />
       </div>
 
       {/* Fixed left sidebar — full height, under navbar */}
