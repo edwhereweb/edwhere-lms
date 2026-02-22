@@ -1,3 +1,7 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { Menu } from 'lucide-react';
 import { type Module, type Chapter, type Course, type UserProgress } from '@prisma/client';
 
@@ -20,8 +24,15 @@ interface CourseMobileSidebarProps {
 }
 
 export const CourseMobileSidebar = ({ course, progressCount }: CourseMobileSidebarProps) => {
+  const pathname = usePathname();
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
+
   return (
-    <Sheet>
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger className="md:hidden pr-4 hover:opacity-75 transition">
         <Menu />
       </SheetTrigger>

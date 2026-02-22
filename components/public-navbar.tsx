@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { Search, Menu } from 'lucide-react';
@@ -15,6 +17,11 @@ const NAV_LINKS = [
 
 export const PublicNavbar = () => {
   const pathname = usePathname();
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-gray-100">
@@ -48,7 +55,7 @@ export const PublicNavbar = () => {
           </Link>
         </nav>
 
-        <Sheet>
+        <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger className="lg:hidden p-2 hover:opacity-75 transition">
             <Menu className="h-6 w-6 text-[#1F1F1F]" />
           </SheetTrigger>
