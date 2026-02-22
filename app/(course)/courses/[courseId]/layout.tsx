@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 
@@ -37,7 +39,8 @@ const CourseLayout = async ({
         orderBy: { position: 'asc' },
         include: {
           chapters: {
-            where: { isPublished: true },
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            where: { isPublished: true, isLibraryAsset: false } as any,
             include: {
               userProgress: {
                 where: { userId }
@@ -49,9 +52,12 @@ const CourseLayout = async ({
       },
       chapters: {
         where: {
+          /* eslint-disable @typescript-eslint/no-explicit-any */
           isPublished: true,
-          moduleId: null
-        },
+          moduleId: null,
+          isLibraryAsset: false
+        } as any,
+        /* eslint-enable @typescript-eslint/no-explicit-any */
         include: {
           userProgress: {
             where: {

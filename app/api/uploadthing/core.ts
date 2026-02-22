@@ -31,11 +31,6 @@ export const ourFileRouter = {
     .onUploadComplete(({ metadata, file }) => {
       debug('UPLOAD_ATTACHMENT', metadata.userId, file.url);
     }),
-  chapterVideo: f({ video: { maxFileCount: 1, maxFileSize: '2GB' } })
-    .middleware(async () => await handleAuth())
-    .onUploadComplete(({ metadata, file }) => {
-      debug('UPLOAD_CHAPTER_VIDEO', metadata.userId, file.url);
-    }),
   chapterPdf: f({ pdf: { maxFileCount: 1, maxFileSize: '16MB' } })
     .middleware(async () => await handleAuth())
     .onUploadComplete(({ metadata, file }) => {

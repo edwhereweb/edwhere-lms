@@ -1,5 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/db';
 import { checkCourseEdit } from '@/lib/course-auth';
 import { apiError, handleApiError } from '@/lib/api-utils';
@@ -58,6 +59,7 @@ export async function PATCH(
       data: { isPublished: true }
     });
 
+    revalidatePath(`/courses/${params.courseId}`);
     return NextResponse.json(publishedChapter);
   } catch (error) {
     return handleApiError('CHAPTER_PUBLISH', error);

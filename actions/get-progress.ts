@@ -3,7 +3,8 @@ import { db } from '@/lib/db';
 export const getProgress = async (userId: string, courseId: string): Promise<number> => {
   try {
     const publishedChapters = await db.chapter.findMany({
-      where: { courseId, isPublished: true },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      where: { courseId, isPublished: true, isLibraryAsset: false } as any,
       select: { id: true }
     });
 
@@ -34,7 +35,8 @@ export const getProgressBatch = async (
     if (courseIds.length === 0) return new Map();
 
     const chapters = await db.chapter.findMany({
-      where: { courseId: { in: courseIds }, isPublished: true },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      where: { courseId: { in: courseIds }, isPublished: true, isLibraryAsset: false } as any,
       select: { id: true, courseId: true }
     });
 

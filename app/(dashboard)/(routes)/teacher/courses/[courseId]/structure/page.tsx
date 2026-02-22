@@ -17,17 +17,21 @@ const CourseStructurePage = async ({ params }: { params: { courseId: string } })
   const allowed = await canEditCourse(userId, params.courseId);
   if (!allowed) return redirect('/teacher/courses');
 
-  const course = await db.course.findUnique({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const course = await (db.course.findUnique as any)({
     where: { id: params.courseId },
     include: {
       modules: {
         orderBy: { position: 'asc' },
         include: {
-          chapters: { orderBy: { position: 'asc' } }
+          chapters: {
+            where: { isLibraryAsset: false },
+            orderBy: { position: 'asc' }
+          }
         }
       },
       chapters: {
-        where: { moduleId: null },
+        where: { moduleId: null, isLibraryAsset: false },
         orderBy: { position: 'asc' }
       }
     }

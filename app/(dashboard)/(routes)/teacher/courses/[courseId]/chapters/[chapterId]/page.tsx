@@ -17,6 +17,7 @@ import { ChapterHtmlForm } from './_components/chapter-html-form';
 import { ChapterPdfForm } from './_components/chapter-pdf-form';
 import { Banner } from '@/components/banner';
 import { ChapterActions } from './_components/chapter-actions';
+import { AssetLibraryPicker } from './_components/asset-library-picker';
 
 interface ChapterIdPageProps {
   params: {
@@ -184,6 +185,11 @@ const ChapterIdPage: React.FC<ChapterIdPageProps> = async ({ params }) => {
                   <IconBadge icon={Video} />
                   <h2 className="text-xl font-medium">Upload Video</h2>
                 </div>
+                <AssetLibraryPicker
+                  courseId={params.courseId}
+                  chapterId={params.chapterId}
+                  currentContentType={contentType}
+                />
                 <ChapterVideoForm
                   initialData={chapter}
                   courseId={params.courseId}
@@ -198,6 +204,11 @@ const ChapterIdPage: React.FC<ChapterIdPageProps> = async ({ params }) => {
                   <IconBadge icon={Youtube} />
                   <h2 className="text-xl font-medium">Embed YouTube Video</h2>
                 </div>
+                <AssetLibraryPicker
+                  courseId={params.courseId}
+                  chapterId={params.chapterId}
+                  currentContentType={contentType}
+                />
                 <ChapterYoutubeForm
                   initialData={chapter}
                   courseId={params.courseId}
@@ -212,6 +223,11 @@ const ChapterIdPage: React.FC<ChapterIdPageProps> = async ({ params }) => {
                   <IconBadge icon={AlignLeft} />
                   <h2 className="text-xl font-medium">Body Content</h2>
                 </div>
+                <AssetLibraryPicker
+                  courseId={params.courseId}
+                  chapterId={params.chapterId}
+                  currentContentType={contentType}
+                />
                 <ChapterContentForm
                   initialData={chapter}
                   courseId={params.courseId}
@@ -226,6 +242,11 @@ const ChapterIdPage: React.FC<ChapterIdPageProps> = async ({ params }) => {
                   <IconBadge icon={Code2} />
                   <h2 className="text-xl font-medium">HTML Embed</h2>
                 </div>
+                <AssetLibraryPicker
+                  courseId={params.courseId}
+                  chapterId={params.chapterId}
+                  currentContentType={contentType}
+                />
                 <ChapterHtmlForm
                   initialData={chapter}
                   courseId={params.courseId}
@@ -240,6 +261,11 @@ const ChapterIdPage: React.FC<ChapterIdPageProps> = async ({ params }) => {
                   <IconBadge icon={AlignLeft} />
                   <h2 className="text-xl font-medium">PDF Document</h2>
                 </div>
+                <AssetLibraryPicker
+                  courseId={params.courseId}
+                  chapterId={params.chapterId}
+                  currentContentType={contentType}
+                />
                 <ChapterPdfForm
                   initialData={chapter}
                   courseId={params.courseId}

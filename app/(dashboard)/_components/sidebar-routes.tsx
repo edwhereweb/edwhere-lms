@@ -9,7 +9,8 @@ import {
   Tag,
   ClipboardCheck,
   Megaphone,
-  MessageCircle
+  MessageCircle,
+  Library
 } from 'lucide-react';
 import SidebarItem from './sidebar-item';
 import { usePathname } from 'next/navigation';
@@ -26,6 +27,7 @@ const teacherRoutes = [
   { icon: Users, label: 'Manage Users', href: '/teacher/users' },
   { icon: Tag, label: 'Categories', href: '/teacher/categories' },
   { icon: ClipboardCheck, label: 'Pending Approvals', href: '/teacher/pending-approvals' },
+  { icon: Library, label: 'Asset Library', href: '/teacher/asset-library' },
   { icon: MessageCircle, label: 'Mentor Connect', href: '/teacher/mentor-connect' }
 ];
 

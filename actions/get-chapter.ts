@@ -42,10 +42,13 @@ export const getChapter = async ({ userId, courseId, chapterId }: GetChapterProp
         db.muxData.findUnique({ where: { chapterId } }),
         purchase ? db.attachment.findMany({ where: { courseId } }) : Promise.resolve([]),
         db.chapter.findMany({
+          /* eslint-disable @typescript-eslint/no-explicit-any */
           where: {
             courseId,
-            isPublished: true
-          },
+            isPublished: true,
+            isLibraryAsset: false
+          } as any,
+          /* eslint-enable @typescript-eslint/no-explicit-any */
           include: {
             module: true
           }
