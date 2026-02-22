@@ -41,12 +41,15 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
 
   const categories = await db.category.findMany({ orderBy: { name: 'asc' } });
 
+  const hasPublishedChapter = course.chapters.some((chapter) => chapter.isPublished);
+
   const requiredFields = [
     course.title,
     course.description,
     course.imageUrl,
     course.price,
-    course.categoryId
+    course.categoryId,
+    hasPublishedChapter
   ];
 
   const totalFields = requiredFields.length;
@@ -57,6 +60,12 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
 
   return (
     <>
+      {!hasPublishedChapter && (
+        <Banner
+          label="You must publish at least one chapter in the Course Structure before you can publish the course."
+          variant="warning"
+        />
+      )}
       {course.pendingApproval && (
         <Banner
           label="This course is pending admin approval before it goes live."

@@ -25,16 +25,24 @@ export async function PATCH(req: Request, { params }: { params: { courseId: stri
       return apiError('Not found', 404);
     }
 
-    if (
-      !course.title ||
-      !course.description ||
-      !course.imageUrl ||
-      !course.categoryId ||
-      course.chapters.length === 0 ||
-      course.price == null ||
-      course.price <= 0
-    ) {
-      return apiError('Missing required fields', 400);
+    const missingFields = [];
+    if (!course.title) missingFields.push('title');
+    if (!course.description) missingFields.push('description');
+    if (!course.imageUrl) missingFields.push('imageUrl');
+    if (!course.categoryId) missingFields.push('categoryId');
+    if (course.chapters.length === 0)
+      missingFields.push('chapters (at least one published chapter required)');
+    if (course.price == null) missingFields.push('price (null)');
+    else if (course.price <= 0) missingFields.push('price (<= 0)');
+
+    if (missingFields.length > 0) {
+      return new NextResponse(
+        JSON.stringify({
+          error: 'Missing required fields',
+          missingFields
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
     }
 
     const updatedCourse = await db.course.update({

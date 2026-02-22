@@ -7,8 +7,8 @@ import { z } from 'zod';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
-import Image from 'next/image';
-import { Phone, MapPin, MessageCircle, Send, Loader2, CheckCircle2, Menu } from 'lucide-react';
+import { Phone, MapPin, MessageCircle, Send, Loader2, CheckCircle2 } from 'lucide-react';
+import { PublicNavbar } from '@/components/public-navbar';
 import {
   Form,
   FormControl,
@@ -66,43 +66,7 @@ export default function ContactPage() {
   return (
     <div className="min-h-screen bg-white text-black">
       {/* ── Navbar (identical to homepage) ── */}
-      <header className="sticky top-0 z-50 bg-white border-b border-gray-100">
-        <div className="max-w-[1400px] mx-auto flex items-center justify-between px-4 md:px-8 py-2">
-          <Link href="/" className="flex items-center gap-2 shrink-0">
-            <Image
-              src="/edwhere-logo.png"
-              alt="Edwhere"
-              width={44}
-              height={44}
-              className="rounded"
-            />
-          </Link>
-
-          <nav className="hidden lg:flex items-center gap-0.5">
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.label}
-                href={link.href}
-                className={`px-3 py-2.5 text-sm font-medium font-inter capitalize transition-colors hover:text-[#EC4130] ${
-                  link.href === '/contact' ? 'text-[#EC4130]' : 'text-[#1F1F1F]'
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
-            <Link
-              href="/sign-in"
-              className="ml-3 px-5 py-2 text-sm font-semibold font-inter text-white bg-[#171717] rounded transition-all hover:bg-[#EC4130] hover:shadow-md"
-            >
-              Login
-            </Link>
-          </nav>
-
-          <button className="lg:hidden p-2" aria-label="Menu">
-            <Menu className="h-6 w-6 text-[#1F1F1F]" />
-          </button>
-        </div>
-      </header>
+      <PublicNavbar />
 
       {/* ── Page hero ── */}
       <section className="bg-[#111111] text-white py-14 px-4 text-center">

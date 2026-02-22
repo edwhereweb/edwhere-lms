@@ -2,8 +2,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
-import { Search, Quote, Menu } from 'lucide-react';
+import { Quote } from 'lucide-react';
 import { StatsCounter } from './_components/stats-counter';
+import { PublicNavbar } from '@/components/public-navbar';
 
 const STATS = [
   { value: '35K+', label: 'Students' },
@@ -125,46 +126,7 @@ export default async function LandingPage() {
   return (
     <div className="min-h-screen bg-white text-black">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-white border-b border-gray-100">
-        <div className="max-w-[1400px] mx-auto flex items-center justify-between px-4 md:px-8 py-2">
-          <Link href="/" className="flex items-center gap-2 shrink-0">
-            <Image
-              src="/edwhere-logo.png"
-              alt="Edwhere"
-              width={44}
-              height={44}
-              className="rounded"
-            />
-          </Link>
-
-          <div className="hidden lg:flex items-center border border-[#E5E5E5] rounded px-3 py-2 w-72 mx-6">
-            <Search className="h-4 w-4 text-[#ACB3C2] mr-2 shrink-0" />
-            <span className="text-sm text-[#ACB3C2] font-inter">Search</span>
-          </div>
-
-          <nav className="hidden lg:flex items-center gap-0.5">
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.label}
-                href={link.href}
-                className="px-3 py-2.5 text-sm font-medium font-inter text-[#1F1F1F] capitalize transition-colors hover:text-[#EC4130]"
-              >
-                {link.label}
-              </Link>
-            ))}
-            <Link
-              href="/sign-in"
-              className="ml-3 px-5 py-2 text-sm font-semibold font-inter text-white bg-[#171717] rounded transition-all hover:bg-[#EC4130] hover:shadow-md"
-            >
-              Login
-            </Link>
-          </nav>
-
-          <button className="lg:hidden p-2" aria-label="Menu">
-            <Menu className="h-6 w-6 text-[#1F1F1F]" />
-          </button>
-        </div>
-      </header>
+      <PublicNavbar />
 
       {/* Hero Section */}
       <section className="bg-white shadow-[0_0_9px_rgba(0,0,0,0.07)] overflow-hidden">
