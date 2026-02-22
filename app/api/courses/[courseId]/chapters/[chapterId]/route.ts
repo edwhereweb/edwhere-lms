@@ -38,10 +38,19 @@ export async function DELETE(
       });
 
       if (existingMuxData) {
-        try {
-          await getMuxVideo().Assets.del(existingMuxData.assetId);
-        } catch {
-          // Mux asset may already be deleted — safe to continue
+        const isUsedElsewhere = await db.muxData.findFirst({
+          where: {
+            assetId: existingMuxData.assetId,
+            chapterId: { not: params.chapterId }
+          }
+        });
+
+        if (!isUsedElsewhere) {
+          try {
+            await getMuxVideo().Assets.del(existingMuxData.assetId);
+          } catch {
+            // Mux asset may already be deleted — safe to continue
+          }
         }
         await db.muxData.delete({ where: { id: existingMuxData.id } });
       }
@@ -101,10 +110,19 @@ export async function PATCH(
       });
 
       if (existingMuxData) {
-        try {
-          await getMuxVideo().Assets.del(existingMuxData.assetId);
-        } catch {
-          // Mux asset may already be deleted
+        const isUsedElsewhere = await db.muxData.findFirst({
+          where: {
+            assetId: existingMuxData.assetId,
+            chapterId: { not: params.chapterId }
+          }
+        });
+
+        if (!isUsedElsewhere) {
+          try {
+            await getMuxVideo().Assets.del(existingMuxData.assetId);
+          } catch {
+            // Mux asset may already be deleted
+          }
         }
         await db.muxData.delete({ where: { id: existingMuxData.id } });
       }
@@ -112,7 +130,7 @@ export async function PATCH(
       try {
         const asset = await getMuxVideo().Assets.create({
           input: validation.data.videoUrl,
-          playback_policy: 'public',
+          playback_policy: ['public'],
           test: false
         });
 

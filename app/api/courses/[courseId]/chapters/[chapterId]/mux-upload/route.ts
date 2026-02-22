@@ -42,10 +42,19 @@ export async function POST(
     });
     if (existingMuxData) {
       if (existingMuxData.assetId) {
-        try {
-          await muxVideo.Assets.del(existingMuxData.assetId);
-        } catch {
-          // Asset may already be gone — safe to ignore
+        const isUsedElsewhere = await db.muxData.findFirst({
+          where: {
+            assetId: existingMuxData.assetId,
+            chapterId: { not: params.chapterId }
+          }
+        });
+
+        if (!isUsedElsewhere) {
+          try {
+            await muxVideo.Assets.del(existingMuxData.assetId);
+          } catch {
+            // Asset may already be gone — safe to ignore
+          }
         }
       }
       await db.muxData.delete({ where: { id: existingMuxData.id } });

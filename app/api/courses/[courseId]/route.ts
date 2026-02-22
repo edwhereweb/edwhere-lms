@@ -4,6 +4,12 @@ import { NextResponse } from 'next/server';
 import { checkCourseEdit } from '@/lib/course-auth';
 import { updateCourseSchema } from '@/lib/validations';
 import { validateBody, handleApiError } from '@/lib/api-utils';
+import Mux from '@mux/mux-node';
+
+function getMuxVideo() {
+  const { Video } = new Mux(process.env.MUX_TOKEN_ID!, process.env.MUX_TOKEN_SECRET!);
+  return Video;
+}
 
 export async function PATCH(req: Request, { params }: { params: { courseId: string } }) {
   try {
@@ -49,9 +55,30 @@ export async function DELETE(req: Request, { params }: { params: { courseId: str
       return new NextResponse('Not found', { status: 404 });
     }
 
-    // Since we're deleting, we might want to clean up Mux assets (omitted for brevity, can be added if Video.js wrapper exists)
-    // The cascade delete in Prisma (if configured) will handle the DB rows.
-    // Here we explicitly perform the delete.
+    const assetIdsInCourse = Array.from(
+      new Set(course.chapters.flatMap((ch) => (ch.muxData?.assetId ? [ch.muxData.assetId] : [])))
+    );
+
+    for (const assetId of assetIdsInCourse) {
+      // Check if any other course is using this exact assetId
+      const isUsedElsewhere = await db.muxData.findFirst({
+        where: {
+          assetId,
+          chapter: {
+            courseId: { not: courseId }
+          }
+        }
+      });
+
+      if (!isUsedElsewhere) {
+        try {
+          await getMuxVideo().Assets.del(assetId);
+        } catch {
+          // ignore - might already be deleted on Mux
+        }
+      }
+    }
+
     const deletedCourse = await db.course.delete({
       where: { id: courseId }
     });
