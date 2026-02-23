@@ -22,15 +22,8 @@ import { Textarea } from '@/components/ui/textarea';
 
 /* ─── Design tokens ─── */
 const RED = '#EC4130';
-const DARK = '#171717';
 
 /* ─── Shared nav data ─── */
-const NAV_LINKS = [
-  { label: 'Courses', href: '/search' },
-  { label: 'About Us', href: 'https://edwhere.com/about-us/' },
-  { label: 'Contact Us', href: '/contact' },
-  { label: 'Webinars', href: '#' }
-];
 
 /* ─── Form schema ─── */
 const formSchema = z.object({

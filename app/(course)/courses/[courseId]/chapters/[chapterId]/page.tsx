@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
-import { File, BookOpen } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 
 import { getChapter } from '@/actions/get-chapter';
 import { Banner } from '@/components/banner';
@@ -20,12 +20,11 @@ const ChapterIdPage = async ({ params }: { params: { courseId: string; chapterId
     return redirect('/sign-in');
   }
 
-  const { chapter, course, muxData, attachments, nextChapter, userProgress, purchase } =
-    await getChapter({
-      userId,
-      chapterId: params.chapterId,
-      courseId: params.courseId
-    });
+  const { chapter, course, muxData, nextChapter, userProgress, purchase } = await getChapter({
+    userId,
+    chapterId: params.chapterId,
+    courseId: params.courseId
+  });
 
   if (!chapter || !course) {
     return redirect('/dashboard');
