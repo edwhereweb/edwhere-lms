@@ -2,9 +2,16 @@ import { currentProfile } from '@/lib/current-profile';
 import { db } from '@/lib/db';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { clerkClient } from '@clerk/nextjs/server';
 
 const enrolSchema = z.object({
-  emails: z.array(z.string().email())
+  students: z.array(
+    z.object({
+      name: z.string(),
+      email: z.string().email(),
+      phone: z.string().optional()
+    })
+  )
 });
 
 export async function POST(req: Request, { params }: { params: { courseId: string } }) {
@@ -27,10 +34,10 @@ export async function POST(req: Request, { params }: { params: { courseId: strin
     }
 
     const body = await req.json();
-    const { emails } = enrolSchema.parse(body);
+    const { students } = enrolSchema.parse(body);
 
-    if (!emails || emails.length === 0) {
-      return new NextResponse('No emails provided', { status: 400 });
+    if (!students || students.length === 0) {
+      return new NextResponse('No students provided', { status: 400 });
     }
 
     // Process enrolments
@@ -40,42 +47,109 @@ export async function POST(req: Request, { params }: { params: { courseId: strin
       alreadyEnrolled: [] as string[]
     };
 
-    for (const email of emails) {
-      // Find the user profile by email
-      // Note: We're doing this sequentially to handle individual errors cleanly and avoid complex bulk upserts with relations
-      const targetUser = await db.profile.findFirst({
-        where: { email: { equals: email, mode: 'insensitive' } }
-      });
+    for (const student of students) {
+      try {
+        let targetUserId: string | null = null;
 
-      if (!targetUser) {
-        results.failed.push({ email, reason: 'User account not found on the platform.' });
-        continue;
-      }
+        // 1. Find the user profile by email in our local DB
+        let targetUser = await db.profile.findFirst({
+          where: { email: { equals: student.email, mode: 'insensitive' } }
+        });
 
-      // Check if already enrolled
-      const existingPurchase = await db.purchase.findUnique({
-        where: {
-          userId_courseId: {
-            userId: targetUser.userId,
+        if (targetUser) {
+          targetUserId = targetUser.userId;
+        } else {
+          // 2. User doesn't exist locally. Check Clerk.
+          const currentClerkClient = await clerkClient();
+          const clerkUserList = await currentClerkClient.users.getUserList({
+            emailAddress: [student.email]
+          });
+
+          let clerkUserId: string;
+
+          if (clerkUserList.data && clerkUserList.data.length > 0) {
+            // User exists in Clerk but not in our DB
+            clerkUserId = clerkUserList.data[0].id;
+          } else {
+            // 3. User doesn't exist in Clerk either. Create them.
+            // Split name into first and last for Clerk
+            const nameParts = student.name !== 'N/A' ? student.name.split(' ') : [];
+            const firstName = nameParts.length > 0 ? nameParts[0] : 'Student';
+            const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : undefined;
+
+            const newClerkUser = await currentClerkClient.users.createUser({
+              emailAddress: [student.email],
+              firstName: firstName,
+              lastName: lastName,
+              skipPasswordChecks: true, // We don't set a password here, they will use forgot password or magic link
+              skipPasswordRequirement: true
+            });
+            clerkUserId = newClerkUser.id;
+          }
+
+          // 4. Create the local Profile
+          targetUser = await db.profile.create({
+            data: {
+              userId: clerkUserId,
+              email: student.email,
+              name: student.name !== 'N/A' ? student.name : 'Student',
+              role: 'STUDENT'
+            }
+          });
+
+          targetUserId = targetUser.userId;
+        }
+
+        if (!targetUserId) {
+          results.failed.push({
+            email: student.email,
+            reason: 'Failed to find or create user account.'
+          });
+          continue;
+        }
+
+        // 5. Check if already enrolled
+        const existingPurchase = await db.purchase.findUnique({
+          where: {
+            userId_courseId: {
+              userId: targetUserId,
+              courseId: courseId
+            }
+          }
+        });
+
+        if (existingPurchase) {
+          results.alreadyEnrolled.push(student.email);
+          continue;
+        }
+
+        // 6. Create new purchase to grant access
+        await db.purchase.create({
+          data: {
+            userId: targetUserId,
             courseId: courseId
           }
-        }
-      });
+        });
 
-      if (existingPurchase) {
-        results.alreadyEnrolled.push(email);
-        continue;
+        results.successful.push(student.email);
+      } catch (err) {
+        let errorMessage = 'An error occurred during account creation or enrolment.';
+
+        if (err instanceof Error) {
+          errorMessage = err.message;
+        } else if (typeof err === 'object' && err !== null && 'errors' in err) {
+          const clerkErr = err as { errors?: Array<{ message?: string }> };
+          if (clerkErr.errors && Array.isArray(clerkErr.errors) && clerkErr.errors[0]?.message) {
+            errorMessage = clerkErr.errors[0].message;
+          }
+        }
+
+        console.error(`Failed processing ${student.email}:`, err);
+        results.failed.push({
+          email: student.email,
+          reason: errorMessage
+        });
       }
-
-      // Create new purchase to grant access
-      await db.purchase.create({
-        data: {
-          userId: targetUser.userId,
-          courseId: courseId
-        }
-      });
-
-      results.successful.push(email);
     }
 
     return NextResponse.json(results);
