@@ -37,7 +37,7 @@ export const NavbarRoutes: React.FC<NavbarRoutesProps> = ({ currentProfile }) =>
         ) : isTeacher ? (
           <Link href="/teacher/courses">
             <Button size="sm" variant="ghost">
-              Teacher Mode
+              {currentProfile?.role === 'ADMIN' ? 'Admin Mode' : 'Teacher Mode'}
             </Button>
           </Link>
         ) : null}

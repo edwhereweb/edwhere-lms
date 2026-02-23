@@ -10,7 +10,8 @@ import {
   ClipboardCheck,
   Megaphone,
   MessageCircle,
-  Library
+  Library,
+  UserPlus
 } from 'lucide-react';
 import SidebarItem from './sidebar-item';
 import { usePathname } from 'next/navigation';
@@ -25,6 +26,7 @@ const teacherRoutes = [
   { icon: List, label: 'Courses', href: '/teacher/courses' },
   { icon: BarChart, label: 'Analytics', href: '/teacher/analytics' },
   { icon: Users, label: 'Manage Users', href: '/teacher/users' },
+  { icon: UserPlus, label: 'Manual Enrolment', href: '/teacher/enrolments' },
   { icon: Tag, label: 'Categories', href: '/teacher/categories' },
   { icon: ClipboardCheck, label: 'Pending Approvals', href: '/teacher/pending-approvals' },
   { icon: Library, label: 'Asset Library', href: '/teacher/asset-library' },
@@ -50,7 +52,10 @@ export const SidebarRoutes = ({ currentProfile }: SidebarRoutesProps) => {
   // Restrict admin-only teacher routes
   if (isTeacherPage && currentProfile?.role !== 'ADMIN') {
     routes = routes.filter(
-      (route) => !['Manage Users', 'Categories', 'Pending Approvals'].includes(route.label)
+      (route) =>
+        !['Manage Users', 'Manual Enrolment', 'Categories', 'Pending Approvals'].includes(
+          route.label
+        )
     );
   }
 
