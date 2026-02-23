@@ -102,22 +102,20 @@ export const EnrolmentForm = ({ courses }: EnrolmentFormProps) => {
       return;
     }
 
-    const emailsToProcess: string[] = [];
+    const studentsToProcess: ParsedStudent[] = [];
 
     if (mode === 'SINGLE') {
       if (!singleEmail || !singleEmail.includes('@')) {
         toast.error('Please enter a valid email address');
         return;
       }
-      emailsToProcess.push(singleEmail);
+      studentsToProcess.push({ name: 'N/A', email: singleEmail, phone: 'N/A' });
     } else {
       if (parsedData.length === 0) {
         toast.error('Please upload a valid CSV file first');
         return;
       }
-      emailsToProcess.push(
-        ...parsedData.map((d) => d.email).filter((e) => e !== 'N/A' && e !== '')
-      );
+      studentsToProcess.push(...parsedData.filter((d) => d.email !== 'N/A' && d.email !== ''));
     }
 
     try {
@@ -125,7 +123,7 @@ export const EnrolmentForm = ({ courses }: EnrolmentFormProps) => {
       setResults(null);
 
       const response = await axios.post(`/api/admin/courses/${selectedCourse}/enrol`, {
-        emails: emailsToProcess
+        students: studentsToProcess
       });
 
       setResults(response.data);

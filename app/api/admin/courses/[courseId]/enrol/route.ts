@@ -155,7 +155,11 @@ export async function POST(req: Request, { params }: { params: { courseId: strin
     return NextResponse.json(results);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return new NextResponse('Invalid data format', { status: 400 });
+      console.error('[MANUAL_ENROLMENT_POST_VALIDATION_ERROR]', error.errors);
+      return new NextResponse(
+        `Invalid data format: ${error.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ')}`,
+        { status: 400 }
+      );
     }
     console.error('[MANUAL_ENROLMENT_POST]', error);
     return new NextResponse('Internal server error', { status: 500 });
