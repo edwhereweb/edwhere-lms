@@ -23,7 +23,7 @@ export const Chart = ({ data }: ChartProps) => {
             axisLine={false}
             tickFormatter={(value) => `$${value}`}
           />
-          <Bar dataKey="total" fill="#8884d8" barSize={20} radius={[4, 4, 4, 0]} />
+          <Bar dataKey="total" fill="#F80602" barSize={20} radius={[4, 4, 4, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </Card>

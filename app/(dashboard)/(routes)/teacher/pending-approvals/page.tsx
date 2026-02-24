@@ -36,7 +36,7 @@ const PendingApprovalsPage = async () => {
 
       {pendingCourses.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-          <CheckCircle className="h-12 w-12 mb-4 text-green-500" />
+          <CheckCircle className="h-12 w-12 mb-4 text-[#171717]" />
           <p className="text-lg font-medium">All caught up!</p>
           <p className="text-sm">No courses pending approval.</p>
         </div>
@@ -62,7 +62,7 @@ const PendingApprovalsPage = async () => {
               <div className="flex items-center gap-x-2 shrink-0">
                 <Link
                   href={`/teacher/courses/${course.id}/details`}
-                  className="text-xs text-blue-600 hover:underline"
+                  className="text-xs text-[#F80602] hover:underline"
                 >
                   Review
                 </Link>

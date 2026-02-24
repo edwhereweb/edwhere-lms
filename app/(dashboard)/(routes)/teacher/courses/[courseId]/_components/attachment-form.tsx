@@ -77,7 +77,7 @@ export const AttachmentForm = ({ initialData, courseId }: AttachmentFormProps) =
               {initialData.attachments.map((attachment) => (
                 <div
                   key={attachment.id}
-                  className="flex items-center p-3 w-full bg-sky-100 border-sky-200 border text-sky-700 rounded-md dark:bg-slate-700 dark:border-slate-600 dark:text-slate-300"
+                  className="flex items-center p-3 w-full bg-red-50 border-red-200 border text-[#F80602] rounded-md dark:bg-neutral-700 dark:border-neutral-600 dark:text-neutral-300"
                 >
                   <File className="h-4 w-4 mr-2 flex-shrink-0" />
                   <a

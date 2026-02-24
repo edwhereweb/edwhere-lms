@@ -61,7 +61,7 @@ export const ChaptersList = ({ items, onReorder, onEdit }: ChaptersListProps) =>
                     className={`flex items-center gap-x-2 bg-gray-200 border-gray-200 border text-gray-700 rounded-md mb-4 text-sm
                                             ${chapter.isPublished && 'bg-blue-100 border-blue-200 text-blue-700'}
                                             dark:bg-slate-700 dark:border-slate-600 dark:text-slate-300
-                                            dark:${chapter.isPublished && 'bg-blue-800 border-blue-600 text-blue-300'}
+                                            dark:${chapter.isPublished && 'bg-blue-800 border-black/30 text-blue-300'}
                                         `}
                     ref={provided.innerRef}
                     {...provided.draggableProps}
@@ -80,10 +80,10 @@ export const ChaptersList = ({ items, onReorder, onEdit }: ChaptersListProps) =>
                     <div className="ml-auto pr-2 flex items-center gap-x-2">
                       {chapter.isFree && <Badge>Free</Badge>}
                       <Badge
-                        className={`bg-gray-500
-                                                ${chapter.isPublished && 'bg-sky-700'}
-                                                dark:bg-slate-500
-                                                dark:${chapter.isPublished && 'bg-sky-700'}
+                        className={`bg-neutral-500
+                                                ${chapter.isPublished && 'bg-green-600'}
+                                                dark:bg-neutral-500
+                                                dark:${chapter.isPublished && 'bg-green-600'}
                                                 `}
                       >
                         {chapter.isPublished ? 'Published' : 'Draft'}

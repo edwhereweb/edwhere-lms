@@ -64,20 +64,20 @@ export const ModulesList = ({ items, onReorder, onEdit, courseId, course }: Modu
               <Draggable key={module.id} draggableId={module.id} index={index}>
                 {(provided) => (
                   <div
-                    className="mb-4 bg-white dark:bg-slate-900 border rounded-md overflow-hidden"
+                    className="mb-4 bg-white dark:bg-neutral-900 border rounded-md overflow-hidden"
                     ref={provided.innerRef}
                     {...provided.draggableProps}
                   >
                     <div
-                      className={`flex items-center gap-x-2 bg-slate-200 border-b border-slate-200 text-slate-700 py-3 px-2 text-sm
+                      className={`flex items-center gap-x-2 bg-neutral-100 border-b border-neutral-200 text-neutral-700 py-3 px-2 text-sm
                                             ${
                                               module.isPublished &&
-                                              'bg-sky-100 border-sky-200 text-sky-700'
+                                              'bg-blue-100/30 border-sky-200 text-[#171717]'
                                             }
-                                            dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300
+                                            dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-300
                                             dark:${
                                               module.isPublished &&
-                                              'bg-sky-900 border-sky-800 text-sky-300'
+                                              'bg-black/30 border-black text-[#171717]'
                                             }
                                         `}
                     >
@@ -96,9 +96,9 @@ export const ModulesList = ({ items, onReorder, onEdit, courseId, course }: Modu
                         {module.isFree && <Badge>Free</Badge>}
                         <Badge
                           className={`bg-slate-500
-                                                    ${module.isPublished && 'bg-sky-700'}
+                                                    ${module.isPublished && 'bg-green-600'}
                                                     dark:bg-slate-500
-                                                    dark:${module.isPublished && 'bg-sky-700'}
+                                                    dark:${module.isPublished && 'bg-green-600'}
                                                     `}
                         >
                           {module.isPublished ? 'Published' : 'Draft'}

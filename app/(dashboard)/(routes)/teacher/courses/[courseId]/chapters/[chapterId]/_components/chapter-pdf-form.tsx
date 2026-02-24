@@ -72,8 +72,8 @@ export const ChapterPdfForm = ({ initialData, courseId, chapterId }: ChapterPdfF
       {!isEditing && (
         <>
           {pdfUrl ? (
-            <div className="mt-3 flex items-center gap-3 p-3 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-md">
-              <FileText className="h-8 w-8 text-rose-600 dark:text-rose-400 flex-shrink-0" />
+            <div className="mt-3 flex items-center gap-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
+              <FileText className="h-8 w-8 text-[#F80602] dark:text-red-400 flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
                   PDF uploaded successfully
@@ -82,7 +82,7 @@ export const ChapterPdfForm = ({ initialData, courseId, chapterId }: ChapterPdfF
                   href={pdfUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs text-rose-600 dark:text-rose-400 hover:underline"
+                  className="text-xs text-[#F80602] dark:text-red-400 hover:underline"
                 >
                   Preview in new tab ↗
                 </a>

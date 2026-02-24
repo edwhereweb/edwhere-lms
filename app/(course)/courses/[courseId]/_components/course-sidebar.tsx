@@ -107,14 +107,14 @@ export const CourseSidebar = async ({
       <div className="border-t shrink-0">
         <Link
           href={`/courses/${course.id}/chat`}
-          className="flex items-center gap-x-2 pl-6 py-4 text-sm font-[500] text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors w-full"
+          className="flex items-center gap-x-2 pl-6 py-4 text-sm font-[500] text-[#F80602] dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors w-full"
         >
           <div className="relative">
-            <MessageCircle size={20} className="text-emerald-600 dark:text-emerald-400" />
+            <MessageCircle size={20} className="text-[#F80602] dark:text-red-400" />
             {unreadCount > 0 && (
               <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#F80602]"></span>
               </span>
             )}
           </div>

@@ -65,11 +65,11 @@ const ChapterIdPage = async ({ params }: { params: { courseId: string; chapterId
           {/* Chapter header */}
           <div className="flex items-start justify-between gap-4 mb-6">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40">
-                <BookOpen className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-red-50 dark:bg-red-900/40">
+                <BookOpen className="h-5 w-5 text-[#F80602] dark:text-red-400" />
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-0.5">
+                <p className="text-xs font-semibold uppercase tracking-wider text-[#F80602] dark:text-red-400 mb-0.5">
                   Reading
                 </p>
                 <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 leading-tight">
@@ -137,9 +137,9 @@ const ChapterIdPage = async ({ params }: { params: { courseId: string; chapterId
           {/* Header */}
           <div className="flex items-start justify-between gap-4 mb-6">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-900/40">
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-red-50 dark:bg-red-900/40">
                 <svg
-                  className="h-5 w-5 text-violet-600 dark:text-violet-400"
+                  className="h-5 w-5 text-[#F80602] dark:text-red-400"
                   fill="none"
                   stroke="currentColor"
                   strokeWidth={2}
@@ -153,10 +153,10 @@ const ChapterIdPage = async ({ params }: { params: { courseId: string; chapterId
                 </svg>
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-violet-600 dark:text-violet-400 mb-0.5">
+                <p className="text-xs font-semibold uppercase tracking-wider text-[#F80602] dark:text-red-400 mb-0.5">
                   Interactive Content
                 </p>
-                <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
+                <h1 className="text-2xl font-bold text-neutral-800 dark:text-neutral-100">
                   {chapter.title}
                 </h1>
               </div>
@@ -215,7 +215,7 @@ const ChapterIdPage = async ({ params }: { params: { courseId: string; chapterId
           {/* Header */}
           <div className="flex items-start justify-between gap-4 mb-6">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-rose-600 dark:text-rose-400 mb-1">
+              <p className="text-xs font-semibold uppercase tracking-wider text-[#F80602] dark:text-red-400 mb-1">
                 PDF Document
               </p>
               <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">

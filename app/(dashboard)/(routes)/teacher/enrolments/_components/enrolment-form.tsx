@@ -176,8 +176,8 @@ export const EnrolmentForm = ({ courses }: EnrolmentFormProps) => {
           }}
           className={`flex-1 py-3 px-4 rounded-md font-medium border-2 transition-all ${
             mode === 'SINGLE'
-              ? 'border-slate-900 bg-slate-900 text-white'
-              : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+              ? 'border-[#171717] bg-[#171717] text-white'
+              : 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300'
           }`}
         >
           Single Enrolment
@@ -189,8 +189,8 @@ export const EnrolmentForm = ({ courses }: EnrolmentFormProps) => {
           }}
           className={`flex-1 py-3 px-4 rounded-md font-medium border-2 transition-all ${
             mode === 'CSV'
-              ? 'border-emerald-600 bg-emerald-600 text-white'
-              : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+              ? 'border-[#F80602] bg-[#F80602] text-white'
+              : 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300'
           }`}
         >
           Bulk CSV Enrolment
@@ -282,7 +282,7 @@ export const EnrolmentForm = ({ courses }: EnrolmentFormProps) => {
             (mode === 'SINGLE' && !singleEmail)
           }
           size="lg"
-          className="w-full md:w-auto bg-[#171717] hover:bg-[#EC4130] transition-colors"
+          className="w-full md:w-auto bg-[#171717] hover:bg-[#F80602] transition-colors"
         >
           {isLoading ? (
             <>
@@ -304,25 +304,27 @@ export const EnrolmentForm = ({ courses }: EnrolmentFormProps) => {
           <h3 className="text-lg font-semibold text-slate-900 mb-4">Enrolment Results</h3>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-md">
-              <div className="flex items-center gap-2 text-emerald-700 font-semibold mb-1">
+            <div className="bg-neutral-50 border border-neutral-200 p-4 rounded-md">
+              <div className="flex items-center gap-2 text-[#171717] font-semibold mb-1">
                 <CheckCircle2 className="w-5 h-5" /> Successful
               </div>
-              <p className="text-2xl font-bold text-emerald-800">{results.successful.length}</p>
+              <p className="text-2xl font-bold text-[#171717]">{results.successful.length}</p>
             </div>
 
-            <div className="bg-amber-50 border border-amber-200 p-4 rounded-md">
-              <div className="flex items-center gap-2 text-amber-700 font-semibold mb-1">
+            <div className="bg-neutral-50 border border-neutral-200 p-4 rounded-md">
+              <div className="flex items-center gap-2 text-neutral-600 font-semibold mb-1">
                 <CheckCircle2 className="w-5 h-5" /> Already Enrolled
               </div>
-              <p className="text-2xl font-bold text-amber-800">{results.alreadyEnrolled.length}</p>
+              <p className="text-2xl font-bold text-neutral-700">
+                {results.alreadyEnrolled.length}
+              </p>
             </div>
 
-            <div className="bg-rose-50 border border-rose-200 p-4 rounded-md">
-              <div className="flex items-center gap-2 text-rose-700 font-semibold mb-1">
+            <div className="bg-red-50 border border-red-200 p-4 rounded-md">
+              <div className="flex items-center gap-2 text-[#F80602] font-semibold mb-1">
                 <XCircle className="w-5 h-5" /> Failed
               </div>
-              <p className="text-2xl font-bold text-rose-800">{results.failed.length}</p>
+              <p className="text-2xl font-bold text-[#F80602]">{results.failed.length}</p>
             </div>
           </div>
 
@@ -330,8 +332,8 @@ export const EnrolmentForm = ({ courses }: EnrolmentFormProps) => {
           {(results.failed.length > 0 || results.alreadyEnrolled.length > 0) && (
             <div className="space-y-4">
               {results.failed.length > 0 && (
-                <div className="p-4 bg-white border border-rose-100 rounded-md">
-                  <h4 className="font-semibold text-rose-800 mb-2">Failed Enrolments</h4>
+                <div className="p-4 bg-white border border-red-100 rounded-md">
+                  <h4 className="font-semibold text-[#F80602] mb-2">Failed Enrolments</h4>
                   <ul className="text-sm list-disc pl-5 text-slate-700 space-y-1">
                     {results.failed.map((f, i) => (
                       <li key={i}>
@@ -347,8 +349,10 @@ export const EnrolmentForm = ({ courses }: EnrolmentFormProps) => {
               )}
 
               {results.alreadyEnrolled.length > 0 && (
-                <div className="p-4 bg-white border border-amber-100 rounded-md">
-                  <h4 className="font-semibold text-amber-800 mb-2">Skipped (Already Enrolled)</h4>
+                <div className="p-4 bg-white border border-neutral-200 rounded-md">
+                  <h4 className="font-semibold text-neutral-700 mb-2">
+                    Skipped (Already Enrolled)
+                  </h4>
                   <ul className="text-sm list-disc pl-5 text-slate-700 space-y-1">
                     {results.alreadyEnrolled.map((e, i) => (
                       <li key={i}>{e}</li>

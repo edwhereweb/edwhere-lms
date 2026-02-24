@@ -40,7 +40,7 @@ export default async function InstructorMentorConnectPage({ params }: Props) {
           Back to Course
         </Link>
         <div className="h-4 w-px bg-slate-200 dark:bg-slate-700 mx-1" />
-        <MessageCircle className="h-4 w-4 text-emerald-600" />
+        <MessageCircle className="h-4 w-4 text-[#F80602]" />
         <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">
           Mentor Connect — {course.title}
         </span>

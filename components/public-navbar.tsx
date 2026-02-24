@@ -40,8 +40,8 @@ export const PublicNavbar = () => {
             <Link
               key={link.label}
               href={link.href}
-              className={`px-3 py-2.5 text-sm font-medium font-inter capitalize transition-colors hover:text-[#EC4130] ${
-                pathname === link.href ? 'text-[#EC4130]' : 'text-[#1F1F1F]'
+              className={`px-3 py-2.5 text-sm font-medium font-inter capitalize transition-colors hover:text-[#F80602] ${
+                pathname === link.href ? 'text-[#F80602]' : 'text-[#1F1F1F]'
               }`}
             >
               {link.label}
@@ -49,7 +49,7 @@ export const PublicNavbar = () => {
           ))}
           <Link
             href="/sign-in"
-            className="ml-3 px-5 py-2 text-sm font-semibold font-inter text-white bg-[#171717] rounded transition-all hover:bg-[#EC4130] hover:shadow-md"
+            className="ml-3 px-5 py-2 text-sm font-semibold font-inter text-white bg-[#171717] rounded transition-all hover:bg-[#F80602] hover:shadow-md"
           >
             Login
           </Link>
@@ -74,8 +74,8 @@ export const PublicNavbar = () => {
                 <Link
                   key={link.label}
                   href={link.href}
-                  className={`text-base font-medium font-inter transition-colors hover:text-[#EC4130] ${
-                    pathname === link.href ? 'text-[#EC4130]' : 'text-[#1F1F1F]'
+                  className={`text-base font-medium font-inter transition-colors hover:text-[#F80602] ${
+                    pathname === link.href ? 'text-[#F80602]' : 'text-[#1F1F1F]'
                   }`}
                 >
                   {link.label}
@@ -84,7 +84,7 @@ export const PublicNavbar = () => {
               <div className="border-t pt-4">
                 <Link
                   href="/sign-in"
-                  className="w-full inline-flex justify-center px-5 py-2.5 text-sm font-semibold font-inter text-white bg-[#171717] rounded transition-all hover:bg-[#EC4130] hover:shadow-md"
+                  className="w-full inline-flex justify-center px-5 py-2.5 text-sm font-semibold font-inter text-white bg-[#171717] rounded transition-all hover:bg-[#F80602] hover:shadow-md"
                 >
                   Login
                 </Link>

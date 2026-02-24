@@ -78,7 +78,7 @@ export function StatsCounter({ stats }: StatsCounterProps) {
     >
       {stats.map((stat, index) => (
         <div key={stat.label} className="flex flex-col items-center gap-5 px-5 md:px-12">
-          <span className="font-poppins text-[60px] font-semibold text-[#EC4130] leading-[1.4]">
+          <span className="font-poppins text-[60px] font-semibold text-[#F80602] leading-[1.4]">
             {values[index]}
             {parsedStats[index]?.suffix}
           </span>

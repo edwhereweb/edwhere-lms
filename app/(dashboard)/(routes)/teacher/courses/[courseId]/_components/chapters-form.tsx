@@ -129,7 +129,7 @@ export const ChaptersForm = ({ initialData, courseId, moduleId }: ChaptersFormPr
     <div className="relative mt-6 border bg-slate-100 rounded-md p-4 dark:bg-gray-800">
       {isUpdating && (
         <div className="absolute h-full w-full bg-slate-500/20 top-0 right-0 rounded-md flex items-center justify-center">
-          <Loader2 className="animate-spin h-6 w-6 text-sky-700" />
+          <Loader2 className="animate-spin h-6 w-6 text-[#F80602]" />
         </div>
       )}
 
@@ -165,18 +165,18 @@ export const ChaptersForm = ({ initialData, courseId, moduleId }: ChaptersFormPr
                   onClick={() => setSelectedType(type.value)}
                   className={cn(
                     'flex items-start gap-4 rounded-lg border-2 p-4 text-left transition-all',
-                    'hover:border-sky-400 hover:bg-sky-50 dark:hover:bg-sky-900/20',
+                    'hover:border-[#F80602] hover:bg-red-50 dark:hover:bg-red-900/20',
                     isSelected
-                      ? 'border-sky-500 bg-sky-50 dark:bg-sky-900/30'
-                      : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800'
+                      ? 'border-[#F80602] bg-red-50 dark:bg-red-900/30'
+                      : 'border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-800'
                   )}
                 >
                   <div
                     className={cn(
                       'flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full',
                       isSelected
-                        ? 'bg-sky-500 text-white'
-                        : 'bg-slate-100 text-slate-500 dark:bg-slate-700'
+                        ? 'bg-[#F80602] text-white'
+                        : 'bg-neutral-100 text-neutral-500 dark:bg-neutral-700'
                     )}
                   >
                     <Icon className="h-5 w-5" />
@@ -187,14 +187,14 @@ export const ChaptersForm = ({ initialData, courseId, moduleId }: ChaptersFormPr
                         className={cn(
                           'text-sm font-semibold',
                           isSelected
-                            ? 'text-sky-700 dark:text-sky-300'
-                            : 'text-slate-700 dark:text-slate-200'
+                            ? 'text-[#F80602] dark:text-red-300'
+                            : 'text-neutral-700 dark:text-neutral-200'
                         )}
                       >
                         {type.label}
                       </p>
                       {isSelected && (
-                        <CheckCircle2 className="h-4 w-4 text-sky-500 flex-shrink-0" />
+                        <CheckCircle2 className="h-4 w-4 text-[#F80602] flex-shrink-0" />
                       )}
                     </div>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
@@ -218,7 +218,7 @@ export const ChaptersForm = ({ initialData, courseId, moduleId }: ChaptersFormPr
         <div className="mt-4 space-y-3">
           <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
             Give this{' '}
-            <span className="text-sky-600 font-semibold">
+            <span className="text-[#F80602] font-semibold">
               {CONTENT_TYPES.find((t) => t.value === selectedType)?.label}
             </span>{' '}
             chapter a title:
