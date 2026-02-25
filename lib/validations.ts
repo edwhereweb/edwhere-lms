@@ -74,3 +74,72 @@ export const profileUpdateSchema = z.object({
   imageUrl: z.string().url().optional(),
   role: z.enum(['ADMIN', 'TEACHER', 'STUDENT']).optional()
 });
+
+export const unenrollLearnerSchema = z.object({
+  force: z.boolean().optional()
+});
+
+// ── Module schemas ──────────────────────────────────────────────────────
+
+export const createModuleSchema = z.object({
+  title: z.string().min(1, 'Title is required').max(200)
+});
+
+export const updateModuleSchema = z.object({
+  title: z.string().min(1).max(200).optional(),
+  description: z.string().max(5000).optional(),
+  isFree: z.boolean().optional()
+});
+
+export const reorderModulesSchema = z.object({
+  list: z.array(
+    z.object({
+      id: z.string(),
+      position: z.number().int().min(0)
+    })
+  )
+});
+
+// ── Contact / Lead schemas ──────────────────────────────────────────────
+
+export const contactSchema = z.object({
+  name: z.string().min(2).max(100),
+  phone: z.string().min(7).max(20),
+  email: z.string().email(),
+  message: z.string().min(5).max(5000)
+});
+
+export const createLeadSchema = z.object({
+  name: z.string().min(2).max(100),
+  phone: z.string().min(7).max(20),
+  email: z.string().email(),
+  message: z.string().min(1).max(5000),
+  source: z.string().default('MANUAL_ENTRY')
+});
+
+const VALID_LEAD_STATUSES = [
+  'NEW_LEAD',
+  'DECISION_PENDING',
+  'RNR1',
+  'RNR2',
+  'PAYMENT_PENDING',
+  'NOT_INTERESTED',
+  'OFFLINE_INTERESTED',
+  'FUTURE_OPTIONS'
+] as const;
+
+export const updateLeadSchema = z.object({
+  status: z.enum(VALID_LEAD_STATUSES).optional(),
+  notes: z.string().max(10000).optional()
+});
+
+// ── Message schemas ─────────────────────────────────────────────────────
+
+export const messageBodySchema = z.object({
+  content: z.string().min(1).max(4000),
+  threadStudentId: z.string().optional()
+});
+
+export const markReadSchema = z.object({
+  studentId: z.string().min(1)
+});

@@ -57,9 +57,9 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-black">
+    <div className="min-h-screen bg-background text-foreground">
       {/* ── Navbar (identical to homepage) ── */}
-      <PublicNavbar />
+      <PublicNavbar supportsDarkTheme />
 
       {/* ── Page hero ── */}
       <section className="bg-[#111111] text-white py-14 px-4 text-center">
@@ -77,7 +77,7 @@ export default function ContactPage() {
         {/* Left: contact info cards */}
         <div className="md:col-span-2 flex flex-col gap-5">
           {/* Call card */}
-          <div className="border border-gray-100 rounded-2xl p-6 shadow-sm">
+          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
             <div className="flex items-center gap-3 mb-3">
               <div
                 className="h-10 w-10 rounded-full flex items-center justify-center"
@@ -85,9 +85,11 @@ export default function ContactPage() {
               >
                 <Phone className="h-5 w-5" style={{ color: RED }} />
               </div>
-              <h2 className="font-opensans font-semibold text-[#1F1F1F]">Call Us</h2>
+              <h2 className="font-opensans font-semibold text-zinc-900 dark:text-zinc-100">
+                Call Us
+              </h2>
             </div>
-            <p className="font-inter text-sm text-[#888888] mb-3">
+            <p className="mb-3 font-inter text-sm text-zinc-500 dark:text-zinc-400">
               Available Mon–Sat, 9 AM – 6 PM IST
             </p>
             <a
@@ -100,7 +102,7 @@ export default function ContactPage() {
           </div>
 
           {/* WhatsApp card */}
-          <div className="border border-gray-100 rounded-2xl p-6 shadow-sm">
+          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
             <div className="flex items-center gap-3 mb-3">
               <div
                 className="h-10 w-10 rounded-full flex items-center justify-center"
@@ -108,9 +110,11 @@ export default function ContactPage() {
               >
                 <MessageCircle className="h-5 w-5" style={{ color: RED }} />
               </div>
-              <h2 className="font-opensans font-semibold text-[#1F1F1F]">WhatsApp</h2>
+              <h2 className="font-opensans font-semibold text-zinc-900 dark:text-zinc-100">
+                WhatsApp
+              </h2>
             </div>
-            <p className="font-inter text-sm text-[#888888] mb-4">
+            <p className="mb-4 font-inter text-sm text-zinc-500 dark:text-zinc-400">
               Message us directly on WhatsApp
             </p>
             <Link
@@ -125,7 +129,7 @@ export default function ContactPage() {
           </div>
 
           {/* Address card */}
-          <div className="border border-gray-100 rounded-2xl p-6 shadow-sm">
+          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
             <div className="flex items-center gap-3 mb-3">
               <div
                 className="h-10 w-10 rounded-full flex items-center justify-center"
@@ -133,10 +137,12 @@ export default function ContactPage() {
               >
                 <MapPin className="h-5 w-5" style={{ color: RED }} />
               </div>
-              <h2 className="font-opensans font-semibold text-[#1F1F1F]">Visit Us</h2>
+              <h2 className="font-opensans font-semibold text-zinc-900 dark:text-zinc-100">
+                Visit Us
+              </h2>
             </div>
-            <address className="font-inter text-sm text-[#555] not-italic leading-7">
-              <span className="font-semibold text-[#1F1F1F] block">CTRDI</span>
+            <address className="font-inter text-sm leading-7 text-zinc-600 not-italic dark:text-zinc-300">
+              <span className="block font-semibold text-zinc-900 dark:text-zinc-100">CTRDI</span>
               Cybersecurity Trainings Research &amp; Development Institute
               <br />
               Phoger Edwhere Learning LLP
@@ -162,7 +168,7 @@ export default function ContactPage() {
 
         {/* Right: Enquiry form */}
         <div className="md:col-span-3">
-          <div className="border border-gray-100 rounded-2xl shadow-sm p-8">
+          <div className="rounded-2xl border border-gray-100 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
             {submitted ? (
               <div className="flex flex-col items-center justify-center py-16 text-center gap-4">
                 <div
@@ -172,7 +178,7 @@ export default function ContactPage() {
                   <CheckCircle2 className="h-8 w-8" style={{ color: RED }} />
                 </div>
                 <h2 className="font-poppins text-2xl">Message Received!</h2>
-                <p className="font-inter text-[#888888] max-w-sm leading-7">
+                <p className="max-w-sm font-inter leading-7 text-zinc-500 dark:text-zinc-400">
                   Thank you for reaching out. Our team will get back to you shortly.
                 </p>
                 <button
@@ -180,7 +186,7 @@ export default function ContactPage() {
                     setSubmitted(false);
                     form.reset();
                   }}
-                  className="mt-2 px-6 py-2.5 border-2 border-[#171717] text-[#171717] font-opensans font-semibold text-sm uppercase tracking-[0.15em] transition-all hover:bg-[#F80602] hover:border-[#F80602] hover:text-white"
+                  className="mt-2 border-2 border-[#171717] px-6 py-2.5 font-opensans text-sm font-semibold uppercase tracking-[0.15em] text-[#171717] transition-all hover:border-[#F80602] hover:bg-[#F80602] hover:text-white dark:border-zinc-100 dark:text-zinc-100"
                 >
                   Send Another Message
                 </button>
@@ -188,7 +194,7 @@ export default function ContactPage() {
             ) : (
               <>
                 <h2 className="font-poppins text-2xl mb-1">Send Us a Message</h2>
-                <p className="font-inter text-sm text-[#888888] mb-6 leading-7">
+                <p className="mb-6 font-inter text-sm leading-7 text-zinc-500 dark:text-zinc-400">
                   Fill in your details and we&apos;ll get back to you as soon as possible.
                 </p>
 
@@ -200,13 +206,13 @@ export default function ContactPage() {
                         name="name"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="font-inter text-xs font-semibold text-[#888] uppercase tracking-wider">
+                            <FormLabel className="font-inter text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                               Full Name
                             </FormLabel>
                             <FormControl>
                               <Input
                                 placeholder="John Doe"
-                                className="font-inter rounded-none border-gray-200 focus-visible:ring-[#F80602]"
+                                className="font-inter rounded-none border-gray-200 bg-white focus-visible:ring-[#F80602] dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500"
                                 {...field}
                               />
                             </FormControl>
@@ -219,13 +225,13 @@ export default function ContactPage() {
                         name="phone"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="font-inter text-xs font-semibold text-[#888] uppercase tracking-wider">
+                            <FormLabel className="font-inter text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                               Phone Number
                             </FormLabel>
                             <FormControl>
                               <Input
                                 placeholder="+91 98765 43210"
-                                className="font-inter rounded-none border-gray-200 focus-visible:ring-[#F80602]"
+                                className="font-inter rounded-none border-gray-200 bg-white focus-visible:ring-[#F80602] dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500"
                                 {...field}
                               />
                             </FormControl>
@@ -240,14 +246,14 @@ export default function ContactPage() {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-inter text-xs font-semibold text-[#888] uppercase tracking-wider">
+                          <FormLabel className="font-inter text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                             Email Address
                           </FormLabel>
                           <FormControl>
                             <Input
                               type="email"
                               placeholder="john@example.com"
-                              className="font-inter rounded-none border-gray-200 focus-visible:ring-[#F80602]"
+                              className="font-inter rounded-none border-gray-200 bg-white focus-visible:ring-[#F80602] dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500"
                               {...field}
                             />
                           </FormControl>
@@ -261,14 +267,14 @@ export default function ContactPage() {
                       name="message"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-inter text-xs font-semibold text-[#888] uppercase tracking-wider">
+                          <FormLabel className="font-inter text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                             Your Query
                           </FormLabel>
                           <FormControl>
                             <Textarea
                               placeholder="Tell us what you'd like to know about our courses, pricing, schedule, etc."
                               rows={5}
-                              className="font-inter rounded-none border-gray-200 focus-visible:ring-[#F80602] resize-none"
+                              className="font-inter resize-none rounded-none border-gray-200 bg-white focus-visible:ring-[#F80602] dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500"
                               {...field}
                             />
                           </FormControl>
@@ -280,7 +286,7 @@ export default function ContactPage() {
                     <button
                       type="submit"
                       disabled={form.formState.isSubmitting}
-                      className="w-full inline-flex items-center justify-center gap-2 px-7 py-3 bg-[#171717] text-white font-opensans font-semibold text-sm uppercase tracking-[0.21em] border-2 border-[#171717] transition-all hover:bg-[#F80602] hover:border-[#F80602] hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
+                      className="inline-flex w-full items-center justify-center gap-2 border-2 border-[#171717] bg-[#171717] px-7 py-3 font-opensans text-sm font-semibold uppercase tracking-[0.21em] text-white transition-all hover:border-[#F80602] hover:bg-[#F80602] hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:border-[#F80602] dark:hover:bg-[#F80602] dark:hover:text-white"
                     >
                       {form.formState.isSubmitting ? (
                         <>
@@ -303,24 +309,24 @@ export default function ContactPage() {
       </section>
 
       {/* ── Footer (identical to homepage) ── */}
-      <footer className="bg-[#F7F7F7]">
+      <footer className="border-t border-zinc-200 bg-[#F7F7F7] dark:border-zinc-800 dark:bg-zinc-950">
         <div className="max-w-7xl mx-auto px-6 py-10">
           <div className="flex flex-col items-center gap-8">
-            <div className="flex flex-wrap items-center justify-center gap-3 text-sm font-inter font-medium text-[#232228]">
+            <div className="flex flex-wrap items-center justify-center gap-3 text-sm font-inter font-medium text-zinc-800 dark:text-zinc-200">
               <span>Edwhere Learning &copy; {new Date().getFullYear()}</span>
-              <span className="text-gray-300">|</span>
+              <span className="text-gray-300 dark:text-zinc-700">|</span>
               <Link href="#" className="transition-colors hover:text-[#F80602]">
                 Privacy policy
               </Link>
-              <span className="text-gray-300">|</span>
+              <span className="text-gray-300 dark:text-zinc-700">|</span>
               <Link href="#" className="transition-colors hover:text-[#F80602]">
                 Terms of use
               </Link>
-              <span className="text-gray-300">|</span>
+              <span className="text-gray-300 dark:text-zinc-700">|</span>
               <Link href="/contact" className="transition-colors hover:text-[#F80602]">
                 Contact us
               </Link>
-              <span className="text-gray-300">|</span>
+              <span className="text-gray-300 dark:text-zinc-700">|</span>
               <Link href="#" className="transition-colors hover:text-[#F80602]">
                 Refund policy
               </Link>

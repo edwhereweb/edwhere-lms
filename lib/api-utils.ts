@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { ZodSchema, ZodError } from 'zod';
+import { logError } from '@/lib/debug';
 
 export function apiError(message: string, status: number) {
   return NextResponse.json({ error: message }, { status });
@@ -39,6 +40,6 @@ export function validateBody<T>(
 }
 
 export function handleApiError(tag: string, error: unknown) {
-  console.error(`[${tag}]`, error instanceof Error ? error.message : error);
+  logError(tag, error);
   return apiError('Internal Server Error', 500);
 }

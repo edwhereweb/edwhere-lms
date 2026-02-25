@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { logError } from '@/lib/debug';
 import { type Attachment, type Chapter, type Module } from '@prisma/client';
 
 interface GetChapterProps {
@@ -42,13 +43,11 @@ export const getChapter = async ({ userId, courseId, chapterId }: GetChapterProp
         db.muxData.findUnique({ where: { chapterId } }),
         purchase ? db.attachment.findMany({ where: { courseId } }) : Promise.resolve([]),
         db.chapter.findMany({
-          /* eslint-disable @typescript-eslint/no-explicit-any */
           where: {
             courseId,
             isPublished: true,
             isLibraryAsset: false
-          } as any,
-          /* eslint-enable @typescript-eslint/no-explicit-any */
+          },
           include: {
             module: true
           }
@@ -57,7 +56,7 @@ export const getChapter = async ({ userId, courseId, chapterId }: GetChapterProp
       muxData = mux;
       attachments = atts;
 
-      const sortedChapters = allChapters.sort((a, b) => {
+      const sortedChapters = [...allChapters].sort((a, b) => {
         if (a.moduleId && b.moduleId) {
           if (a.moduleId === b.moduleId) return a.position - b.position;
           const moduleAPos = a.module?.position ?? 0;
@@ -86,7 +85,7 @@ export const getChapter = async ({ userId, courseId, chapterId }: GetChapterProp
       purchase
     };
   } catch (error) {
-    console.error('[GET_CHAPTER]', error instanceof Error ? error.message : error);
+    logError('GET_CHAPTER', error);
     return {
       chapter: null,
       course: null,

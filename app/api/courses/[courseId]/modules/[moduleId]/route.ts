@@ -2,9 +2,11 @@ import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { checkCourseEdit } from '@/lib/course-auth';
+import { apiError, validateBody, handleApiError } from '@/lib/api-utils';
+import { updateModuleSchema } from '@/lib/validations';
 
 export async function DELETE(
-  req: Request,
+  _req: Request,
   { params }: { params: { courseId: string; moduleId: string } }
 ) {
   try {
@@ -14,32 +16,23 @@ export async function DELETE(
     if (denied) return denied;
 
     const courseModule = await db.module.findUnique({
-      where: {
-        id: params.moduleId,
-        courseId: params.courseId
-      }
+      where: { id: params.moduleId, courseId: params.courseId }
     });
 
-    if (!courseModule) {
-      return new NextResponse('Not found', { status: 404 });
-    }
+    if (!courseModule) return apiError('Not found', 404);
 
-    // Unassign chapters from this module instead of deleting them outright
     await db.chapter.updateMany({
       where: { moduleId: params.moduleId },
       data: { moduleId: null }
     });
 
     const deletedModule = await db.module.delete({
-      where: {
-        id: params.moduleId
-      }
+      where: { id: params.moduleId }
     });
 
     return NextResponse.json(deletedModule);
   } catch (error) {
-    console.log('[MODULE_ID_DELETE]', error);
-    return new NextResponse('Internal Error', { status: 500 });
+    return handleApiError('MODULE_ID_DELETE', error);
   }
 }
 
@@ -49,30 +42,27 @@ export async function PATCH(
 ) {
   try {
     const { userId } = await auth();
-    const { isPublished: _isPublished, ...values } = await req.json();
 
     const denied = await checkCourseEdit(userId, params.courseId);
     if (denied) return denied;
 
+    const body = await req.json();
+    const validation = validateBody(updateModuleSchema, body);
+    if (!validation.success) return validation.response;
+
     const courseModule = await db.module.update({
-      where: {
-        id: params.moduleId,
-        courseId: params.courseId
-      },
-      data: {
-        ...values
-      }
+      where: { id: params.moduleId, courseId: params.courseId },
+      data: validation.data
     });
 
     return NextResponse.json(courseModule);
   } catch (error) {
-    console.log('[MODULE_ID_PATCH]', error);
-    return new NextResponse('Internal Error', { status: 500 });
+    return handleApiError('MODULE_ID_PATCH', error);
   }
 }
 
 export async function GET(
-  req: Request,
+  _req: Request,
   { params }: { params: { courseId: string; moduleId: string } }
 ) {
   try {
@@ -82,24 +72,16 @@ export async function GET(
     if (denied) return denied;
 
     const courseModule = await db.module.findUnique({
-      where: {
-        id: params.moduleId,
-        courseId: params.courseId
-      },
+      where: { id: params.moduleId, courseId: params.courseId },
       include: {
-        chapters: {
-          orderBy: {
-            position: 'asc'
-          }
-        }
+        chapters: { orderBy: { position: 'asc' } }
       }
     });
 
-    if (!courseModule) return new NextResponse('Not Found', { status: 404 });
+    if (!courseModule) return apiError('Not found', 404);
 
     return NextResponse.json(courseModule);
   } catch (error) {
-    console.log('[MODULE_ID_GET]', error);
-    return new NextResponse('Internal Error', { status: 500 });
+    return handleApiError('MODULE_ID_GET', error);
   }
 }

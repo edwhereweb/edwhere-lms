@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
-import getSafeProfile from '@/actions/get-safe-profile';
+import { currentProfile } from '@/lib/current-profile';
+import { apiError, handleApiError } from '@/lib/api-utils';
 
 interface Params {
   params: { courseId: string };
@@ -11,12 +12,11 @@ interface Params {
 export async function POST(_req: Request, { params }: Params) {
   try {
     const { userId } = await auth();
-    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!userId) return apiError('Unauthorized', 401);
 
-    const profile = await getSafeProfile();
-    if (!profile) return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
+    const profile = await currentProfile();
+    if (!profile) return apiError('Unauthorized', 401);
 
-    // Students only mark their own thread as read
     await db.studentLastRead.upsert({
       where: {
         studentId_courseId: {
@@ -34,7 +34,6 @@ export async function POST(_req: Request, { params }: Params) {
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error('[MESSAGES_READ_STUDENT_POST]', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return handleApiError('MESSAGES_READ_STUDENT_POST', error);
   }
 }

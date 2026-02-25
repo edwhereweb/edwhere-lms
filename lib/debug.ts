@@ -3,3 +3,8 @@ export function debug(tag: string, ...args: unknown[]) {
     console.log(`[${tag}]`, ...args);
   }
 }
+
+export function logError(tag: string, error: unknown) {
+  const message = error instanceof Error ? error.message : error;
+  console.error(`[${tag}]`, message);
+}

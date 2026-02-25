@@ -31,8 +31,8 @@ export async function POST(req: Request) {
 
     if (
       !crypto.timingSafeEqual(
-        Buffer.from(generatedSignature, 'hex'),
-        Buffer.from(razorpay_signature, 'hex')
+        Uint8Array.from(Buffer.from(generatedSignature, 'hex')),
+        Uint8Array.from(Buffer.from(razorpay_signature, 'hex'))
       )
     ) {
       return apiError('Invalid payment signature', 400);
@@ -48,8 +48,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true });
     }
 
+    const onboardingData: Record<string, string> = {
+      onboardingSource: 'PAID'
+    };
     await db.purchase.create({
-      data: { courseId, userId: user.id }
+      data: { courseId, userId: user.id, ...onboardingData }
     });
 
     return NextResponse.json({ success: true });

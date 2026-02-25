@@ -1,10 +1,10 @@
 import { db } from '@/lib/db';
+import { logError } from '@/lib/debug';
 
 export const getProgress = async (userId: string, courseId: string): Promise<number> => {
   try {
     const publishedChapters = await db.chapter.findMany({
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      where: { courseId, isPublished: true, isLibraryAsset: false } as any,
+      where: { courseId, isPublished: true, isLibraryAsset: false },
       select: { id: true }
     });
 
@@ -22,7 +22,7 @@ export const getProgress = async (userId: string, courseId: string): Promise<num
 
     return (validCompletedChapters / publishedChapters.length) * 100;
   } catch (error) {
-    console.error('[GET_PROGRESS]', error instanceof Error ? error.message : error);
+    logError('GET_PROGRESS', error);
     return 0;
   }
 };
@@ -35,8 +35,7 @@ export const getProgressBatch = async (
     if (courseIds.length === 0) return new Map();
 
     const chapters = await db.chapter.findMany({
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      where: { courseId: { in: courseIds }, isPublished: true, isLibraryAsset: false } as any,
+      where: { courseId: { in: courseIds }, isPublished: true, isLibraryAsset: false },
       select: { id: true, courseId: true }
     });
 
@@ -72,7 +71,7 @@ export const getProgressBatch = async (
 
     return result;
   } catch (error) {
-    console.error('[GET_PROGRESS_BATCH]', error instanceof Error ? error.message : error);
+    logError('GET_PROGRESS_BATCH', error);
     return new Map();
   }
 };

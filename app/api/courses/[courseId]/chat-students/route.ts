@@ -1,27 +1,26 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
-import { isTeacher } from '@/lib/teacher';
-import getSafeProfile from '@/actions/get-safe-profile';
+import { currentProfile } from '@/lib/current-profile';
+import { canEditCourse } from '@/lib/course-auth';
+import { apiError, handleApiError } from '@/lib/api-utils';
 
 interface Params {
   params: { courseId: string };
 }
 
 // GET /api/courses/[courseId]/chat-students
-// Returns distinct students who have sent messages in this course, with unread count
 export async function GET(_req: Request, { params }: Params) {
   try {
     const { userId } = await auth();
-    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!userId) return apiError('Unauthorized', 401);
 
-    const authorized = await isTeacher();
-    if (!authorized) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    const allowed = await canEditCourse(userId, params.courseId);
+    if (!allowed) return apiError('Forbidden', 403);
 
-    const profile = await getSafeProfile();
-    if (!profile) return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
+    const profile = await currentProfile();
+    if (!profile) return apiError('Unauthorized', 401);
 
-    // Find all distinct threadStudentIds for this course
     const threads = await db.courseMessage.findMany({
       where: { courseId: params.courseId },
       distinct: ['threadStudentId'],
@@ -31,62 +30,74 @@ export async function GET(_req: Request, { params }: Params) {
     const studentIds = threads.map((t) => t.threadStudentId);
     if (studentIds.length === 0) return NextResponse.json([]);
 
-    // Fetch profile info for those students
     const allProfiles = await db.profile.findMany({
       where: { id: { in: studentIds } },
       select: { id: true, name: true, imageUrl: true, role: true }
     });
 
-    // Filter out instructors who might have sent legacy shared messages
     const students = allProfiles.filter((p) => p.role === 'STUDENT');
     const validStudentIds = students.map((s) => s.id);
 
-    // Get lastRead records for this instructor × course × students
-    const lastReads = await db.mentorLastRead.findMany({
-      where: {
-        instructorId: profile.id,
-        courseId: params.courseId,
-        studentId: { in: validStudentIds, not: null }
+    if (validStudentIds.length === 0) return NextResponse.json([]);
+
+    // Batched: fetch lastReads, all recent messages, and all unread-candidate messages in 3 queries
+    const [lastReads, recentMessages, unreadMessages] = await Promise.all([
+      db.mentorLastRead.findMany({
+        where: {
+          instructorId: profile.id,
+          courseId: params.courseId,
+          studentId: { in: validStudentIds, not: null }
+        }
+      }),
+      db.courseMessage.findMany({
+        where: { courseId: params.courseId, threadStudentId: { in: validStudentIds } },
+        orderBy: { createdAt: 'desc' },
+        select: {
+          threadStudentId: true,
+          id: true,
+          content: true,
+          createdAt: true,
+          author: { select: { name: true } }
+        }
+      }),
+      db.courseMessage.findMany({
+        where: {
+          courseId: params.courseId,
+          threadStudentId: { in: validStudentIds },
+          NOT: { authorId: profile.id }
+        },
+        select: { threadStudentId: true, createdAt: true }
+      })
+    ]);
+
+    // Derive latest message per student (first occurrence since ordered desc)
+    const latestByStudent = new Map<string, (typeof recentMessages)[0]>();
+    for (const msg of recentMessages) {
+      if (!latestByStudent.has(msg.threadStudentId)) {
+        latestByStudent.set(msg.threadStudentId, msg);
       }
-    });
+    }
 
-    // Get latest message per student thread
-    const latestMessages = await Promise.all(
-      validStudentIds.map(async (sid) => {
-        const msg = await db.courseMessage.findFirst({
-          where: { courseId: params.courseId, threadStudentId: sid },
-          orderBy: { createdAt: 'desc' },
-          select: { id: true, content: true, createdAt: true, author: { select: { name: true } } }
-        });
-        return { studentId: sid, msg };
-      })
-    );
-
-    // Count unread messages per student thread
-    const unreadCounts = await Promise.all(
-      validStudentIds.map(async (sid) => {
-        const lastRead = lastReads.find((lr) => lr.studentId === sid);
-        const count = await db.courseMessage.count({
-          where: {
-            courseId: params.courseId,
-            threadStudentId: sid,
-            NOT: { authorId: profile.id },
-            ...(lastRead ? { createdAt: { gt: lastRead.lastReadAt } } : {})
-          }
-        });
-        return { studentId: sid, count };
-      })
-    );
+    // Derive unread count per student
+    const unreadByStudent = new Map<string, number>();
+    for (const msg of unreadMessages) {
+      const lastRead = lastReads.find((lr) => lr.studentId === msg.threadStudentId);
+      if (!lastRead || msg.createdAt > lastRead.lastReadAt) {
+        unreadByStudent.set(
+          msg.threadStudentId,
+          (unreadByStudent.get(msg.threadStudentId) ?? 0) + 1
+        );
+      }
+    }
 
     const result = students.map((student) => ({
       id: student.id,
       name: student.name,
       imageUrl: student.imageUrl,
-      lastMessage: latestMessages.find((m) => m.studentId === student.id)?.msg ?? null,
-      unreadCount: unreadCounts.find((u) => u.studentId === student.id)?.count ?? 0
+      lastMessage: latestByStudent.get(student.id) ?? null,
+      unreadCount: unreadByStudent.get(student.id) ?? 0
     }));
 
-    // Sort: unread first, then by latest message
     result.sort((a, b) => {
       if (a.unreadCount > 0 && b.unreadCount === 0) return -1;
       if (a.unreadCount === 0 && b.unreadCount > 0) return 1;
@@ -97,7 +108,6 @@ export async function GET(_req: Request, { params }: Params) {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error('[CHAT_STUDENTS_GET]', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return handleApiError('CHAT_STUDENTS_GET', error);
   }
 }
