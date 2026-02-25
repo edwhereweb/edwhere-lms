@@ -1,5 +1,6 @@
 import { getProgressBatch } from '@/actions/get-progress';
 import { db } from '@/lib/db';
+import { logError } from '@/lib/debug';
 import { CourseWithProgressWithCategory } from '@/types';
 
 type GetCourses = {
@@ -48,7 +49,7 @@ export const getCourses = async ({
       progress: course.purchases.length === 0 ? null : (progressMap.get(course.id) ?? 0)
     }));
   } catch (error) {
-    console.error('[GET_COURSES]', error instanceof Error ? error.message : error);
+    logError('GET_COURSES', error);
     return [];
   }
 };

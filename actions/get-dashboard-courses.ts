@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { logError } from '@/lib/debug';
 import { type Category, type Chapter, type Course } from '@prisma/client';
 import { getProgressBatch } from './get-progress';
 
@@ -29,23 +30,22 @@ export const getDashboardCourses = async (userId: string): Promise<DashboardCour
       }
     });
 
-    const courses = purchasedCourses.map(
-      (purchase) => purchase.course
-    ) as CourseWithProgressWithCategory[];
+    const rawCourses = purchasedCourses.map((purchase) => purchase.course);
 
-    const courseIds = courses.map((c) => c.id);
+    const courseIds = rawCourses.map((c) => c.id);
     const progressMap = await getProgressBatch(userId, courseIds);
 
-    for (const course of courses) {
-      course.progress = progressMap.get(course.id) ?? 0;
-    }
+    const courses = rawCourses.map((course) => ({
+      ...course,
+      progress: progressMap.get(course.id) ?? 0
+    })) as CourseWithProgressWithCategory[];
 
     const completedCourses = courses.filter((course) => course.progress === 100);
     const coursesInProgress = courses.filter((course) => (course.progress ?? 0) < 100);
 
     return { completedCourses, coursesInProgress };
   } catch (error) {
-    console.error('[GET_DASHBOARD_COURSES]', error instanceof Error ? error.message : error);
+    logError('GET_DASHBOARD_COURSES', error);
     return { completedCourses: [], coursesInProgress: [] };
   }
 };

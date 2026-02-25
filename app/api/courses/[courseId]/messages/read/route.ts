@@ -1,53 +1,55 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
-import getSafeProfile from '@/actions/get-safe-profile';
-import { isTeacher } from '@/lib/teacher';
-import { z } from 'zod';
+import { currentProfile } from '@/lib/current-profile';
+import { canEditCourse } from '@/lib/course-auth';
+import { apiError, validateBody, handleApiError } from '@/lib/api-utils';
+import { markReadSchema } from '@/lib/validations';
 
 interface Params {
   params: { courseId: string };
 }
 
-const bodySchema = z.object({ studentId: z.string().min(1) });
-
 // POST /api/courses/[courseId]/messages/read
-// Body: { studentId } — whose thread the instructor just read
 export async function POST(req: Request, { params }: Params) {
   try {
     const { userId } = await auth();
-    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!userId) return apiError('Unauthorized', 401);
 
-    const authorized = await isTeacher();
-    if (!authorized) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    const allowed = await canEditCourse(userId, params.courseId);
+    if (!allowed) return apiError('Forbidden', 403);
 
-    const profile = await getSafeProfile();
-    if (!profile) return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
+    const profile = await currentProfile();
+    if (!profile) return apiError('Unauthorized', 401);
 
     const body = await req.json();
-    const parsed = bodySchema.safeParse(body);
-    if (!parsed.success) return NextResponse.json({ error: 'Invalid data' }, { status: 400 });
+    const validation = validateBody(markReadSchema, body);
+    if (!validation.success) return validation.response;
+
+    const studentEnrolled = await db.purchase.findFirst({
+      where: { courseId: params.courseId, userId: validation.data.studentId }
+    });
+    if (!studentEnrolled) return apiError('Student is not enrolled in this course', 400);
 
     await db.mentorLastRead.upsert({
       where: {
         instructorId_courseId_studentId: {
           instructorId: profile.id,
           courseId: params.courseId,
-          studentId: parsed.data.studentId
+          studentId: validation.data.studentId
         }
       },
       update: { lastReadAt: new Date() },
       create: {
         instructorId: profile.id,
         courseId: params.courseId,
-        studentId: parsed.data.studentId,
+        studentId: validation.data.studentId,
         lastReadAt: new Date()
       }
     });
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error('[MESSAGES_READ_POST]', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return handleApiError('MESSAGES_READ_POST', error);
   }
 }

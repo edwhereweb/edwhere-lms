@@ -1,16 +1,17 @@
+import { auth } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
 import { NextResponse } from 'next/server';
+import { currentProfile } from '@/lib/current-profile';
 import { profileUpdateSchema } from '@/lib/validations';
 import { validateBody, apiError, handleApiError } from '@/lib/api-utils';
-import getSafeProfile from '@/actions/get-safe-profile';
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   try {
-    const profile = await getSafeProfile();
+    const { userId } = await auth();
+    if (!userId) return apiError('Unauthorized', 401);
 
-    if (!profile) {
-      return apiError('Unauthorized', 401);
-    }
+    const profile = await currentProfile();
+    if (!profile) return apiError('Unauthorized', 401);
 
     const isAdmin = profile.role === 'ADMIN';
     const isSelf = profile.id === params.id;

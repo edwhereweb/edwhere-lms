@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 import { Menu } from 'lucide-react';
-import { Sidebar } from './Sidebar';
+import { Sidebar } from './sidebar';
 
 export const MobileSidebar = () => {
   const pathname = usePathname();

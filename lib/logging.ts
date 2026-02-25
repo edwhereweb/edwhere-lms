@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { logError } from '@/lib/debug';
 
 export interface LogEntry {
   url: string;
@@ -17,7 +18,7 @@ export async function logRequest(entry: LogEntry): Promise<void> {
         createdAt: new Date()
       }
     });
-  } catch {
-    console.error('[LOGGING_WRITE_FAILED]', entry.url);
+  } catch (error) {
+    logError('LOGGING_WRITE_FAILED', error);
   }
 }

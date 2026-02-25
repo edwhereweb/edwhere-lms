@@ -1,5 +1,6 @@
-import { auth } from "@clerk/nextjs/server";
-import { db } from "@/lib/db";
+import { auth } from '@clerk/nextjs/server';
+import { db } from '@/lib/db';
+import { logError } from '@/lib/debug';
 
 export const currentProfile = async () => {
   try {
@@ -18,7 +19,7 @@ export const currentProfile = async () => {
 
     return profile;
   } catch (error) {
-    console.error("CURRENT_PROFILE_ERROR", error);
+    logError('CURRENT_PROFILE', error);
     return null;
   }
 };

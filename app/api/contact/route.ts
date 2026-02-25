@@ -1,27 +1,21 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { z } from 'zod';
-
-const contactSchema = z.object({
-  name: z.string().min(2).max(100),
-  phone: z.string().min(7).max(20),
-  email: z.string().email(),
-  message: z.string().min(5).max(5000)
-});
+import { validateBody, apiError, handleApiError } from '@/lib/api-utils';
+import { contactSchema } from '@/lib/validations';
+import { isRateLimited } from '@/lib/rate-limit';
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const parsed = contactSchema.safeParse(body);
-
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: 'Invalid data', details: parsed.error.flatten() },
-        { status: 400 }
-      );
+    const ip = req.headers.get('x-forwarded-for') ?? 'unknown';
+    if (isRateLimited(`contact:${ip}`, { maxRequests: 5, windowMs: 60_000 })) {
+      return apiError('Too many requests. Please try again later.', 429);
     }
 
-    const { name, phone, email, message } = parsed.data;
+    const body = await req.json();
+    const validation = validateBody(contactSchema, body);
+    if (!validation.success) return validation.response;
+
+    const { name, phone, email, message } = validation.data;
 
     const lead = await db.lead.create({
       data: {
@@ -36,7 +30,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json(lead, { status: 201 });
   } catch (error) {
-    console.error('[CONTACT_POST]', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return handleApiError('CONTACT_POST', error);
   }
 }

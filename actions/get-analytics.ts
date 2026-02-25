@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { logError } from '@/lib/debug';
 import { type Course, type Purchase } from '@prisma/client';
 
 type PurchaseWithCourse = Purchase & {
@@ -40,7 +41,7 @@ export const getAnalytics = async (userId: string) => {
 
     return { data, totalRevenue, totalSales };
   } catch (error) {
-    console.error('[GET_ANALYTICS]', error instanceof Error ? error.message : error);
+    logError('GET_ANALYTICS', error);
     return { data: [], totalRevenue: 0, totalSales: 0 };
   }
 };

@@ -15,7 +15,11 @@ const NAV_LINKS = [
   { label: 'Webinars', href: '#' }
 ];
 
-export const PublicNavbar = () => {
+type PublicNavbarProps = {
+  supportsDarkTheme?: boolean;
+};
+
+export const PublicNavbar = ({ supportsDarkTheme = false }: PublicNavbarProps) => {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -24,15 +28,35 @@ export const PublicNavbar = () => {
   }, [pathname]);
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-gray-100">
+    <header
+      className={`sticky top-0 z-50 border-b ${
+        supportsDarkTheme
+          ? 'border-gray-100 bg-white dark:border-zinc-800 dark:bg-zinc-950'
+          : 'border-gray-100 bg-white'
+      }`}
+    >
       <div className="max-w-[1400px] mx-auto flex items-center justify-between px-4 md:px-8 py-2">
         <Link href="/" className="flex items-center gap-2 shrink-0">
           <Image src="/edwhere-logo.png" alt="Edwhere" width={44} height={44} className="rounded" />
         </Link>
 
-        <div className="hidden md:flex lg:flex items-center border border-[#E5E5E5] rounded px-3 py-2 w-72 mx-6">
-          <Search className="h-4 w-4 text-[#ACB3C2] mr-2 shrink-0" />
-          <span className="text-sm text-[#ACB3C2] font-inter">Search</span>
+        <div
+          className={`mx-6 hidden w-72 items-center rounded border px-3 py-2 md:flex lg:flex ${
+            supportsDarkTheme ? 'border-[#E5E5E5] dark:border-zinc-800' : 'border-[#E5E5E5]'
+          }`}
+        >
+          <Search
+            className={`mr-2 h-4 w-4 shrink-0 ${
+              supportsDarkTheme ? 'text-[#ACB3C2] dark:text-zinc-500' : 'text-[#ACB3C2]'
+            }`}
+          />
+          <span
+            className={`font-inter text-sm ${
+              supportsDarkTheme ? 'text-[#ACB3C2] dark:text-zinc-500' : 'text-[#ACB3C2]'
+            }`}
+          >
+            Search
+          </span>
         </div>
 
         <nav className="hidden lg:flex items-center gap-0.5">
@@ -41,7 +65,11 @@ export const PublicNavbar = () => {
               key={link.label}
               href={link.href}
               className={`px-3 py-2.5 text-sm font-medium font-inter capitalize transition-colors hover:text-[#F80602] ${
-                pathname === link.href ? 'text-[#F80602]' : 'text-[#1F1F1F]'
+                pathname === link.href
+                  ? 'text-[#F80602]'
+                  : supportsDarkTheme
+                    ? 'text-[#1F1F1F] dark:text-zinc-100'
+                    : 'text-[#1F1F1F]'
               }`}
             >
               {link.label}
@@ -56,11 +84,22 @@ export const PublicNavbar = () => {
         </nav>
 
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
-          <SheetTrigger className="lg:hidden p-2 hover:opacity-75 transition">
-            <Menu className="h-6 w-6 text-[#1F1F1F]" />
+          <SheetTrigger className="p-2 transition hover:opacity-75 lg:hidden">
+            <Menu
+              className={`h-6 w-6 ${supportsDarkTheme ? 'text-[#1F1F1F] dark:text-zinc-100' : 'text-[#1F1F1F]'}`}
+            />
           </SheetTrigger>
-          <SheetContent side="left" className="p-6 bg-white flex flex-col gap-y-6 lg:hidden w-64">
-            <div className="flex items-center justify-center border-b pb-4">
+          <SheetContent
+            side="left"
+            className={`flex w-64 flex-col gap-y-6 p-6 lg:hidden ${
+              supportsDarkTheme ? 'bg-white dark:bg-zinc-950' : 'bg-white'
+            }`}
+          >
+            <div
+              className={`flex items-center justify-center border-b pb-4 ${
+                supportsDarkTheme ? 'border-gray-200 dark:border-zinc-800' : 'border-gray-200'
+              }`}
+            >
               <Image
                 src="/edwhere-logo.png"
                 alt="Edwhere"
@@ -75,13 +114,19 @@ export const PublicNavbar = () => {
                   key={link.label}
                   href={link.href}
                   className={`text-base font-medium font-inter transition-colors hover:text-[#F80602] ${
-                    pathname === link.href ? 'text-[#F80602]' : 'text-[#1F1F1F]'
+                    pathname === link.href
+                      ? 'text-[#F80602]'
+                      : supportsDarkTheme
+                        ? 'text-[#1F1F1F] dark:text-zinc-100'
+                        : 'text-[#1F1F1F]'
                   }`}
                 >
                   {link.label}
                 </Link>
               ))}
-              <div className="border-t pt-4">
+              <div
+                className={`pt-4 ${supportsDarkTheme ? 'border-t border-gray-200 dark:border-zinc-800' : 'border-t border-gray-200'}`}
+              >
                 <Link
                   href="/sign-in"
                   className="w-full inline-flex justify-center px-5 py-2.5 text-sm font-semibold font-inter text-white bg-[#171717] rounded transition-all hover:bg-[#F80602] hover:shadow-md"

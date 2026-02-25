@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { logError } from '@/lib/debug';
 import { SafeProfile } from '@/types';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
@@ -61,7 +62,8 @@ export default async function getSafeProfile() {
     };
 
     return safeProfile;
-  } catch {
+  } catch (error) {
+    logError('GET_SAFE_PROFILE', error);
     return null;
   }
 }
