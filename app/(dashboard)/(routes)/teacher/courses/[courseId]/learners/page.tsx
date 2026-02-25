@@ -6,6 +6,8 @@ import { ArrowLeft, Users } from 'lucide-react';
 import { db } from '@/lib/db';
 import { canEditCourse } from '@/lib/course-auth';
 import { IconBadge } from '@/components/icon-badge';
+import { LearnerRowActions } from '@/app/(dashboard)/(routes)/teacher/courses/[courseId]/learners/_components/learner-row-actions';
+import { Badge } from '@/components/ui/badge';
 
 const CourseLearnersPage = async ({ params }: { params: { courseId: string } }) => {
   const { userId } = await auth();
@@ -41,11 +43,17 @@ const CourseLearnersPage = async ({ params }: { params: { courseId: string } }) 
   // Map purchases to profiles to include enrollment date
   const learners = purchases.map((purchase) => {
     const profile = profiles.find((p) => p.userId === purchase.userId);
+    const sourceValue = (purchase as { onboardingSource?: string }).onboardingSource;
+    const onboardingSource: 'PAID' | 'MANUAL' | 'PAID_MANUAL' | 'UNKNOWN' =
+      sourceValue === 'PAID' || sourceValue === 'MANUAL' || sourceValue === 'PAID_MANUAL'
+        ? sourceValue
+        : 'UNKNOWN';
     return {
       id: purchase.id,
       name: profile?.name || 'Unknown User',
       email: profile?.email || 'No email',
-      enrolledAt: purchase.createdAt
+      enrolledAt: purchase.createdAt,
+      onboardingSource
     };
   });
 
@@ -62,7 +70,7 @@ const CourseLearnersPage = async ({ params }: { params: { courseId: string } }) 
         <div className="flex flex-col gap-y-2">
           <h1 className="text-2xl font-medium">Enrolled Learners</h1>
           <span className="text-sm text-slate-700 dark:text-slate-300">
-            View students who have purchased this course
+            View students who are enrolled in this course
           </span>
         </div>
       </div>
@@ -84,7 +92,9 @@ const CourseLearnersPage = async ({ params }: { params: { courseId: string } }) 
                 <tr>
                   <th className="px-6 py-3 font-medium">Name</th>
                   <th className="px-6 py-3 font-medium">Email</th>
+                  <th className="px-6 py-3 font-medium">Onboarding</th>
                   <th className="px-6 py-3 font-medium">Enrolled Date</th>
+                  <th className="px-6 py-3 font-medium text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -97,12 +107,45 @@ const CourseLearnersPage = async ({ params }: { params: { courseId: string } }) 
                       {learner.name}
                     </td>
                     <td className="px-6 py-4 text-slate-500">{learner.email}</td>
+                    <td className="px-6 py-4">
+                      <Badge
+                        variant={
+                          learner.onboardingSource === 'PAID' ||
+                          learner.onboardingSource === 'PAID_MANUAL'
+                            ? 'default'
+                            : 'secondary'
+                        }
+                        className={
+                          learner.onboardingSource === 'PAID'
+                            ? 'bg-emerald-600'
+                            : learner.onboardingSource === 'PAID_MANUAL'
+                              ? 'bg-amber-600'
+                              : ''
+                        }
+                      >
+                        {learner.onboardingSource === 'PAID'
+                          ? 'Paid'
+                          : learner.onboardingSource === 'PAID_MANUAL'
+                            ? 'Paid Manually'
+                            : learner.onboardingSource === 'MANUAL'
+                              ? 'Manual'
+                              : 'Unknown'}
+                      </Badge>
+                    </td>
                     <td className="px-6 py-4 text-slate-500">
                       {new Intl.DateTimeFormat('en-US', {
                         month: 'short',
                         day: 'numeric',
                         year: 'numeric'
                       }).format(new Date(learner.enrolledAt))}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <LearnerRowActions
+                        courseId={params.courseId}
+                        purchaseId={learner.id}
+                        learnerName={learner.name}
+                        onboardingSource={learner.onboardingSource}
+                      />
                     </td>
                   </tr>
                 ))}

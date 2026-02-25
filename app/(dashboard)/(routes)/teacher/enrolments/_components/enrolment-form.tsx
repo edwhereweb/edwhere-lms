@@ -29,6 +29,7 @@ export const EnrolmentForm = ({ courses }: EnrolmentFormProps) => {
   const router = useRouter();
   const [mode, setMode] = useState<'SINGLE' | 'CSV'>('SINGLE');
   const [selectedCourse, setSelectedCourse] = useState<string>('');
+  const [onboardingSource, setOnboardingSource] = useState<'MANUAL' | 'PAID_MANUAL'>('MANUAL');
 
   // Single Enrolment State
   const [singleEmail, setSingleEmail] = useState('');
@@ -123,7 +124,8 @@ export const EnrolmentForm = ({ courses }: EnrolmentFormProps) => {
       setResults(null);
 
       const response = await axios.post(`/api/admin/courses/${selectedCourse}/enrol`, {
-        students: studentsToProcess
+        students: studentsToProcess,
+        onboardingSource
       });
 
       setResults(response.data);
@@ -195,6 +197,20 @@ export const EnrolmentForm = ({ courses }: EnrolmentFormProps) => {
         >
           Bulk CSV Enrolment
         </button>
+      </div>
+
+      <div className="mb-8 p-6 bg-slate-50 rounded-lg border border-slate-100">
+        <label className="block text-sm font-semibold text-slate-700 mb-2 uppercase tracking-wide">
+          2. Select Onboarding Source
+        </label>
+        <select
+          value={onboardingSource}
+          onChange={(e) => setOnboardingSource(e.target.value as 'MANUAL' | 'PAID_MANUAL')}
+          className="w-full p-3 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-slate-900 outline-none"
+        >
+          <option value="MANUAL">Manual (no payment)</option>
+          <option value="PAID_MANUAL">Paid Manually (outside platform)</option>
+        </select>
       </div>
 
       {/* Input Area */}

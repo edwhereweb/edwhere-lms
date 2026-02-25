@@ -74,3 +74,7 @@ export const profileUpdateSchema = z.object({
   imageUrl: z.string().url().optional(),
   role: z.enum(['ADMIN', 'TEACHER', 'STUDENT']).optional()
 });
+
+export const unenrollLearnerSchema = z.object({
+  force: z.boolean().optional()
+});

@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { clerkClient } from '@clerk/nextjs/server';
 
 const enrolSchema = z.object({
+  onboardingSource: z.enum(['MANUAL', 'PAID_MANUAL']).optional(),
   students: z.array(
     z.object({
       name: z.string(),
@@ -34,7 +35,7 @@ export async function POST(req: Request, { params }: { params: { courseId: strin
     }
 
     const body = await req.json();
-    const { students } = enrolSchema.parse(body);
+    const { students, onboardingSource } = enrolSchema.parse(body);
 
     if (!students || students.length === 0) {
       return new NextResponse('No students provided', { status: 400 });
@@ -124,10 +125,14 @@ export async function POST(req: Request, { params }: { params: { courseId: strin
         }
 
         // 6. Create new purchase to grant access
+        const onboardingData: Record<string, string> = {
+          onboardingSource: onboardingSource ?? 'MANUAL'
+        };
         await db.purchase.create({
           data: {
             userId: targetUserId,
-            courseId: courseId
+            courseId: courseId,
+            ...onboardingData
           }
         });
 

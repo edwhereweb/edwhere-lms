@@ -15,6 +15,12 @@ enum MemberRole {
   MARKETER
 }
 
+enum PurchaseOnboardingSource {
+  MANUAL
+  PAID
+  PAID_MANUAL
+}
+
 model Profile {
   id String @id @default(auto()) @map("_id") @db.ObjectId
   userId String @unique
@@ -172,6 +178,7 @@ model UserProgress {
 model Purchase {
   id          String     @id @default(auto()) @map("_id") @db.ObjectId
   userId      String
+  onboardingSource PurchaseOnboardingSource?
 
   courseId    String     @db.ObjectId
   course      Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
