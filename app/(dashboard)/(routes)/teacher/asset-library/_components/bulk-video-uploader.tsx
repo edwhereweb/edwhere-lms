@@ -73,13 +73,13 @@ function StatusBadge({ status, progress }: { status: UploadStatus; progress: num
     );
   if (status === 'uploading')
     return (
-      <Badge variant="outline" className="text-[10px] text-blue-600 border-blue-300">
+      <Badge variant="outline" className="text-[10px] text-[#EC4130] border-red-300">
         {progress}%
       </Badge>
     );
   if (status === 'processing')
     return (
-      <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-300">
+      <Badge variant="outline" className="text-[10px] text-neutral-600 border-neutral-300">
         Processing…
       </Badge>
     );

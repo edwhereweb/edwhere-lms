@@ -135,7 +135,7 @@ const ChapterIdPage: React.FC<ChapterIdPageProps> = async ({ params }) => {
                 </div>
               </div>
             </div>
-            <span className="text-sm text-slate-700 dark:text-slate-300 ">
+            <span className="text-sm text-neutral-700 dark:text-neutral-300 ">
               Complete all fields {completionText}
             </span>
           </div>

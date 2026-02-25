@@ -32,8 +32,7 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
     where: { id: params.courseId },
     include: {
       chapters: { orderBy: { position: 'asc' } },
-      attachments: { orderBy: { createdAt: 'desc' } },
-      instructors: { include: { profile: true } }
+      attachments: { orderBy: { createdAt: 'desc' } }
     }
   });
 

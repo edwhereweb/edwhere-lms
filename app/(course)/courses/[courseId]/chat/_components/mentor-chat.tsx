@@ -139,7 +139,7 @@ export function MentorChat({
 
   if (!resolvedThreadId) {
     return (
-      <div className="flex items-center justify-center h-full text-slate-400 text-sm">
+      <div className="flex items-center justify-center h-full text-neutral-400 text-sm">
         No thread selected.
       </div>
     );
@@ -148,15 +148,15 @@ export function MentorChat({
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center gap-3 px-5 py-4 border-b bg-white dark:bg-slate-900 shrink-0">
-        <div className="h-9 w-9 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
-          <MessageCircle className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+      <div className="flex items-center gap-3 px-5 py-4 border-b bg-white dark:bg-neutral-900 shrink-0">
+        <div className="h-9 w-9 rounded-full bg-red-50 dark:bg-red-900/40 flex items-center justify-center">
+          <MessageCircle className="h-5 w-5 text-[#F80602] dark:text-red-400" />
         </div>
         <div>
-          <h2 className="font-semibold text-slate-800 dark:text-slate-100 leading-tight">
+          <h2 className="font-semibold text-neutral-800 dark:text-neutral-100 leading-tight">
             Mentor Connect
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-neutral-500 dark:text-neutral-400">
             {isInstructor ? 'Private chat with student' : 'Ask your course mentor anything'}
           </p>
         </div>
@@ -166,11 +166,11 @@ export function MentorChat({
       <div className="flex-1 overflow-y-auto px-4 py-5 space-y-4">
         {loading && (
           <div className="flex justify-center pt-10">
-            <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+            <Loader2 className="h-6 w-6 animate-spin text-neutral-400" />
           </div>
         )}
         {!loading && messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full text-center text-slate-400 gap-3 pt-16">
+          <div className="flex flex-col items-center justify-center h-full text-center text-neutral-400 gap-3 pt-16">
             <MessageCircle className="h-12 w-12 opacity-30" />
             <p className="text-sm font-medium">No messages yet</p>
             <p className="text-xs">
@@ -188,13 +188,13 @@ export function MentorChat({
               <div
                 className={cn(
                   'h-8 w-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white',
-                  mentor ? 'bg-emerald-500' : 'bg-blue-500'
+                  mentor ? 'bg-[#F80602]' : 'bg-[#171717]'
                 )}
               >
                 {msg.author.name.charAt(0).toUpperCase()}
               </div>
               <div className={cn('flex flex-col max-w-[72%]', mine ? 'items-end' : 'items-start')}>
-                <span className="text-[10px] text-slate-400 mb-1 px-1">
+                <span className="text-[10px] text-neutral-400 mb-1 px-1">
                   {mine ? 'You' : msg.author.name}
                   {` · ${ROLE_LABEL[msg.author.role] ?? msg.author.role}`}
                   {` · ${format(new Date(msg.createdAt), 'dd MMM, h:mm a')}`}
@@ -203,10 +203,10 @@ export function MentorChat({
                   className={cn(
                     'rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words',
                     mine
-                      ? 'bg-blue-600 text-white rounded-tr-sm'
+                      ? 'bg-[#F80602] text-white rounded-tr-sm'
                       : mentor
-                        ? 'bg-emerald-50 dark:bg-emerald-900/20 text-slate-800 dark:text-slate-100 border border-emerald-200 dark:border-emerald-800 rounded-tl-sm'
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded-tl-sm'
+                        ? 'bg-red-50 dark:bg-red-900/20 text-neutral-800 dark:text-neutral-100 border border-red-200 dark:border-red-800 rounded-tl-sm'
+                        : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 rounded-tl-sm'
                   )}
                 >
                   {msg.content}
@@ -219,12 +219,12 @@ export function MentorChat({
       </div>
 
       {/* Input */}
-      <div className="border-t px-4 py-3 bg-white dark:bg-slate-900 shrink-0">
+      <div className="border-t px-4 py-3 bg-white dark:bg-neutral-900 shrink-0">
         <div className="flex gap-2 items-end">
           <textarea
             ref={textareaRef}
             rows={1}
-            className="flex-1 resize-none rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-slate-100 max-h-32"
+            className="flex-1 resize-none rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#F80602] dark:text-neutral-100 max-h-32"
             placeholder={
               isInstructor ? 'Reply to student… (Enter to send)' : 'Ask a question… (Enter to send)'
             }
@@ -241,7 +241,7 @@ export function MentorChat({
           <button
             onClick={handleSend}
             disabled={!input.trim() || sending}
-            className="h-10 w-10 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors shrink-0"
+            className="h-10 w-10 rounded-xl bg-[#F80602] hover:bg-[#d63a2b] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors shrink-0"
           >
             {sending ? (
               <Loader2 className="h-4 w-4 text-white animate-spin" />
@@ -250,7 +250,7 @@ export function MentorChat({
             )}
           </button>
         </div>
-        <p className="text-[10px] text-slate-400 mt-1.5 ml-1">
+        <p className="text-[10px] text-neutral-400 mt-1.5 ml-1">
           Enter to send · Shift+Enter for new line
         </p>
       </div>

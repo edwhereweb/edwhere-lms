@@ -48,8 +48,8 @@ export default async function MarketerPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Leads</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <h1 className="text-2xl font-bold text-neutral-800 dark:text-neutral-100">Leads</h1>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
             All enquiries submitted through the contact form and other sources.
           </p>
         </div>
@@ -61,7 +61,7 @@ export default async function MarketerPage() {
         {stats.map((s) => (
           <div
             key={s.label}
-            className="rounded-xl border bg-white dark:bg-slate-900 shadow-sm p-4 flex items-center gap-3"
+            className="rounded-xl border bg-white dark:bg-neutral-900 shadow-sm p-4 flex items-center gap-3"
           >
             <div
               className={`h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0 ${s.color}`}
@@ -69,8 +69,8 @@ export default async function MarketerPage() {
               <s.icon className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">{s.value}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">{s.label}</p>
+              <p className="text-2xl font-bold text-neutral-800 dark:text-neutral-100">{s.value}</p>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">{s.label}</p>
             </div>
           </div>
         ))}

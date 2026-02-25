@@ -48,7 +48,7 @@ export const PdfViewer = ({ url, title = 'PDF Document' }: PdfViewerProps) => {
       className="flex flex-col rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm bg-slate-100 dark:bg-slate-900"
     >
       {/* Toolbar */}
-      <div className="flex items-center justify-between px-4 py-2 bg-rose-600 dark:bg-rose-700 text-white flex-shrink-0">
+      <div className="flex items-center justify-between px-4 py-2 bg-[#F80602] dark:bg-[#F80602] text-white flex-shrink-0">
         <div className="flex items-center gap-2 min-w-0">
           <FileText className="h-4 w-4 flex-shrink-0" />
           <span className="text-sm font-medium truncate">{title}</span>
@@ -60,7 +60,7 @@ export const PdfViewer = ({ url, title = 'PDF Document' }: PdfViewerProps) => {
             size="sm"
             onClick={zoomOut}
             disabled={zoomIndex === 0}
-            className="text-white hover:text-white hover:bg-rose-500 disabled:opacity-40 h-8 px-2"
+            className="text-white hover:text-white hover:bg-[#d63a2b] disabled:opacity-40 h-8 px-2"
             title="Zoom out"
           >
             <ZoomOut className="h-4 w-4" />
@@ -73,7 +73,7 @@ export const PdfViewer = ({ url, title = 'PDF Document' }: PdfViewerProps) => {
             size="sm"
             onClick={zoomIn}
             disabled={zoomIndex === ZOOM_LEVELS.length - 1}
-            className="text-white hover:text-white hover:bg-rose-500 disabled:opacity-40 h-8 px-2"
+            className="text-white hover:text-white hover:bg-[#d63a2b] disabled:opacity-40 h-8 px-2"
             title="Zoom in"
           >
             <ZoomIn className="h-4 w-4" />
@@ -83,7 +83,7 @@ export const PdfViewer = ({ url, title = 'PDF Document' }: PdfViewerProps) => {
             variant="ghost"
             size="sm"
             onClick={toggleFullscreen}
-            className="text-white hover:text-white hover:bg-rose-500 h-8 px-2 ml-1"
+            className="text-white hover:text-white hover:bg-[#d63a2b] h-8 px-2 ml-1"
             title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
           >
             {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}

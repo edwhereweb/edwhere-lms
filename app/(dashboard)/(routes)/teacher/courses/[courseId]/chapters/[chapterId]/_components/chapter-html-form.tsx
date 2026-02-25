@@ -114,8 +114,8 @@ export const ChapterHtmlForm = ({ initialData, courseId, chapterId }: ChapterHtm
 
           {/* Live preview while editing */}
           {isPreviewing && currentHtml && (
-            <div className="rounded-md overflow-hidden border border-sky-200 dark:border-sky-800 bg-white">
-              <div className="px-3 py-1.5 bg-sky-50 dark:bg-sky-900/30 text-xs text-sky-600 dark:text-sky-400 font-medium border-b border-sky-200 dark:border-sky-800">
+            <div className="rounded-md overflow-hidden border border-neutral-200 dark:border-neutral-800 bg-white">
+              <div className="px-3 py-1.5 bg-neutral-50 dark:bg-neutral-900/30 text-xs text-neutral-600 dark:text-neutral-400 font-medium border-b border-neutral-200 dark:border-neutral-800">
                 Live Preview
               </div>
               <HtmlEmbedPreview html={currentHtml} />

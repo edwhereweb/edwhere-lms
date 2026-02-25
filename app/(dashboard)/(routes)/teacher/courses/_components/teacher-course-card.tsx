@@ -28,12 +28,12 @@ export const TeacherCourseCard = ({
   isPublished
 }: TeacherCourseCardProps) => {
   return (
-    <div className="group border rounded-lg p-3 h-full flex flex-col bg-slate-50 dark:bg-slate-900">
-      <div className="relative w-full aspect-video rounded-md overflow-hidden bg-slate-200 dark:bg-slate-800">
+    <div className="group border rounded-lg p-3 h-full flex flex-col bg-neutral-50 dark:bg-neutral-900">
+      <div className="relative w-full aspect-video rounded-md overflow-hidden bg-neutral-200 dark:bg-neutral-800">
         {imageUrl ? (
           <Image fill className="object-cover" alt={title} src={imageUrl} />
         ) : (
-          <div className="flex items-center justify-center h-full w-full text-slate-400">
+          <div className="flex items-center justify-center h-full w-full text-neutral-400">
             No Image
           </div>
         )}
@@ -41,19 +41,19 @@ export const TeacherCourseCard = ({
       <div className="flex flex-col pt-4 flex-grow">
         <div className="flex justify-between items-start gap-x-2">
           <div className="text-lg font-medium line-clamp-2">{title}</div>
-          <Badge className={cn('bg-slate-500', isPublished && 'bg-sky-700')}>
+          <Badge className={cn('bg-neutral-500', isPublished && 'bg-[#F80602]')}>
             {isPublished ? 'Published' : 'Draft'}
           </Badge>
         </div>
         <p className="text-sm text-muted-foreground mt-1">{category || 'Uncategorized'}</p>
-        <div className="my-3 flex items-center gap-x-2 text-sm text-slate-500">
+        <div className="my-3 flex items-center gap-x-2 text-sm text-neutral-500">
           <IconBadge size="sm" icon={BookOpen} />
           <span>
             {chaptersLength} {chaptersLength === 1 ? 'Chapter' : 'Chapters'}
           </span>
         </div>
 
-        <p className="text-md font-medium text-slate-700 dark:text-slate-300 mb-4">
+        <p className="text-md font-medium text-neutral-700 dark:text-neutral-300 mb-4">
           {price !== null ? formatPrice(price) : 'Free'}
         </p>
 

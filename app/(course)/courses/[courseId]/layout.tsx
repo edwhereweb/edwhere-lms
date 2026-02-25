@@ -39,8 +39,7 @@ const CourseLayout = async ({
         orderBy: { position: 'asc' },
         include: {
           chapters: {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            where: { isPublished: true, isLibraryAsset: false } as any,
+            where: { isPublished: true, isLibraryAsset: false },
             include: {
               userProgress: {
                 where: { userId }
@@ -52,12 +51,10 @@ const CourseLayout = async ({
       },
       chapters: {
         where: {
-          /* eslint-disable @typescript-eslint/no-explicit-any */
           isPublished: true,
           moduleId: null,
           isLibraryAsset: false
-        } as any,
-        /* eslint-enable @typescript-eslint/no-explicit-any */
+        },
         include: {
           userProgress: {
             where: {

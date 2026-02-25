@@ -21,7 +21,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 
 /* ─── Design tokens ─── */
-const RED = '#EC4130';
+const RED = '#F80602';
 
 /* ─── Shared nav data ─── */
 
@@ -63,7 +63,7 @@ export default function ContactPage() {
 
       {/* ── Page hero ── */}
       <section className="bg-[#111111] text-white py-14 px-4 text-center">
-        <p className="font-inter text-[#EC4130] text-xs font-semibold uppercase tracking-[0.2em] mb-3">
+        <p className="font-inter text-[#F80602] text-xs font-semibold uppercase tracking-[0.2em] mb-3">
           Get in Touch
         </p>
         <h1 className="font-poppins text-4xl md:text-5xl font-normal tracking-wide">Contact Us</h1>
@@ -92,7 +92,7 @@ export default function ContactPage() {
             </p>
             <a
               href={`tel:${PHONE_RAW}`}
-              className="font-poppins font-semibold text-lg flex items-center gap-2 hover:text-[#EC4130] transition-colors"
+              className="font-poppins font-semibold text-lg flex items-center gap-2 hover:text-[#F80602] transition-colors"
             >
               <Phone className="h-4 w-4" />
               {PHONE_DISPLAY}
@@ -102,8 +102,11 @@ export default function ContactPage() {
           {/* WhatsApp card */}
           <div className="border border-gray-100 rounded-2xl p-6 shadow-sm">
             <div className="flex items-center gap-3 mb-3">
-              <div className="h-10 w-10 rounded-full bg-green-50 flex items-center justify-center">
-                <MessageCircle className="h-5 w-5 text-green-600" />
+              <div
+                className="h-10 w-10 rounded-full flex items-center justify-center"
+                style={{ background: `${RED}1A` }}
+              >
+                <MessageCircle className="h-5 w-5" style={{ color: RED }} />
               </div>
               <h2 className="font-opensans font-semibold text-[#1F1F1F]">WhatsApp</h2>
             </div>
@@ -114,7 +117,7 @@ export default function ContactPage() {
               href={WA_LINK}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-green-500 hover:bg-green-600 text-white font-opensans font-semibold text-sm rounded-xl transition-colors"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#171717] hover:bg-[#F80602] text-white font-opensans font-semibold text-sm rounded-xl transition-colors"
             >
               <MessageCircle className="h-4 w-4" />
               Chat on WhatsApp
@@ -162,8 +165,11 @@ export default function ContactPage() {
           <div className="border border-gray-100 rounded-2xl shadow-sm p-8">
             {submitted ? (
               <div className="flex flex-col items-center justify-center py-16 text-center gap-4">
-                <div className="h-16 w-16 rounded-full bg-green-50 flex items-center justify-center">
-                  <CheckCircle2 className="h-8 w-8 text-green-600" />
+                <div
+                  className="h-16 w-16 rounded-full flex items-center justify-center"
+                  style={{ background: `${RED}1A` }}
+                >
+                  <CheckCircle2 className="h-8 w-8" style={{ color: RED }} />
                 </div>
                 <h2 className="font-poppins text-2xl">Message Received!</h2>
                 <p className="font-inter text-[#888888] max-w-sm leading-7">
@@ -174,7 +180,7 @@ export default function ContactPage() {
                     setSubmitted(false);
                     form.reset();
                   }}
-                  className="mt-2 px-6 py-2.5 border-2 border-[#171717] text-[#171717] font-opensans font-semibold text-sm uppercase tracking-[0.15em] transition-all hover:bg-[#EC4130] hover:border-[#EC4130] hover:text-white"
+                  className="mt-2 px-6 py-2.5 border-2 border-[#171717] text-[#171717] font-opensans font-semibold text-sm uppercase tracking-[0.15em] transition-all hover:bg-[#F80602] hover:border-[#F80602] hover:text-white"
                 >
                   Send Another Message
                 </button>
@@ -200,7 +206,7 @@ export default function ContactPage() {
                             <FormControl>
                               <Input
                                 placeholder="John Doe"
-                                className="font-inter rounded-none border-gray-200 focus-visible:ring-[#EC4130]"
+                                className="font-inter rounded-none border-gray-200 focus-visible:ring-[#F80602]"
                                 {...field}
                               />
                             </FormControl>
@@ -219,7 +225,7 @@ export default function ContactPage() {
                             <FormControl>
                               <Input
                                 placeholder="+91 98765 43210"
-                                className="font-inter rounded-none border-gray-200 focus-visible:ring-[#EC4130]"
+                                className="font-inter rounded-none border-gray-200 focus-visible:ring-[#F80602]"
                                 {...field}
                               />
                             </FormControl>
@@ -241,7 +247,7 @@ export default function ContactPage() {
                             <Input
                               type="email"
                               placeholder="john@example.com"
-                              className="font-inter rounded-none border-gray-200 focus-visible:ring-[#EC4130]"
+                              className="font-inter rounded-none border-gray-200 focus-visible:ring-[#F80602]"
                               {...field}
                             />
                           </FormControl>
@@ -262,7 +268,7 @@ export default function ContactPage() {
                             <Textarea
                               placeholder="Tell us what you'd like to know about our courses, pricing, schedule, etc."
                               rows={5}
-                              className="font-inter rounded-none border-gray-200 focus-visible:ring-[#EC4130] resize-none"
+                              className="font-inter rounded-none border-gray-200 focus-visible:ring-[#F80602] resize-none"
                               {...field}
                             />
                           </FormControl>
@@ -274,7 +280,7 @@ export default function ContactPage() {
                     <button
                       type="submit"
                       disabled={form.formState.isSubmitting}
-                      className="w-full inline-flex items-center justify-center gap-2 px-7 py-3 bg-[#171717] text-white font-opensans font-semibold text-sm uppercase tracking-[0.21em] border-2 border-[#171717] transition-all hover:bg-[#EC4130] hover:border-[#EC4130] hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
+                      className="w-full inline-flex items-center justify-center gap-2 px-7 py-3 bg-[#171717] text-white font-opensans font-semibold text-sm uppercase tracking-[0.21em] border-2 border-[#171717] transition-all hover:bg-[#F80602] hover:border-[#F80602] hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       {form.formState.isSubmitting ? (
                         <>
@@ -303,19 +309,19 @@ export default function ContactPage() {
             <div className="flex flex-wrap items-center justify-center gap-3 text-sm font-inter font-medium text-[#232228]">
               <span>Edwhere Learning &copy; {new Date().getFullYear()}</span>
               <span className="text-gray-300">|</span>
-              <Link href="#" className="transition-colors hover:text-[#EC4130]">
+              <Link href="#" className="transition-colors hover:text-[#F80602]">
                 Privacy policy
               </Link>
               <span className="text-gray-300">|</span>
-              <Link href="#" className="transition-colors hover:text-[#EC4130]">
+              <Link href="#" className="transition-colors hover:text-[#F80602]">
                 Terms of use
               </Link>
               <span className="text-gray-300">|</span>
-              <Link href="/contact" className="transition-colors hover:text-[#EC4130]">
+              <Link href="/contact" className="transition-colors hover:text-[#F80602]">
                 Contact us
               </Link>
               <span className="text-gray-300">|</span>
-              <Link href="#" className="transition-colors hover:text-[#EC4130]">
+              <Link href="#" className="transition-colors hover:text-[#F80602]">
                 Refund policy
               </Link>
             </div>

@@ -147,7 +147,7 @@ export default async function LandingPage() {
               <div className="mt-5">
                 <Link
                   href="/search"
-                  className="inline-flex items-center gap-2 px-7 py-3.5 bg-[#171717] text-white font-poppins font-semibold text-sm uppercase tracking-[0.21em] border-2 border-[#171717] transition-all hover:bg-[#EC4130] hover:border-[#EC4130] hover:shadow-lg"
+                  className="inline-flex items-center gap-2 px-7 py-3.5 bg-[#171717] text-white font-poppins font-semibold text-sm uppercase tracking-[0.21em] border-2 border-[#171717] transition-all hover:bg-[#F80602] hover:border-[#F80602] hover:shadow-lg"
                 >
                   Explore All courses
                 </Link>
@@ -234,7 +234,7 @@ export default async function LandingPage() {
                   </p>
                   <Link
                     href="/search"
-                    className="inline-flex items-center justify-center px-4 py-2.5 bg-[#6715FF] text-white font-opensans font-semibold text-base rounded-xl transition-all self-start hover:bg-[#EC4130] hover:shadow-md"
+                    className="inline-flex items-center justify-center px-4 py-2.5 bg-[#6715FF] text-white font-opensans font-semibold text-base rounded-xl transition-all self-start hover:bg-[#F80602] hover:shadow-md"
                   >
                     Enroll for {course.price}
                   </Link>
@@ -331,7 +331,7 @@ export default async function LandingPage() {
                   href={video.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center px-7 py-3 bg-[#EC4130] text-white font-opensans font-semibold text-sm uppercase tracking-[0.21em] border-2 border-[#EC4130] transition-all hover:bg-white hover:text-[#EC4130] hover:shadow-md"
+                  className="inline-flex items-center justify-center px-7 py-3 bg-[#F80602] text-white font-opensans font-semibold text-sm uppercase tracking-[0.21em] border-2 border-[#F80602] transition-all hover:bg-white hover:text-[#F80602] hover:shadow-md"
                 >
                   Watch now
                 </Link>
@@ -362,7 +362,7 @@ export default async function LandingPage() {
                 </div>
                 <Link
                   href={card.href}
-                  className="inline-flex items-center justify-center px-7 py-3 bg-[#171717] text-white font-opensans font-semibold text-sm uppercase tracking-[0.21em] border-2 border-[#171717] transition-all hover:bg-[#EC4130] hover:border-[#EC4130] hover:shadow-lg"
+                  className="inline-flex items-center justify-center px-7 py-3 bg-[#171717] text-white font-opensans font-semibold text-sm uppercase tracking-[0.21em] border-2 border-[#171717] transition-all hover:bg-[#F80602] hover:border-[#F80602] hover:shadow-lg"
                 >
                   {card.cta}
                 </Link>
@@ -379,19 +379,19 @@ export default async function LandingPage() {
             <div className="flex flex-wrap items-center justify-center gap-3 text-sm font-inter font-medium text-[#232228]">
               <span>Edwhere Learning &copy; {new Date().getFullYear()}</span>
               <span className="text-gray-300">|</span>
-              <Link href="#" className="transition-colors hover:text-[#EC4130]">
+              <Link href="#" className="transition-colors hover:text-[#F80602]">
                 Privacy policy
               </Link>
               <span className="text-gray-300">|</span>
-              <Link href="#" className="transition-colors hover:text-[#EC4130]">
+              <Link href="#" className="transition-colors hover:text-[#F80602]">
                 Terms of use
               </Link>
               <span className="text-gray-300">|</span>
-              <Link href="#" className="transition-colors hover:text-[#EC4130]">
+              <Link href="#" className="transition-colors hover:text-[#F80602]">
                 Contact us
               </Link>
               <span className="text-gray-300">|</span>
-              <Link href="#" className="transition-colors hover:text-[#EC4130]">
+              <Link href="#" className="transition-colors hover:text-[#F80602]">
                 Refund policy
               </Link>
             </div>

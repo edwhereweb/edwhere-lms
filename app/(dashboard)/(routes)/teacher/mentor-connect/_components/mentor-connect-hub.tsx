@@ -83,9 +83,9 @@ export function MentorConnectHub({
   /* ── Course list ─────────────────────────────────────────────────────── */
   if (view.type === 'courses') {
     return (
-      <div className="rounded-xl border bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+      <div className="rounded-xl border bg-white dark:bg-neutral-900 shadow-sm overflow-hidden">
         {courses.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-20 text-center text-slate-400 gap-3">
+          <div className="flex flex-col items-center justify-center py-20 text-center text-neutral-400 gap-3">
             <MessageCircle className="h-12 w-12 opacity-30" />
             <p className="text-sm font-medium">No courses yet</p>
           </div>
@@ -97,11 +97,11 @@ export function MentorConnectHub({
               key={course.id}
               onClick={() => setView({ type: 'students', course })}
               className={cn(
-                'w-full flex items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50',
-                idx !== 0 && 'border-t border-slate-100 dark:border-slate-800'
+                'w-full flex items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/50',
+                idx !== 0 && 'border-t border-neutral-100 dark:border-neutral-800'
               )}
             >
-              <div className="h-11 w-11 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center shrink-0 overflow-hidden">
+              <div className="h-11 w-11 rounded-xl bg-red-50 dark:bg-red-900/30 flex items-center justify-center shrink-0 overflow-hidden">
                 {course.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -110,7 +110,7 @@ export function MentorConnectHub({
                     className="h-full w-full object-cover rounded-xl"
                   />
                 ) : (
-                  <BookOpen className="h-5 w-5 text-emerald-600" />
+                  <BookOpen className="h-5 w-5 text-[#F80602]" />
                 )}
               </div>
               <div className="flex-1 min-w-0">
@@ -119,33 +119,33 @@ export function MentorConnectHub({
                     className={cn(
                       'text-sm font-semibold truncate',
                       hasUnread
-                        ? 'text-slate-900 dark:text-white'
-                        : 'text-slate-700 dark:text-slate-300'
+                        ? 'text-neutral-900 dark:text-white'
+                        : 'text-neutral-700 dark:text-neutral-300'
                     )}
                   >
                     {course.title}
                   </p>
                   {hasUnread && (
-                    <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                    <span className="h-2 w-2 rounded-full bg-[#F80602] animate-pulse shrink-0" />
                   )}
                 </div>
                 {course.lastMessage ? (
-                  <p className="text-xs text-slate-500 truncate mt-0.5">
+                  <p className="text-xs text-neutral-500 truncate mt-0.5">
                     <span className="font-medium">{course.lastMessage.author.name}: </span>
                     {course.lastMessage.content}
                   </p>
                 ) : (
-                  <p className="text-xs text-slate-400 italic mt-0.5">No messages yet</p>
+                  <p className="text-xs text-neutral-400 italic mt-0.5">No messages yet</p>
                 )}
               </div>
               <div className="flex flex-col items-end gap-1 shrink-0">
                 {course.lastMessage && (
-                  <span className="text-[10px] text-slate-400">
+                  <span className="text-[10px] text-neutral-400">
                     {format(new Date(course.lastMessage.createdAt), 'dd MMM')}
                   </span>
                 )}
                 {hasUnread && (
-                  <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-emerald-500 text-[10px] font-bold text-white">
+                  <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-[#F80602] text-[10px] font-bold text-white">
                     {course.unreadCount > 99 ? '99+' : course.unreadCount}
                   </span>
                 )}
@@ -164,21 +164,21 @@ export function MentorConnectHub({
       <div>
         <button
           onClick={() => setView({ type: 'courses' })}
-          className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 mb-4 transition-colors"
+          className="flex items-center gap-1.5 text-sm text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200 mb-4 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" /> All courses
         </button>
-        <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-1">
+        <h2 className="text-lg font-semibold text-neutral-800 dark:text-neutral-100 mb-1">
           {course.title}
         </h2>
-        <p className="text-sm text-slate-500 mb-5">Select a student to view their chat</p>
+        <p className="text-sm text-neutral-500 mb-5">Select a student to view their chat</p>
 
-        <div className="rounded-xl border bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+        <div className="rounded-xl border bg-white dark:bg-neutral-900 shadow-sm overflow-hidden">
           {loadingStudents && (
-            <div className="py-10 text-center text-slate-400 text-sm">Loading…</div>
+            <div className="py-10 text-center text-neutral-400 text-sm">Loading…</div>
           )}
           {!loadingStudents && students.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-16 text-slate-400 gap-3">
+            <div className="flex flex-col items-center justify-center py-16 text-neutral-400 gap-3">
               <MessageCircle className="h-10 w-10 opacity-30" />
               <p className="text-sm">No students have messaged yet.</p>
             </div>
@@ -190,15 +190,15 @@ export function MentorConnectHub({
                 key={student.id}
                 onClick={() => setView({ type: 'chat', course, student })}
                 className={cn(
-                  'w-full flex items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50',
-                  idx !== 0 && 'border-t border-slate-100 dark:border-slate-800'
+                  'w-full flex items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/50',
+                  idx !== 0 && 'border-t border-neutral-100 dark:border-neutral-800'
                 )}
               >
                 {/* Avatar */}
                 <div
                   className={cn(
                     'h-10 w-10 rounded-full flex items-center justify-center shrink-0 text-sm font-bold text-white',
-                    'bg-blue-500'
+                    'bg-[#171717]'
                   )}
                 >
                   {student.imageUrl ? (
@@ -219,33 +219,33 @@ export function MentorConnectHub({
                       className={cn(
                         'text-sm font-semibold truncate',
                         hasUnread
-                          ? 'text-slate-900 dark:text-white'
-                          : 'text-slate-700 dark:text-slate-300'
+                          ? 'text-neutral-900 dark:text-white'
+                          : 'text-neutral-700 dark:text-neutral-300'
                       )}
                     >
                       {student.name}
                     </p>
                     {hasUnread && (
-                      <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                      <span className="h-2 w-2 rounded-full bg-[#F80602] animate-pulse shrink-0" />
                     )}
                   </div>
                   {student.lastMessage ? (
-                    <p className="text-xs text-slate-500 truncate mt-0.5">
+                    <p className="text-xs text-neutral-500 truncate mt-0.5">
                       {student.lastMessage.content}
                     </p>
                   ) : (
-                    <p className="text-xs text-slate-400 italic mt-0.5">No messages</p>
+                    <p className="text-xs text-neutral-400 italic mt-0.5">No messages</p>
                   )}
                 </div>
 
                 <div className="flex flex-col items-end gap-1 shrink-0">
                   {student.lastMessage && (
-                    <span className="text-[10px] text-slate-400">
+                    <span className="text-[10px] text-neutral-400">
                       {format(new Date(student.lastMessage.createdAt), 'dd MMM, h:mm a')}
                     </span>
                   )}
                   {hasUnread && (
-                    <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-emerald-500 text-[10px] font-bold text-white">
+                    <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-[#F80602] text-[10px] font-bold text-white">
                       {student.unreadCount > 99 ? '99+' : student.unreadCount}
                     </span>
                   )}
@@ -261,18 +261,18 @@ export function MentorConnectHub({
   /* ── Private chat ────────────────────────────────────────────────────── */
   const { course, student } = view;
   return (
-    <div className="flex flex-col h-[calc(100vh-200px)] rounded-xl border bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-200px)] rounded-xl border bg-white dark:bg-neutral-900 shadow-sm overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b bg-slate-50 dark:bg-slate-800 shrink-0">
+      <div className="flex items-center gap-3 px-4 py-3 border-b bg-neutral-50 dark:bg-neutral-800 shrink-0">
         <button
           onClick={() => setView({ type: 'students', course })}
-          className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
+          className="flex items-center gap-1.5 text-sm text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" /> {course.title}
         </button>
-        <div className="h-4 w-px bg-slate-200 dark:bg-slate-700" />
-        <User className="h-4 w-4 text-blue-500" />
-        <span className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">
+        <div className="h-4 w-px bg-neutral-200 dark:bg-neutral-700" />
+        <User className="h-4 w-4 text-[#F80602]" />
+        <span className="text-sm font-semibold text-neutral-800 dark:text-neutral-100 truncate">
           {student.name}
         </span>
       </div>
