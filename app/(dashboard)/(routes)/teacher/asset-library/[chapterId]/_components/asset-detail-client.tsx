@@ -17,7 +17,8 @@ import {
   Pencil,
   X,
   Save,
-  ExternalLink
+  ExternalLink,
+  Trash
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -26,6 +27,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Editor } from '@/components/editor';
 import { Preview } from '@/components/preview';
+import { ConfirmModal } from '@/components/modals/confirm-modal';
 import { HtmlEmbedPreview } from '@/components/html-embed-preview';
 import { PdfViewer } from '@/components/pdf-viewer';
 import { Badge } from '@/components/ui/badge';
@@ -338,11 +340,26 @@ export function AssetDetailClient({ chapter: initial }: { chapter: Chapter }) {
   const router = useRouter();
   const [chapter, setChapter] = useState<Chapter>(initial);
   const [isEditing, setIsEditing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleSaved = (updated: Chapter) => {
     setChapter(updated);
     setIsEditing(false);
     router.refresh();
+  };
+
+  const handleDelete = async () => {
+    try {
+      setIsDeleting(true);
+      await axios.delete(`/api/admin/asset-library/${chapter.id}`);
+      toast.success('Asset deleted');
+      router.push('/teacher/asset-library');
+      router.refresh();
+    } catch {
+      toast.error('Something went wrong');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -385,10 +402,23 @@ export function AssetDetailClient({ chapter: initial }: { chapter: Chapter }) {
         </div>
 
         {!isEditing && (
-          <Button onClick={() => setIsEditing(true)} variant="outline" className="shrink-0">
-            <Pencil className="h-4 w-4 mr-2" />
-            Edit
-          </Button>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button onClick={() => setIsEditing(true)} variant="outline">
+              <Pencil className="h-4 w-4 mr-2" />
+              Edit
+            </Button>
+            <ConfirmModal
+              onConfirm={handleDelete}
+              title="Delete this asset?"
+              description="This will permanently remove the asset from your library. This action cannot be undone."
+              confirmText="Delete asset"
+            >
+              <Button variant="destructive" disabled={isDeleting}>
+                <Trash className="h-4 w-4 mr-2" />
+                {isDeleting ? 'Deleting...' : 'Delete'}
+              </Button>
+            </ConfirmModal>
+          </div>
         )}
       </div>
 

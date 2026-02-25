@@ -1,9 +1,15 @@
+import Mux from '@mux/mux-node';
 import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import getSafeProfile from '@/actions/get-safe-profile';
 import { apiError, handleApiError, validateBody } from '@/lib/api-utils';
 import { updateChapterSchema } from '@/lib/validations';
+
+function getMuxVideo() {
+  const { Video } = new Mux(process.env.MUX_TOKEN_ID!, process.env.MUX_TOKEN_SECRET!);
+  return Video;
+}
 
 /** Return true if the current profile has access to the given chapter. */
 async function canAccessChapter(
@@ -91,5 +97,73 @@ export async function PATCH(req: Request, { params }: { params: { chapterId: str
     return NextResponse.json(chapter);
   } catch (error) {
     return handleApiError('ASSET_LIBRARY_CHAPTER_PATCH', error);
+  }
+}
+
+export async function DELETE(_req: Request, { params }: { params: { chapterId: string } }) {
+  try {
+    const { userId } = await auth();
+    if (!userId) return apiError('Unauthorized', 401);
+
+    const profile = await getSafeProfile();
+    const isAdmin = profile?.role === 'ADMIN';
+    const isTeacher = profile?.role === 'TEACHER';
+
+    if (!profile || (!isAdmin && !isTeacher)) return apiError('Forbidden', 403);
+
+    const hasAccess = await canAccessChapter(params.chapterId, userId, profile.id, isAdmin);
+    if (!hasAccess) return apiError('Forbidden', 403);
+
+    const chapter = await db.chapter.findUnique({
+      where: { id: params.chapterId },
+      select: { id: true, courseId: true }
+    });
+
+    if (!chapter) return apiError('Not Found', 404);
+
+    const existingMuxData = await db.muxData.findFirst({
+      where: { chapterId: params.chapterId }
+    });
+
+    if (existingMuxData) {
+      const isUsedElsewhere = await db.muxData.findFirst({
+        where: {
+          assetId: existingMuxData.assetId,
+          chapterId: { not: params.chapterId }
+        }
+      });
+
+      if (!isUsedElsewhere) {
+        try {
+          await getMuxVideo().Assets.del(existingMuxData.assetId);
+        } catch {
+          // Mux asset may already be deleted.
+        }
+      }
+
+      await db.muxData.delete({ where: { id: existingMuxData.id } });
+    }
+
+    const deletedChapter = await db.chapter.delete({
+      where: { id: params.chapterId }
+    });
+
+    const publishedCount = await db.chapter.count({
+      where: {
+        courseId: chapter.courseId,
+        isPublished: true
+      }
+    });
+
+    if (publishedCount === 0) {
+      await db.course.update({
+        where: { id: chapter.courseId },
+        data: { isPublished: false }
+      });
+    }
+
+    return NextResponse.json(deletedChapter);
+  } catch (error) {
+    return handleApiError('ASSET_LIBRARY_CHAPTER_DELETE', error);
   }
 }
