@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { CheckCircle, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ConfirmModal } from '@/components/modals/confirm-modal';
 
 export const PendingCourseActions = ({ courseId }: { courseId: string }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -39,25 +40,32 @@ export const PendingCourseActions = ({ courseId }: { courseId: string }) => {
 
   return (
     <div className="flex items-center gap-x-2">
-      <Button
-        onClick={onApprove}
-        disabled={isLoading}
-        size="sm"
-        className="bg-[#171717] hover:bg-[#F80602] text-white h-8"
+      <ConfirmModal
+        onConfirm={onApprove}
+        title="Approve course?"
+        description="This will publish the course and make it visible to all students."
+        confirmText="Approve"
       >
-        <CheckCircle className="h-4 w-4 mr-1" />
-        Approve
-      </Button>
-      <Button
-        onClick={onReject}
-        disabled={isLoading}
-        variant="destructive"
-        size="sm"
-        className="h-8"
+        <Button
+          disabled={isLoading}
+          size="sm"
+          className="bg-[#171717] hover:bg-[#F80602] text-white h-8"
+        >
+          <CheckCircle className="h-4 w-4 mr-1" />
+          Approve
+        </Button>
+      </ConfirmModal>
+      <ConfirmModal
+        onConfirm={onReject}
+        title="Reject course?"
+        description="This will reject the course submission. The instructor will need to make changes and resubmit."
+        confirmText="Reject"
       >
-        <XCircle className="h-4 w-4 mr-1" />
-        Reject
-      </Button>
+        <Button disabled={isLoading} variant="destructive" size="sm" className="h-8">
+          <XCircle className="h-4 w-4 mr-1" />
+          Reject
+        </Button>
+      </ConfirmModal>
     </div>
   );
 };

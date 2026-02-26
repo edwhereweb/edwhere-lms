@@ -36,6 +36,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
+import { ConfirmModal } from '@/components/modals/confirm-modal';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -331,20 +332,38 @@ export const AssetLibraryPicker = ({
                     </div>
 
                     {/* Import button */}
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      disabled={isSelf || !!importing}
-                      onClick={() => handleImport(item.id)}
-                      className="shrink-0 gap-1.5 text-primary hover:text-primary"
-                    >
-                      {isImporting ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
+                    {isSelf ? (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled
+                        className="shrink-0 gap-1.5 text-primary hover:text-primary"
+                      >
                         <Download className="h-4 w-4" />
-                      )}
-                      {isImporting ? 'Importing…' : isSelf ? 'Current' : 'Import'}
-                    </Button>
+                        Current
+                      </Button>
+                    ) : (
+                      <ConfirmModal
+                        onConfirm={() => handleImport(item.id)}
+                        title="Import asset?"
+                        description="This will replace the current chapter content with the selected asset. This cannot be undone."
+                        confirmText="Import"
+                      >
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          disabled={!!importing}
+                          className="shrink-0 gap-1.5 text-primary hover:text-primary"
+                        >
+                          {isImporting ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Download className="h-4 w-4" />
+                          )}
+                          {isImporting ? 'Importing…' : 'Import'}
+                        </Button>
+                      </ConfirmModal>
+                    )}
                   </div>
                 );
               })}

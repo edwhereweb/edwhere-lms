@@ -24,19 +24,25 @@ export const ChapterActions = ({
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
-  const onClick = async () => {
+  const onPublish = async () => {
     try {
       setIsLoading(true);
-
-      if (isPublished) {
-        await axios.patch(`/api/courses/${courseId}/chapters/${chapterId}/unpublish`);
-        toast.success('Chapter unpublished');
-      } else {
-        await axios.patch(`/api/courses/${courseId}/chapters/${chapterId}/publish`);
-        toast.success('Chapter published');
-      }
+      await axios.patch(`/api/courses/${courseId}/chapters/${chapterId}/publish`);
+      toast.success('Chapter published');
       router.refresh();
-      return;
+    } catch {
+      toast.error('Something went wrong');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onUnpublish = async () => {
+    try {
+      setIsLoading(true);
+      await axios.patch(`/api/courses/${courseId}/chapters/${chapterId}/unpublish`);
+      toast.success('Chapter unpublished');
+      router.refresh();
     } catch {
       toast.error('Something went wrong');
     } finally {
@@ -59,9 +65,21 @@ export const ChapterActions = ({
 
   return (
     <div className="flex items-center gap-x-2">
-      <Button onClick={onClick} disabled={disabled || isLoading} variant="outline" size="sm">
-        {isPublished ? 'Unpublish' : 'Publish'}
-      </Button>
+      {isPublished ? (
+        <ConfirmModal
+          onConfirm={onUnpublish}
+          title="Unpublish chapter?"
+          description="This will make the chapter unavailable to students."
+        >
+          <Button disabled={disabled || isLoading} variant="outline" size="sm">
+            Unpublish
+          </Button>
+        </ConfirmModal>
+      ) : (
+        <Button onClick={onPublish} disabled={disabled || isLoading} variant="outline" size="sm">
+          Publish
+        </Button>
+      )}
       <ConfirmModal onConfirm={onDelete}>
         <Button disabled={isLoading}>
           <Trash className="h-4 w-4" />

@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { Loader2, Upload, UserPlus, CheckCircle2, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { ConfirmModal } from '@/components/modals/confirm-modal';
 
 interface Course {
   id: string;
@@ -320,29 +321,39 @@ export const EnrolmentForm = ({ courses }: EnrolmentFormProps) => {
 
       {/* Action Button */}
       <div className="border-t border-border pt-6">
-        <Button
-          onClick={onSubmit}
-          disabled={
-            isLoading ||
-            !selectedCourse ||
-            (mode === 'CSV' && parsedData.length === 0) ||
-            (mode === 'SINGLE' && !singleEmail)
+        <ConfirmModal
+          onConfirm={onSubmit}
+          title="Confirm enrolment?"
+          description={
+            mode === 'SINGLE'
+              ? 'This will enrol the student into the selected course.'
+              : `This will enrol ${parsedData.length} student(s) into the selected course.`
           }
-          size="lg"
-          className="w-full md:w-auto bg-[#171717] text-white hover:bg-black dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-slate-300 transition-colors"
+          confirmText="Enrol"
         >
-          {isLoading ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Processing...
-            </>
-          ) : (
-            <>
-              <UserPlus className="w-4 h-4 mr-2" />
-              {mode === 'SINGLE' ? 'Enrol Student' : `Enrol ${parsedData.length} Students`}
-            </>
-          )}
-        </Button>
+          <Button
+            disabled={
+              isLoading ||
+              !selectedCourse ||
+              (mode === 'CSV' && parsedData.length === 0) ||
+              (mode === 'SINGLE' && !singleEmail)
+            }
+            size="lg"
+            className="w-full md:w-auto bg-[#171717] text-white hover:bg-black dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-slate-300 transition-colors"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              <>
+                <UserPlus className="w-4 h-4 mr-2" />
+                {mode === 'SINGLE' ? 'Enrol Student' : `Enrol ${parsedData.length} Students`}
+              </>
+            )}
+          </Button>
+        </ConfirmModal>
       </div>
 
       {/* Results Component */}

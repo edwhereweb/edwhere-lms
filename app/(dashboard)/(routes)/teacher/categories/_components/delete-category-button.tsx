@@ -7,6 +7,7 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 
 import { Button } from '@/components/ui/button';
+import { ConfirmModal } from '@/components/modals/confirm-modal';
 
 interface DeleteCategoryButtonProps {
   categoryId: string;
@@ -30,8 +31,14 @@ export const DeleteCategoryButton = ({ categoryId }: DeleteCategoryButtonProps) 
   };
 
   return (
-    <Button onClick={onDelete} disabled={isLoading} variant="destructive" size="sm">
-      <Trash className="h-4 w-4" />
-    </Button>
+    <ConfirmModal
+      onConfirm={onDelete}
+      title="Delete category?"
+      description="This will permanently delete the category. Courses using this category will be unaffected."
+    >
+      <Button disabled={isLoading} variant="destructive" size="sm">
+        <Trash className="h-4 w-4" />
+      </Button>
+    </ConfirmModal>
   );
 };
