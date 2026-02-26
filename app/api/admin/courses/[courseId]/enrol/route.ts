@@ -10,7 +10,8 @@ const enrolSchema = z.object({
     z.object({
       name: z.string(),
       email: z.string().email(),
-      phone: z.string().optional()
+      phone: z.string().optional(),
+      onboardingSource: z.enum(['MANUAL', 'PAID_MANUAL']).optional()
     })
   )
 });
@@ -126,7 +127,7 @@ export async function POST(req: Request, { params }: { params: { courseId: strin
 
         // 6. Create new purchase to grant access
         const onboardingData: Record<string, string> = {
-          onboardingSource: onboardingSource ?? 'MANUAL'
+          onboardingSource: student.onboardingSource ?? onboardingSource ?? 'MANUAL'
         };
         await db.purchase.create({
           data: {

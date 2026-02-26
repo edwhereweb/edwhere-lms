@@ -23,6 +23,7 @@ interface ParsedStudent {
   name: string;
   email: string;
   phone: string;
+  onboardingSource?: 'MANUAL' | 'PAID_MANUAL';
 }
 
 export const EnrolmentForm = ({ courses }: EnrolmentFormProps) => {
@@ -45,6 +46,20 @@ export const EnrolmentForm = ({ courses }: EnrolmentFormProps) => {
     failed: { email: string; reason: string }[];
     alreadyEnrolled: string[];
   } | null>(null);
+
+  const normalizeCsvOnboardingSource = (
+    rawValue: string | undefined
+  ): 'MANUAL' | 'PAID_MANUAL' | undefined => {
+    if (!rawValue) return undefined;
+    const normalized = rawValue
+      .trim()
+      .toLowerCase()
+      .replace(/[\s-]+/g, '_');
+
+    if (normalized === 'manual') return 'MANUAL';
+    if (normalized === 'paid_manually' || normalized === 'paid_manual') return 'PAID_MANUAL';
+    return undefined;
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -87,7 +102,8 @@ export const EnrolmentForm = ({ courses }: EnrolmentFormProps) => {
       return {
         name: cleanColumns[0] || 'N/A',
         email: cleanColumns[1] || 'N/A',
-        phone: cleanColumns[2] || 'N/A'
+        phone: cleanColumns[2] || 'N/A',
+        onboardingSource: normalizeCsvOnboardingSource(cleanColumns[3])
       };
     });
 
@@ -110,7 +126,12 @@ export const EnrolmentForm = ({ courses }: EnrolmentFormProps) => {
         toast.error('Please enter a valid email address');
         return;
       }
-      studentsToProcess.push({ name: 'N/A', email: singleEmail, phone: 'N/A' });
+      studentsToProcess.push({
+        name: 'N/A',
+        email: singleEmail,
+        phone: 'N/A',
+        onboardingSource
+      });
     } else {
       if (parsedData.length === 0) {
         toast.error('Please upload a valid CSV file first');
@@ -125,7 +146,7 @@ export const EnrolmentForm = ({ courses }: EnrolmentFormProps) => {
 
       const response = await axios.post(`/api/admin/courses/${selectedCourse}/enrol`, {
         students: studentsToProcess,
-        onboardingSource
+        ...(mode === 'SINGLE' ? { onboardingSource } : {})
       });
 
       setResults(response.data);
@@ -148,16 +169,16 @@ export const EnrolmentForm = ({ courses }: EnrolmentFormProps) => {
   };
 
   return (
-    <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm font-inter">
+    <div className="bg-card text-card-foreground p-8 rounded-xl border shadow-sm font-inter">
       {/* Course Selection */}
-      <div className="mb-8 p-6 bg-slate-50 rounded-lg border border-slate-100">
-        <label className="block text-sm font-semibold text-slate-700 mb-2 uppercase tracking-wide">
+      <div className="mb-8 p-6 bg-muted/40 rounded-lg border">
+        <label className="block text-sm font-semibold text-foreground mb-2 uppercase tracking-wide">
           1. Select Course to Enrol Students In
         </label>
         <select
           value={selectedCourse}
           onChange={(e) => setSelectedCourse(e.target.value)}
-          className="w-full p-3 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-slate-900 outline-none"
+          className="w-full p-3 border rounded-md bg-background text-foreground focus:ring-2 focus:ring-primary/30 outline-none"
         >
           <option value="">-- Choose a Course --</option>
           {courses.map((course) => (
@@ -178,8 +199,8 @@ export const EnrolmentForm = ({ courses }: EnrolmentFormProps) => {
           }}
           className={`flex-1 py-3 px-4 rounded-md font-medium border-2 transition-all ${
             mode === 'SINGLE'
-              ? 'border-[#171717] bg-[#171717] text-white'
-              : 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300'
+              ? 'border-[#171717] bg-[#171717] text-white dark:border-slate-200 dark:bg-slate-200 dark:text-slate-900'
+              : 'border-border bg-background text-muted-foreground hover:border-primary/40'
           }`}
         >
           Single Enrolment
@@ -191,33 +212,30 @@ export const EnrolmentForm = ({ courses }: EnrolmentFormProps) => {
           }}
           className={`flex-1 py-3 px-4 rounded-md font-medium border-2 transition-all ${
             mode === 'CSV'
-              ? 'border-[#F80602] bg-[#F80602] text-white'
-              : 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300'
+              ? 'border-[#171717] bg-[#171717] text-white dark:border-slate-200 dark:bg-slate-200 dark:text-slate-900'
+              : 'border-border bg-background text-muted-foreground hover:border-primary/40'
           }`}
         >
           Bulk CSV Enrolment
         </button>
       </div>
 
-      <div className="mb-8 p-6 bg-slate-50 rounded-lg border border-slate-100">
-        <label className="block text-sm font-semibold text-slate-700 mb-2 uppercase tracking-wide">
-          2. Select Onboarding Source
-        </label>
-        <select
-          value={onboardingSource}
-          onChange={(e) => setOnboardingSource(e.target.value as 'MANUAL' | 'PAID_MANUAL')}
-          className="w-full p-3 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-slate-900 outline-none"
-        >
-          <option value="MANUAL">Manual (no payment)</option>
-          <option value="PAID_MANUAL">Paid Manually (outside platform)</option>
-        </select>
-      </div>
-
       {/* Input Area */}
       <div className="mb-8">
         {mode === 'SINGLE' ? (
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">
+            <label className="block text-sm font-semibold text-foreground mb-2 uppercase tracking-wide">
+              2. Select Onboarding Source
+            </label>
+            <select
+              value={onboardingSource}
+              onChange={(e) => setOnboardingSource(e.target.value as 'MANUAL' | 'PAID_MANUAL')}
+              className="w-full max-w-md p-3 border rounded-md bg-background text-foreground focus:ring-2 focus:ring-primary/30 outline-none mb-4"
+            >
+              <option value="MANUAL">Manual (no payment)</option>
+              <option value="PAID_MANUAL">Paid Manually (outside platform)</option>
+            </select>
+            <label className="block text-sm font-semibold text-foreground mb-2">
               Student Email Address
             </label>
             <Input
@@ -230,15 +248,16 @@ export const EnrolmentForm = ({ courses }: EnrolmentFormProps) => {
           </div>
         ) : (
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">
+            <label className="block text-sm font-semibold text-foreground mb-2">
               Upload CSV File
             </label>
-            <p className="text-sm text-slate-500 mb-4">
-              File should contain columns: Name, Email, Phone Number (separated by commas or tabs).
+            <p className="text-sm text-muted-foreground mb-4">
+              File should contain columns: Name, Email, Phone Number, Payment Type (optional).
+              Payment Type values: MANUAL or PAID_MANUAL.
             </p>
 
             <div className="flex items-center gap-4">
-              <label className="flex items-center gap-2 cursor-pointer bg-slate-100 hover:bg-slate-200 border border-slate-300 px-4 py-2 rounded-md font-medium text-slate-700 transition">
+              <label className="flex items-center gap-2 cursor-pointer bg-muted hover:bg-muted/80 border border-border px-4 py-2 rounded-md font-medium text-foreground transition">
                 <Upload className="w-4 h-4" />
                 Select File
                 <input
@@ -248,34 +267,46 @@ export const EnrolmentForm = ({ courses }: EnrolmentFormProps) => {
                   onChange={handleFileUpload}
                 />
               </label>
-              <span className="text-sm font-medium text-slate-600">
+              <span className="text-sm font-medium text-muted-foreground">
                 {fileName ? fileName : 'No file selected'}
               </span>
+              <a
+                href="/samples/enrolment-sample.csv"
+                download
+                className="text-sm font-medium text-primary hover:underline"
+              >
+                Download sample CSV
+              </a>
             </div>
 
             {/* Preview Table */}
             {parsedData.length > 0 && (
               <div className="mt-8">
-                <h3 className="text-md font-semibold text-slate-800 mb-3">
+                <h3 className="text-md font-semibold text-foreground mb-3">
                   Preview ({parsedData.length} records found)
                 </h3>
-                <div className="max-h-96 overflow-y-auto border border-slate-200 rounded-lg shadow-sm">
+                <div className="max-h-96 overflow-y-auto border border-border rounded-lg shadow-sm">
                   <table className="w-full text-sm text-left">
-                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase text-xs">
+                    <thead className="bg-muted/40 border-b border-border text-muted-foreground uppercase text-xs">
                       <tr>
                         <th className="px-6 py-3">#</th>
                         <th className="px-6 py-3">Full Name</th>
                         <th className="px-6 py-3">Email</th>
                         <th className="px-6 py-3">Phone</th>
+                        <th className="px-6 py-3">Payment Type</th>
                       </tr>
                     </thead>
                     <tbody>
                       {parsedData.map((row, i) => (
-                        <tr key={i} className="border-b last:border-0 hover:bg-slate-50">
-                          <td className="px-6 py-3 text-slate-500">{i + 1}</td>
-                          <td className="px-6 py-3 font-medium text-slate-900">{row.name}</td>
+                        <tr
+                          key={i}
+                          className="border-b border-border last:border-0 hover:bg-muted/40"
+                        >
+                          <td className="px-6 py-3 text-muted-foreground">{i + 1}</td>
+                          <td className="px-6 py-3 font-medium text-foreground">{row.name}</td>
                           <td className="px-6 py-3">{row.email}</td>
                           <td className="px-6 py-3">{row.phone}</td>
+                          <td className="px-6 py-3">{row.onboardingSource ?? onboardingSource}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -288,7 +319,7 @@ export const EnrolmentForm = ({ courses }: EnrolmentFormProps) => {
       </div>
 
       {/* Action Button */}
-      <div className="border-t border-slate-200 pt-6">
+      <div className="border-t border-border pt-6">
         <Button
           onClick={onSubmit}
           disabled={
@@ -298,7 +329,7 @@ export const EnrolmentForm = ({ courses }: EnrolmentFormProps) => {
             (mode === 'SINGLE' && !singleEmail)
           }
           size="lg"
-          className="w-full md:w-auto bg-[#171717] hover:bg-[#F80602] transition-colors"
+          className="w-full md:w-auto bg-[#171717] text-white hover:bg-black dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-slate-300 transition-colors"
         >
           {isLoading ? (
             <>
@@ -316,31 +347,29 @@ export const EnrolmentForm = ({ courses }: EnrolmentFormProps) => {
 
       {/* Results Component */}
       {results && (
-        <div className="mt-8 p-6 bg-slate-50 rounded-lg border border-slate-200">
-          <h3 className="text-lg font-semibold text-slate-900 mb-4">Enrolment Results</h3>
+        <div className="mt-8 p-6 bg-muted/40 rounded-lg border border-border">
+          <h3 className="text-lg font-semibold text-foreground mb-4">Enrolment Results</h3>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="bg-neutral-50 border border-neutral-200 p-4 rounded-md">
-              <div className="flex items-center gap-2 text-[#171717] font-semibold mb-1">
+            <div className="bg-card border border-border p-4 rounded-md">
+              <div className="flex items-center gap-2 text-foreground font-semibold mb-1">
                 <CheckCircle2 className="w-5 h-5" /> Successful
               </div>
-              <p className="text-2xl font-bold text-[#171717]">{results.successful.length}</p>
+              <p className="text-2xl font-bold text-foreground">{results.successful.length}</p>
             </div>
 
-            <div className="bg-neutral-50 border border-neutral-200 p-4 rounded-md">
-              <div className="flex items-center gap-2 text-neutral-600 font-semibold mb-1">
+            <div className="bg-card border border-border p-4 rounded-md">
+              <div className="flex items-center gap-2 text-muted-foreground font-semibold mb-1">
                 <CheckCircle2 className="w-5 h-5" /> Already Enrolled
               </div>
-              <p className="text-2xl font-bold text-neutral-700">
-                {results.alreadyEnrolled.length}
-              </p>
+              <p className="text-2xl font-bold text-foreground">{results.alreadyEnrolled.length}</p>
             </div>
 
-            <div className="bg-red-50 border border-red-200 p-4 rounded-md">
-              <div className="flex items-center gap-2 text-[#F80602] font-semibold mb-1">
+            <div className="bg-destructive/10 border border-destructive/20 p-4 rounded-md">
+              <div className="flex items-center gap-2 text-destructive font-semibold mb-1">
                 <XCircle className="w-5 h-5" /> Failed
               </div>
-              <p className="text-2xl font-bold text-[#F80602]">{results.failed.length}</p>
+              <p className="text-2xl font-bold text-destructive">{results.failed.length}</p>
             </div>
           </div>
 
@@ -348,16 +377,16 @@ export const EnrolmentForm = ({ courses }: EnrolmentFormProps) => {
           {(results.failed.length > 0 || results.alreadyEnrolled.length > 0) && (
             <div className="space-y-4">
               {results.failed.length > 0 && (
-                <div className="p-4 bg-white border border-red-100 rounded-md">
-                  <h4 className="font-semibold text-[#F80602] mb-2">Failed Enrolments</h4>
-                  <ul className="text-sm list-disc pl-5 text-slate-700 space-y-1">
+                <div className="p-4 bg-card border border-destructive/20 rounded-md">
+                  <h4 className="font-semibold text-destructive mb-2">Failed Enrolments</h4>
+                  <ul className="text-sm list-disc pl-5 text-foreground/90 space-y-1">
                     {results.failed.map((f, i) => (
                       <li key={i}>
                         <span className="font-medium">{f.email}</span>: {f.reason}
                       </li>
                     ))}
                   </ul>
-                  <p className="text-xs text-slate-500 mt-3 pt-3 border-t">
+                  <p className="text-xs text-muted-foreground mt-3 pt-3 border-t border-border">
                     * Failed enrolments are usually because the user has not yet created an account
                     on the platform using that email address.
                   </p>
@@ -365,11 +394,9 @@ export const EnrolmentForm = ({ courses }: EnrolmentFormProps) => {
               )}
 
               {results.alreadyEnrolled.length > 0 && (
-                <div className="p-4 bg-white border border-neutral-200 rounded-md">
-                  <h4 className="font-semibold text-neutral-700 mb-2">
-                    Skipped (Already Enrolled)
-                  </h4>
-                  <ul className="text-sm list-disc pl-5 text-slate-700 space-y-1">
+                <div className="p-4 bg-card border border-border rounded-md">
+                  <h4 className="font-semibold text-foreground mb-2">Skipped (Already Enrolled)</h4>
+                  <ul className="text-sm list-disc pl-5 text-foreground/90 space-y-1">
                     {results.alreadyEnrolled.map((e, i) => (
                       <li key={i}>{e}</li>
                     ))}

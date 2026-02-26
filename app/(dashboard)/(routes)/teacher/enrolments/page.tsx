@@ -25,8 +25,8 @@ export default async function ManualEnrolmentsPage() {
   return (
     <div className="p-6 max-w-5xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold font-poppins text-slate-900">Manual Course Enrolment</h1>
-        <p className="text-slate-600 mt-2 font-inter">
+        <h1 className="text-3xl font-bold font-poppins">Manual Course Enrolment</h1>
+        <p className="text-muted-foreground mt-2 font-inter">
           Enroll students manually into specific courses either one-by-one or via CSV upload.
         </p>
       </div>
