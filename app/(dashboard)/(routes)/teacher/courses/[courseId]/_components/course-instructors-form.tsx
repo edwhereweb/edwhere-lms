@@ -8,6 +8,7 @@ import { UserPlus, X, Users } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { ConfirmModal } from '@/components/modals/confirm-modal';
 
 interface Profile {
   id: string;
@@ -113,15 +114,20 @@ export const CourseInstructorsForm = ({ courseId }: CourseInstructorsFormProps) 
                 <p className="font-medium">{inst.name}</p>
                 <p className="text-xs text-muted-foreground">{inst.email}</p>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={isLoading}
-                onClick={() => onRemove(inst)}
-                className="text-red-500 hover:text-red-700 h-7 w-7 p-0"
+              <ConfirmModal
+                onConfirm={() => onRemove(inst)}
+                title="Remove instructor?"
+                description={`This will remove ${inst.name} as an instructor from this course.`}
               >
-                <X className="h-4 w-4" />
-              </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={isLoading}
+                  className="text-red-500 hover:text-red-700 h-7 w-7 p-0"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </ConfirmModal>
             </li>
           ))}
         </ul>

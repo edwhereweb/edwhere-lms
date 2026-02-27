@@ -9,6 +9,7 @@ import { type Attachment, type Course } from '@prisma/client';
 
 import { Button } from '@/components/ui/button';
 import { FileUpload } from '@/components/file-upload';
+import { ConfirmModal } from '@/components/modals/confirm-modal';
 
 interface AttachmentFormProps {
   initialData: Course & { attachments?: Attachment[] };
@@ -94,13 +95,18 @@ export const AttachmentForm = ({ initialData, courseId }: AttachmentFormProps) =
                     </div>
                   )}
                   {deletingId !== attachment.id && (
-                    <button
-                      title="Delete attachment"
-                      onClick={() => onDelete(attachment.id)}
-                      className="ml-auto hover:opacity-75 transition"
+                    <ConfirmModal
+                      onConfirm={() => onDelete(attachment.id)}
+                      title="Delete attachment?"
+                      description="This will permanently remove the attachment from the course."
                     >
-                      <X className="h-4 w-4" />
-                    </button>
+                      <button
+                        title="Delete attachment"
+                        className="ml-auto hover:opacity-75 transition"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </ConfirmModal>
                   )}
                 </div>
               ))}

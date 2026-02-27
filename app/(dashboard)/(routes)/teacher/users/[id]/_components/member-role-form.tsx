@@ -15,6 +15,7 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from '@/component
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Combobox } from '@/components/ui/combobox';
+import { ConfirmModal } from '@/components/modals/confirm-modal';
 
 interface MemberRoleFormProps {
   initialData: Profile;
@@ -85,7 +86,7 @@ export const MemberRoleForm = ({ initialData, id, isAdmin }: MemberRoleFormProps
       )}
       {isEditing && isAdmin && (
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">
+          <form className="space-y-4 mt-4">
             <FormField
               control={form.control}
               name="role"
@@ -99,9 +100,16 @@ export const MemberRoleForm = ({ initialData, id, isAdmin }: MemberRoleFormProps
               )}
             />
             <div className="flex items-center gap-x-2">
-              <Button disabled={!isValid || isSubmitting} type="submit">
-                Save
-              </Button>
+              <ConfirmModal
+                onConfirm={form.handleSubmit(onSubmit)}
+                title="Change user role?"
+                description="This will change the user's role and may affect their access permissions across the platform."
+                confirmText="Change Role"
+              >
+                <Button disabled={!isValid || isSubmitting} type="button">
+                  Save
+                </Button>
+              </ConfirmModal>
             </div>
           </form>
         </Form>
