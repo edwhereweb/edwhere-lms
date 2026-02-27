@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import { checkCourseEdit } from '@/lib/course-auth';
 import { updateChapterSchema } from '@/lib/validations';
 import { validateBody, apiError, handleApiError } from '@/lib/api-utils';
+import { urlToR2Key, deleteObject } from '@/lib/r2';
 
 function getMuxVideo() {
   const { Video } = new Mux(process.env.MUX_TOKEN_ID!, process.env.MUX_TOKEN_SECRET!);
@@ -30,6 +31,16 @@ export async function DELETE(
 
     if (!chapter) {
       return apiError('Not Found', 404);
+    }
+
+    const chapterPdfUrl = (chapter as { pdfUrl?: string }).pdfUrl;
+    const pdfKey = urlToR2Key(chapterPdfUrl);
+    if (pdfKey) {
+      try {
+        await deleteObject(pdfKey);
+      } catch {
+        // continue — object may already be gone
+      }
     }
 
     if (chapter.videoUrl) {
@@ -90,6 +101,28 @@ export async function PATCH(
     const body = await req.json();
     const validation = validateBody(updateChapterSchema, body);
     if (!validation.success) return validation.response;
+
+    if (validation.data.pdfUrl !== undefined) {
+      const existing = await db.chapter.findUnique({
+        where: {
+          id: params.chapterId,
+          courseId: params.courseId
+        },
+        select: { pdfUrl: true }
+      });
+      const existingPdfUrl = (existing as { pdfUrl?: string } | null)?.pdfUrl ?? null;
+      const newPdfUrl = validation.data.pdfUrl ?? null;
+      if (existingPdfUrl !== newPdfUrl) {
+        const oldKey = urlToR2Key(existingPdfUrl);
+        if (oldKey) {
+          try {
+            await deleteObject(oldKey);
+          } catch {
+            // continue — object may already be gone
+          }
+        }
+      }
+    }
 
     const safeData = {
       ...validation.data,

@@ -10,7 +10,7 @@
 - **Auth**: Clerk (`@clerk/nextjs`)
 - **Payments**: Razorpay (INR currency)
 - **Video**: Mux (upload) + YouTube (embed)
-- **Uploads**: UploadThing
+- **Uploads**: Cloudflare R2 (S3-compatible, presigned URLs). See [docs/R2-IMPLEMENTATION.md](docs/R2-IMPLEMENTATION.md) for architecture, assumptions, and where to change for new upload types or access rules.
 - **UI**: Tailwind CSS + shadcn/ui
 - **Forms**: React Hook Form + Zod
 - **State**: Zustand (client), React Context (theme)
