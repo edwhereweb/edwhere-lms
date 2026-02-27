@@ -69,7 +69,14 @@ const editSchema = z.object({
   youtubeVideoId: z.string().max(50).nullable().optional(),
   content: z.string().max(100000).nullable().optional(),
   htmlContent: z.string().max(500000).nullable().optional(),
-  pdfUrl: z.string().url('Must be a valid URL').nullable().optional()
+  pdfUrl: z
+    .string()
+    .refine(
+      (v) => v.startsWith('/api/files/') || /^https?:\/\//.test(v),
+      'Must be a valid URL or file path'
+    )
+    .nullable()
+    .optional()
 });
 
 type EditValues = z.infer<typeof editSchema>;

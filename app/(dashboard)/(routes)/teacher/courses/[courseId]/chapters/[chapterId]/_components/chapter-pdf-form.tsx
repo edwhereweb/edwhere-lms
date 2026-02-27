@@ -106,7 +106,11 @@ export const ChapterPdfForm = ({ initialData, courseId, chapterId }: ChapterPdfF
 
       {isEditing && (
         <div className="mt-4">
-          <FileUpload endpoint="chapterPdf" onChange={(url) => onUpload(url)} />
+          <FileUpload
+            endpoint="chapterPdf"
+            chapterId={chapterId}
+            onChange={(url) => onUpload(url)}
+          />
           <p className="text-xs text-slate-500 mt-2">
             Upload a PDF document (max 16 MB). Students will be able to view it in-platform.
           </p>

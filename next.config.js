@@ -4,6 +4,7 @@ const nextConfig = {
     images: {
         remotePatterns: [
             {
+                // Legacy UploadThing URLs still stored in DB
                 protocol: "https",
                 hostname: "utfs.io",
             },

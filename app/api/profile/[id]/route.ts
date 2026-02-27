@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { currentProfile } from '@/lib/current-profile';
 import { profileUpdateSchema } from '@/lib/validations';
 import { validateBody, apiError, handleApiError } from '@/lib/api-utils';
+import { urlToR2Key, deleteObject } from '@/lib/r2';
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   try {
@@ -23,6 +24,22 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     const body = await req.json();
     const validation = validateBody(profileUpdateSchema, body);
     if (!validation.success) return validation.response;
+
+    if (validation.data.imageUrl !== undefined) {
+      const existing = await db.profile.findUnique({
+        where: { id: params.id },
+        select: { imageUrl: true }
+      });
+      const oldKey = urlToR2Key(existing?.imageUrl ?? null);
+      const newUrl = validation.data.imageUrl ?? null;
+      if (oldKey && newUrl !== existing?.imageUrl) {
+        try {
+          await deleteObject(oldKey);
+        } catch {
+          // continue — object may already be gone
+        }
+      }
+    }
 
     const { role, ...safeFields } = validation.data;
 
