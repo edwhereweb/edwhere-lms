@@ -19,10 +19,12 @@ export async function GET(req: Request) {
     const q = searchParams.get('q')?.trim() ?? '';
     if (q.length < 1) return NextResponse.json([]);
 
-    // MongoDB does not support mode:"insensitive" on non-fulltext fields.
-    // Fetch a broader set and filter in JS instead.
+    // Filter by role at DB level so we never miss a teacher due to a take() cap.
     const allProfiles = await db.profile.findMany({
-      where: { NOT: { userId } },
+      where: {
+        NOT: { userId },
+        role: { in: ['TEACHER', 'ADMIN'] }
+      },
       select: {
         id: true,
         name: true,
@@ -30,16 +32,12 @@ export async function GET(req: Request) {
         imageUrl: true,
         role: true
       },
-      take: 200
+      orderBy: { name: 'asc' }
     });
 
     const lower = q.toLowerCase();
     const results = allProfiles
-      .filter(
-        (p) =>
-          ['TEACHER', 'ADMIN'].includes(p.role) &&
-          (p.name.toLowerCase().includes(lower) || p.email.toLowerCase().includes(lower))
-      )
+      .filter((p) => p.name.toLowerCase().includes(lower) || p.email.toLowerCase().includes(lower))
       .slice(0, 10);
 
     return NextResponse.json(results);

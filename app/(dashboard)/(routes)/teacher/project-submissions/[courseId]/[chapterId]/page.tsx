@@ -30,45 +30,17 @@ export default async function ProjectSubmissionsChapterPage({ params }: Props) {
   ]);
   if (!course || !chapter) return redirect(`/teacher/project-submissions/${params.courseId}`);
 
-  // Use $runCommandRaw to read status/reviewNote which the stale Prisma client would strip.
-  // Remove this once the dev server is restarted and `npx prisma generate` has been re-run.
-  type RawSubmission = {
-    _id: { $oid: string };
-    userId: string;
-    driveUrl: string;
-    chapterId: { $oid: string };
-    status?: string;
-    reviewNote?: string | null;
-    reviewedAt?: { $date: string } | null;
-    reviewedBy?: string | null;
-    createdAt: { $date: string };
-    updatedAt: { $date: string };
-  };
+  const submissions = await db.projectSubmission.findMany({
+    where: { chapterId: params.chapterId },
+    orderBy: { updatedAt: 'desc' }
+  });
 
-  const rawResult = (await db.$runCommandRaw({
-    find: 'ProjectSubmission',
-    filter: { chapterId: { $oid: params.chapterId } },
-    sort: { updatedAt: -1 }
-  })) as { cursor: { firstBatch: RawSubmission[] } };
-
-  const rawDocs = rawResult?.cursor?.firstBatch ?? [];
-
-  const userIds = rawDocs.map((s) => s.userId);
+  const userIds = submissions.map((s) => s.userId);
   const profiles = await db.profile.findMany({
     where: { userId: { in: userIds } },
     select: { userId: true, name: true, email: true, imageUrl: true }
   });
   const profileMap = Object.fromEntries(profiles.map((p) => [p.userId, p]));
-
-  // Normalise to a plain shape the template can use
-  const submissions = rawDocs.map((s) => ({
-    id: s._id.$oid,
-    userId: s.userId,
-    driveUrl: s.driveUrl,
-    status: s.status ?? 'PENDING',
-    reviewNote: s.reviewNote ?? null,
-    updatedAt: new Date(s.updatedAt.$date)
-  }));
 
   return (
     <div className="p-6 max-w-5xl mx-auto">

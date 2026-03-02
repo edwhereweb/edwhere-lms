@@ -24,37 +24,14 @@ export default async function ProjectSubmissionsCourseePage({ params }: Props) {
 
   const chapters = await db.chapter.findMany({
     where: { courseId: params.courseId, contentType: 'HANDS_ON_PROJECT' },
-    select: { id: true, title: true, isPublished: true },
+    select: {
+      id: true,
+      title: true,
+      isPublished: true,
+      projectSubmissions: { select: { status: true } }
+    },
     orderBy: { position: 'asc' }
   });
-
-  // Use $runCommandRaw to read status counts accurately from MongoDB,
-  // bypassing the stale Prisma client which strips the status field.
-  type AggResult = { _id: { chapterId: string; status: string }; count: number };
-  const aggResult = (await db.$runCommandRaw({
-    aggregate: 'ProjectSubmission',
-    pipeline: [
-      { $match: { chapterId: { $in: chapters.map((c) => ({ $oid: c.id })) } } },
-      {
-        $group: {
-          _id: {
-            chapterId: { $toString: '$chapterId' },
-            status: { $ifNull: ['$status', 'PENDING'] }
-          },
-          count: { $sum: 1 }
-        }
-      }
-    ],
-    cursor: {}
-  })) as { cursor: { firstBatch: AggResult[] } };
-
-  const countMap: Record<string, Record<string, number>> = {};
-  for (const row of aggResult?.cursor?.firstBatch ?? []) {
-    const cid = row._id.chapterId;
-    const st = row._id.status;
-    if (!countMap[cid]) countMap[cid] = {};
-    countMap[cid][st] = row.count;
-  }
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
@@ -79,11 +56,10 @@ export default async function ProjectSubmissionsCourseePage({ params }: Props) {
       ) : (
         <div className="space-y-3">
           {chapters.map((ch) => {
-            const counts = countMap[ch.id] ?? {};
-            const pending = counts['PENDING'] ?? 0;
-            const approved = counts['APPROVED'] ?? 0;
-            const rejected = counts['REJECTED'] ?? 0;
-            const total = pending + approved + rejected;
+            const pending = ch.projectSubmissions.filter((s) => s.status === 'PENDING').length;
+            const approved = ch.projectSubmissions.filter((s) => s.status === 'APPROVED').length;
+            const rejected = ch.projectSubmissions.filter((s) => s.status === 'REJECTED').length;
+            const total = ch.projectSubmissions.length;
 
             return (
               <Link

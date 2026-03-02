@@ -48,43 +48,18 @@ export async function POST(req: Request, { params }: Params) {
     const validation = validateBody(projectSubmissionSchema, body);
     if (!validation.success) return validation.response;
 
-    const driveUrl = validation.data.driveUrl;
-
-    // Check if a submission already exists
-    const existing = await db.projectSubmission.findUnique({
-      where: { userId_chapterId: { userId, chapterId: params.chapterId } }
+    // Upsert — resets review status to PENDING on resubmission
+    const submission = await db.projectSubmission.upsert({
+      where: { userId_chapterId: { userId, chapterId: params.chapterId } },
+      create: { userId, chapterId: params.chapterId, driveUrl: validation.data.driveUrl },
+      update: {
+        driveUrl: validation.data.driveUrl,
+        status: 'PENDING',
+        reviewNote: null,
+        reviewedAt: null,
+        reviewedBy: null
+      }
     });
-
-    let submission;
-    if (existing) {
-      // Use raw MongoDB command to bypass stale Prisma client schema validation.
-      // (Remove this once `npx prisma generate` has been re-run after server restart.)
-      await db.$runCommandRaw({
-        update: 'ProjectSubmission',
-        updates: [
-          {
-            q: { userId, chapterId: { $oid: params.chapterId } },
-            u: {
-              $set: {
-                driveUrl,
-                status: 'PENDING',
-                reviewNote: null,
-                reviewedAt: null,
-                reviewedBy: null,
-                updatedAt: { $date: new Date().toISOString() }
-              }
-            }
-          }
-        ]
-      });
-      submission = await db.projectSubmission.findUnique({
-        where: { userId_chapterId: { userId, chapterId: params.chapterId } }
-      });
-    } else {
-      submission = await db.projectSubmission.create({
-        data: { userId, chapterId: params.chapterId, driveUrl }
-      });
-    }
 
     // Auto-mark chapter as completed on first submission
     await db.userProgress.upsert({
