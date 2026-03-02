@@ -16,7 +16,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
+  DialogTrigger,
+  DialogDescription
 } from '@/components/ui/dialog';
 import {
   Form,
@@ -92,6 +93,7 @@ export function CreateLeadDialog() {
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Create New Lead</DialogTitle>
+          <DialogDescription className="hidden">Create a new lead in the system</DialogDescription>
         </DialogHeader>
 
         <Form {...form}>

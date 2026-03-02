@@ -30,11 +30,24 @@ export const updateChapterSchema = z.object({
   pdfUrl: fileUrl.nullable().optional()
 });
 
+const GOOGLE_DRIVE_REGEX =
+  /^https:\/\/(drive|docs|sheets|slides|forms|sites|jamboard)\.google\.com\/.+/;
+
+export const projectSubmissionSchema = z.object({
+  driveUrl: z
+    .string()
+    .url('Must be a valid URL')
+    .refine(
+      (url) => GOOGLE_DRIVE_REGEX.test(url),
+      'Only Google Drive, Docs, Sheets, Slides, or Forms links are accepted'
+    )
+});
+
 export const createChapterSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200),
   moduleId: z.string().optional().nullable(),
   contentType: z
-    .enum(['VIDEO_MUX', 'VIDEO_YOUTUBE', 'TEXT', 'HTML_EMBED', 'PDF_DOCUMENT'])
+    .enum(['VIDEO_MUX', 'VIDEO_YOUTUBE', 'TEXT', 'HTML_EMBED', 'PDF_DOCUMENT', 'HANDS_ON_PROJECT'])
     .optional()
 });
 

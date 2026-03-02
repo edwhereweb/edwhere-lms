@@ -8,6 +8,7 @@ import {
   Users,
   Tag,
   ClipboardCheck,
+  ClipboardList,
   Megaphone,
   MessageCircle,
   Library,
@@ -29,6 +30,7 @@ const teacherRoutes = [
   { icon: UserPlus, label: 'Manual Enrolment', href: '/teacher/enrolments' },
   { icon: Tag, label: 'Categories', href: '/teacher/categories' },
   { icon: ClipboardCheck, label: 'Pending Approvals', href: '/teacher/pending-approvals' },
+  { icon: ClipboardList, label: 'Student Submissions', href: '/teacher/project-submissions' },
   { icon: Library, label: 'Asset Library', href: '/teacher/asset-library' },
   { icon: MessageCircle, label: 'Mentor Connect', href: '/teacher/mentor-connect' }
 ];

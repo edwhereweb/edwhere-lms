@@ -24,32 +24,37 @@ export async function PATCH(
       })
     ]);
 
-    if (!chapter || !chapter.title || !chapter.description) {
+    if (!chapter || !chapter.title) {
       return apiError('Missing required fields', 400);
     }
 
     const contentType = chapter.contentType ?? 'VIDEO_MUX';
 
-    if (contentType === 'TEXT') {
-      if (!chapter.content) {
-        return apiError('Missing body content', 400);
+    if (contentType === 'HANDS_ON_PROJECT') {
+      const htmlContent = (chapter as unknown as { htmlContent?: string }).htmlContent;
+      if (!chapter.content && !htmlContent) {
+        return apiError('Missing task statement', 400);
+      }
+    } else if (contentType === 'TEXT') {
+      if (!chapter.description || !chapter.content) {
+        return apiError('Missing required fields', 400);
       }
     } else if (contentType === 'VIDEO_YOUTUBE') {
-      if (!chapter.youtubeVideoId) {
-        return apiError('Missing YouTube video', 400);
+      if (!chapter.description || !chapter.youtubeVideoId) {
+        return apiError('Missing required fields', 400);
       }
     } else if (contentType === 'HTML_EMBED') {
-      if (!(chapter as unknown as { htmlContent?: string }).htmlContent) {
-        return apiError('Missing HTML content', 400);
+      if (!chapter.description || !(chapter as unknown as { htmlContent?: string }).htmlContent) {
+        return apiError('Missing required fields', 400);
       }
     } else if (contentType === 'PDF_DOCUMENT') {
-      if (!(chapter as unknown as { pdfUrl?: string }).pdfUrl) {
-        return apiError('Missing PDF document', 400);
+      if (!chapter.description || !(chapter as unknown as { pdfUrl?: string }).pdfUrl) {
+        return apiError('Missing required fields', 400);
       }
     } else {
       // VIDEO_MUX (default / legacy)
       const hasVideo = (!!chapter.videoUrl && !!muxData) || !!chapter.youtubeVideoId;
-      if (!hasVideo) {
+      if (!chapter.description || !hasVideo) {
         return apiError('Missing required fields', 400);
       }
     }

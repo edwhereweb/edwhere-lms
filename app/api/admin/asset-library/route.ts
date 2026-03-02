@@ -87,7 +87,8 @@ export async function GET(req: Request) {
           isPublished: true,
           courseId: true,
           updatedAt: true,
-          course: { select: { id: true, title: true } }
+          course: { select: { id: true, title: true } },
+          muxData: { select: { id: true, playbackId: true } }
         },
         orderBy: { updatedAt: 'desc' },
         skip: (page - 1) * pageSize,

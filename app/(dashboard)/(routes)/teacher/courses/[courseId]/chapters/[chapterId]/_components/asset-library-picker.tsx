@@ -12,6 +12,7 @@ import {
   FileText,
   Code2,
   FileType2,
+  ClipboardList,
   LayoutGrid,
   Loader2,
   ChevronLeft,
@@ -27,7 +28,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
+  DialogTrigger,
+  DialogDescription
 } from '@/components/ui/dialog';
 import {
   Select,
@@ -68,7 +70,8 @@ const TYPE_META: Record<string, { label: string; icon: React.ElementType; color:
   VIDEO_YOUTUBE: { label: 'YouTube', icon: Youtube, color: 'text-red-500' },
   TEXT: { label: 'Text', icon: FileText, color: 'text-green-600' },
   HTML_EMBED: { label: 'HTML Embed', icon: Code2, color: 'text-purple-500' },
-  PDF_DOCUMENT: { label: 'PDF', icon: FileType2, color: 'text-rose-500' }
+  PDF_DOCUMENT: { label: 'PDF', icon: FileType2, color: 'text-rose-500' },
+  HANDS_ON_PROJECT: { label: 'Hands-on Project', icon: ClipboardList, color: 'text-orange-500' }
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -76,7 +79,8 @@ const TYPE_LABELS: Record<string, string> = {
   VIDEO_YOUTUBE: 'YouTube Video',
   TEXT: 'Text',
   HTML_EMBED: 'HTML Embed',
-  PDF_DOCUMENT: 'PDF Document'
+  PDF_DOCUMENT: 'PDF Document',
+  HANDS_ON_PROJECT: 'Hands-on Project'
 };
 
 function TypeBadge({ contentType }: { contentType: string | null }) {
@@ -189,6 +193,9 @@ export const AssetLibraryPicker = ({
     }
   };
 
+  // Hands-on Project chapters have no media asset to import
+  if (currentContentType === 'HANDS_ON_PROJECT') return null;
+
   const handleImport = async (sourceChapterId: string) => {
     setImporting(sourceChapterId);
     try {
@@ -231,10 +238,10 @@ export const AssetLibraryPicker = ({
             <Library className="h-5 w-5 text-primary" />
             Import from Asset Library
           </DialogTitle>
-          <p className="text-sm text-muted-foreground mt-1">
+          <DialogDescription className="mt-1">
             Showing <span className="font-medium text-foreground">{typeLabel}</span> assets from
             your courses. Select one to copy its content into this chapter.
-          </p>
+          </DialogDescription>
         </DialogHeader>
 
         {/* Filters — search + course only */}

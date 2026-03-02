@@ -63,7 +63,7 @@ export async function POST(
     // Create a Mux Direct Upload — client PUTs the video file straight to this URL
     const upload = await muxVideo.Uploads.create({
       cors_origin: '*',
-      new_asset_settings: { playback_policy: 'public' }
+      new_asset_settings: { playback_policy: ['public'] }
     });
 
     // Store muxUploadId so the status poller can track it

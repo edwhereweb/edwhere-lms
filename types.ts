@@ -6,7 +6,8 @@ export type CourseWithProgressWithCategory = Course & {
   progress: number | null;
 };
 
-export type SafeProfile = Omit<Profile, 'createdAt' | 'updatedAt'> & {
+export type SafeProfile = Omit<Profile, 'createdAt' | 'updatedAt' | 'lastLoginAt'> & {
   createdAt: string;
   updatedAt: string;
+  lastLoginAt: string | null;
 };

@@ -5,7 +5,16 @@ import { redirect } from 'next/navigation';
 import { db } from '@/lib/db';
 import Link from 'next/link';
 import { checkCourseEdit } from '@/lib/course-auth';
-import { AlignLeft, ArrowLeft, Code2, Eye, LayoutDashboard, Video, Youtube } from 'lucide-react';
+import {
+  AlignLeft,
+  ArrowLeft,
+  ClipboardList,
+  Code2,
+  Eye,
+  LayoutDashboard,
+  Video,
+  Youtube
+} from 'lucide-react';
 import { IconBadge } from '@/components/icon-badge';
 import { ChapterTitleForm } from './_components/chapter-title-form';
 import { ChapterDescriptionForm } from './_components/chapter-description-form';
@@ -15,6 +24,7 @@ import { ChapterYoutubeForm } from './_components/chapter-youtube-form';
 import { ChapterContentForm } from './_components/chapter-content-form';
 import { ChapterHtmlForm } from './_components/chapter-html-form';
 import { ChapterPdfForm } from './_components/chapter-pdf-form';
+import { ChapterProjectForm } from './_components/chapter-project-form';
 import { Banner } from '@/components/banner';
 import { ChapterActions } from './_components/chapter-actions';
 import { AssetLibraryPicker } from './_components/asset-library-picker';
@@ -54,6 +64,11 @@ const CONTENT_TYPE_LABELS: Record<
     label: 'PDF Document',
     icon: AlignLeft,
     color: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300'
+  },
+  HANDS_ON_PROJECT: {
+    label: 'Hands-on Project',
+    icon: ClipboardList,
+    color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'
   }
 };
 
@@ -98,7 +113,12 @@ const ChapterIdPage: React.FC<ChapterIdPageProps> = async ({ params }) => {
           ]
         : contentType === 'PDF_DOCUMENT'
           ? [chapter.title, chapter.description, (chapter as unknown as { pdfUrl?: string }).pdfUrl]
-          : [chapter.title, chapter.description, hasVideo];
+          : contentType === 'HANDS_ON_PROJECT'
+            ? [
+                chapter.title,
+                chapter.content || (chapter as unknown as { htmlContent?: string }).htmlContent
+              ]
+            : [chapter.title, chapter.description, hasVideo];
 
   const totalFields = requiredFields.length;
   const completedFields = requiredFields.filter(Boolean).length;
@@ -160,11 +180,13 @@ const ChapterIdPage: React.FC<ChapterIdPageProps> = async ({ params }) => {
                 courseId={params.courseId}
                 chapterId={params.chapterId}
               />
-              <ChapterDescriptionForm
-                initialData={chapter}
-                courseId={params.courseId}
-                chapterId={params.chapterId}
-              />
+              {contentType !== 'HANDS_ON_PROJECT' && (
+                <ChapterDescriptionForm
+                  initialData={chapter}
+                  courseId={params.courseId}
+                  chapterId={params.chapterId}
+                />
+              )}
             </div>
             <div className="flex items-center gap-x-2">
               <IconBadge icon={Eye} />
@@ -267,6 +289,24 @@ const ChapterIdPage: React.FC<ChapterIdPageProps> = async ({ params }) => {
                   currentContentType={contentType}
                 />
                 <ChapterPdfForm
+                  initialData={chapter}
+                  courseId={params.courseId}
+                  chapterId={params.chapterId}
+                />
+              </>
+            )}
+
+            {contentType === 'HANDS_ON_PROJECT' && (
+              <>
+                <div className="flex items-center gap-x-2">
+                  <IconBadge icon={ClipboardList} />
+                  <h2 className="text-xl font-medium">Task Statement</h2>
+                </div>
+                <p className="text-sm text-muted-foreground -mt-2">
+                  Write the project task description that students will see when they open this
+                  chapter.
+                </p>
+                <ChapterProjectForm
                   initialData={chapter}
                   courseId={params.courseId}
                   chapterId={params.chapterId}

@@ -13,7 +13,8 @@ import {
   Code2,
   FileType2,
   LayoutGrid,
-  Loader2
+  Loader2,
+  X
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,10 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import axios from 'axios';
+import toast from 'react-hot-toast';
+import { ConfirmModal } from '@/components/modals/confirm-modal';
 
 type Course = { id: string; title: string };
 
@@ -37,6 +42,7 @@ interface AssetItem {
   courseId: string;
   updatedAt: string;
   course: { id: string; title: string };
+  muxData?: { id: string; playbackId: string | null } | null;
 }
 
 interface ApiResponse {
@@ -98,6 +104,8 @@ export const AssetLibraryClient = ({ courses }: AssetLibraryClientProps) => {
   const [pageSize, setPageSize] = useState(10);
   const [data, setData] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Debounce search input
   useEffect(() => {
@@ -143,6 +151,48 @@ export const AssetLibraryClient = ({ courses }: AssetLibraryClientProps) => {
       month: 'short',
       year: 'numeric'
     });
+
+  const handleSelectAll = (checked: boolean) => {
+    if (!data) return;
+    if (checked) {
+      const newSelected = new Set(selected);
+      data.items.forEach((item) => newSelected.add(item.id));
+      setSelected(newSelected);
+    } else {
+      const newSelected = new Set(selected);
+      data.items.forEach((item) => newSelected.delete(item.id));
+      setSelected(newSelected);
+    }
+  };
+
+  const handleSelect = (id: string, checked: boolean) => {
+    const newSelected = new Set(selected);
+    if (checked) {
+      newSelected.add(id);
+    } else {
+      newSelected.delete(id);
+    }
+    setSelected(newSelected);
+  };
+
+  const isAllPageSelected =
+    data && data.items.length > 0 ? data.items.every((item) => selected.has(item.id)) : false;
+
+  const handleDeleteSelected = async () => {
+    try {
+      setIsDeleting(true);
+      const assetIds = Array.from(selected);
+      await axios.post('/api/admin/asset-library/bulk-delete', { assetIds });
+
+      toast.success('Assets deleted successfully');
+      setSelected(new Set());
+      fetchAssets();
+    } catch {
+      toast.error('Something went wrong during deletion');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <div className="space-y-5">
@@ -203,24 +253,46 @@ export const AssetLibraryClient = ({ courses }: AssetLibraryClientProps) => {
         </Select>
       </div>
 
-      {/* Results count */}
-      {data && !loading && (
-        <p className="text-sm text-muted-foreground">
-          Showing{' '}
-          <span className="font-medium text-foreground">
-            {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, data.totalCount)}
-          </span>{' '}
-          of <span className="font-medium text-foreground">{data.totalCount}</span> assets
-        </p>
-      )}
+      {/* Results count & Actions */}
+      <div className="flex items-center justify-between">
+        {data && !loading && (
+          <p className="text-sm text-muted-foreground">
+            Showing{' '}
+            <span className="font-medium text-foreground">
+              {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, data.totalCount)}
+            </span>{' '}
+            of <span className="font-medium text-foreground">{data.totalCount}</span> assets
+          </p>
+        )}
+
+        {selected.size > 0 && (
+          <ConfirmModal onConfirm={handleDeleteSelected}>
+            <Button disabled={isDeleting} variant="destructive" size="sm" className="gap-2">
+              {isDeleting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <X className="h-4 w-4" />
+              )}
+              Delete Selected ({selected.size})
+            </Button>
+          </ConfirmModal>
+        )}
+      </div>
 
       {/* Table */}
       <div className="rounded-lg border overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-muted-foreground">
             <tr>
-              <th className="text-left px-4 py-3 font-medium w-[30%]">Title</th>
-              <th className="text-left px-4 py-3 font-medium w-[25%]">Course</th>
+              <th className="px-4 py-3 w-[4%]">
+                <Checkbox
+                  checked={isAllPageSelected}
+                  onCheckedChange={handleSelectAll}
+                  aria-label="Select all on page"
+                />
+              </th>
+              <th className="text-left py-3 font-medium w-[28%]">Title</th>
+              <th className="text-left px-4 py-3 font-medium w-[23%]">Course</th>
               <th className="text-left px-4 py-3 font-medium w-[16%]">Type</th>
               <th className="text-left px-4 py-3 font-medium w-[10%]">Status</th>
               <th className="text-left px-4 py-3 font-medium w-[13%]">Updated</th>
@@ -230,13 +302,13 @@ export const AssetLibraryClient = ({ courses }: AssetLibraryClientProps) => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} className="py-16 text-center">
+                <td colSpan={7} className="py-16 text-center">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mx-auto" />
                 </td>
               </tr>
             ) : !data || data.items.length === 0 ? (
               <tr>
-                <td colSpan={6} className="py-16 text-center text-muted-foreground">
+                <td colSpan={7} className="py-16 text-center text-muted-foreground">
                   No assets found.
                 </td>
               </tr>
@@ -250,7 +322,23 @@ export const AssetLibraryClient = ({ courses }: AssetLibraryClientProps) => {
                       : 'bg-muted/10 hover:bg-muted/30 transition-colors'
                   }
                 >
-                  <td className="px-4 py-3 font-medium max-w-[240px] truncate">{item.title}</td>
+                  <td className="px-4 py-3">
+                    <Checkbox
+                      checked={selected.has(item.id)}
+                      onCheckedChange={(checked) => handleSelect(item.id, checked === true)}
+                      aria-label={`Select ${item.title}`}
+                    />
+                  </td>
+                  <td className="py-3 font-medium max-w-[240px]">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="truncate flex-1">{item.title}</span>
+                      {item.muxData?.playbackId && (
+                        <div title="Mux Video Ready">
+                          <Video className="h-4 w-4 text-emerald-500 shrink-0" />
+                        </div>
+                      )}
+                    </div>
+                  </td>
                   <td className="px-4 py-3 text-muted-foreground max-w-[200px] truncate">
                     {item.course.title}
                   </td>

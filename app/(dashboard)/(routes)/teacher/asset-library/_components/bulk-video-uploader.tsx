@@ -24,7 +24,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
+  DialogTrigger,
+  DialogDescription
 } from '@/components/ui/dialog';
 import {
   Select,
@@ -115,12 +116,39 @@ export const BulkVideoUploader = ({ courses }: BulkVideoUploaderProps) => {
   // Reset everything when dialog closes
   const handleOpenChange = (val: boolean) => {
     if (!val) {
+      // Fire-and-forget cleanup for any uploads that didn't finish successfully
+      videos.forEach((v) => {
+        if (v.chapterId && v.status !== 'ready') {
+          axios.delete(`/api/courses/${selectedCourseId}/chapters/${v.chapterId}`).catch(() => {});
+        }
+      });
+
       setStep(1);
       setSelectedCourseId('');
       setVideos([]);
       setIsStarting(false);
     }
     setOpen(val);
+  };
+
+  const handleRetry = async (entry: VideoEntry, index: number) => {
+    if (!entry.uploadUrl || !entry.uploadId || !entry.chapterId) return;
+
+    setVideos((prev) =>
+      prev.map((v, i) =>
+        i === index ? { ...v, status: 'uploading', error: undefined, progress: 0 } : v
+      )
+    );
+
+    try {
+      await uploadFileDirect(entry, entry.uploadUrl);
+      await pollUntilReady(entry.uploadId, entry.file);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      setVideos((prev) =>
+        prev.map((v, i) => (i === index ? { ...v, status: 'error', error: msg } : v))
+      );
+    }
   };
 
   // ── File selection ──────────────────────────────────────────────────────────
@@ -247,21 +275,26 @@ export const BulkVideoUploader = ({ courses }: BulkVideoUploaderProps) => {
         }))
       );
 
-      // Upload each file in parallel
-      await Promise.allSettled(
-        uploads.map(async (upload, i) => {
-          const entry = videos[i];
-          try {
-            await uploadFileDirect(entry, upload.uploadUrl);
-            await pollUntilReady(upload.uploadId, entry.file);
-          } catch (err) {
-            const msg = err instanceof Error ? err.message : 'Unknown error';
-            setVideos((prev) =>
-              prev.map((v) => (v.file === entry.file ? { ...v, status: 'error', error: msg } : v))
-            );
-          }
-        })
-      );
+      // Upload each file in chunks to avoid overwhelming the browser/API
+      const CHUNK_SIZE = 5;
+      for (let i = 0; i < uploads.length; i += CHUNK_SIZE) {
+        const chunk = uploads.slice(i, i + CHUNK_SIZE);
+        await Promise.allSettled(
+          chunk.map(async (upload) => {
+            const index = uploads.findIndex((u) => u.uploadId === upload.uploadId);
+            const entry = videos[index];
+            try {
+              await uploadFileDirect(entry, upload.uploadUrl);
+              await pollUntilReady(upload.uploadId, entry.file);
+            } catch (err) {
+              const msg = err instanceof Error ? err.message : 'Unknown error';
+              setVideos((prev) =>
+                prev.map((v) => (v.file === entry.file ? { ...v, status: 'error', error: msg } : v))
+              );
+            }
+          })
+        );
+      }
     } catch {
       toast.error('Failed to start uploads. Please try again.');
       setStep(2);
@@ -296,9 +329,9 @@ export const BulkVideoUploader = ({ courses }: BulkVideoUploaderProps) => {
             <Film className="h-5 w-5 text-primary" />
             Upload Videos to Asset Library
           </DialogTitle>
-          <p className="text-sm text-muted-foreground mt-1">
+          <DialogDescription className="mt-1">
             Videos are uploaded directly to Mux and stored in your Asset Library.
-          </p>
+          </DialogDescription>
           {/* Step indicator */}
           <div className="flex items-center gap-2 mt-3">
             {['Select course', 'Choose videos', 'Upload'].map((label, i) => (
@@ -443,7 +476,20 @@ export const BulkVideoUploader = ({ courses }: BulkVideoUploaderProps) => {
                     </div>
                   )}
 
-                  {v.error && <p className="text-xs text-destructive">{v.error}</p>}
+                  {v.error && (
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs text-destructive truncate">{v.error}</p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleRetry(v, i)}
+                        className="h-7 text-xs px-2 gap-1"
+                      >
+                        <Upload className="h-3 w-3" />
+                        Retry
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ))}
 

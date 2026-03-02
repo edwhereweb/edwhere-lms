@@ -1,6 +1,7 @@
 import { db } from '@/lib/db';
 import { logError } from '@/lib/debug';
 import { SafeProfile } from '@/types';
+import { headers } from 'next/headers';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 
@@ -11,6 +12,11 @@ export default async function getSafeProfile() {
     if (!userId) {
       return redirect('/sign-in');
     }
+
+    const headersList = headers();
+    const forwardedFor = headersList.get('x-forwarded-for');
+    const realIp = headersList.get('x-real-ip');
+    const clientIp = forwardedFor ? forwardedFor.split(',')[0].trim() : realIp || 'Unknown IP';
 
     let currentProfile = await db.profile.findUnique({
       where: {
@@ -24,7 +30,9 @@ export default async function getSafeProfile() {
         email: true,
         role: true,
         createdAt: true,
-        updatedAt: true
+        updatedAt: true,
+        lastLoginAt: true,
+        lastLoginIp: true
       }
     });
 
@@ -40,7 +48,9 @@ export default async function getSafeProfile() {
             clerkUser.username ||
             'User',
           imageUrl: clerkUser.imageUrl ?? '',
-          email: clerkUser.emailAddresses[0]?.emailAddress ?? ''
+          email: clerkUser.emailAddresses[0]?.emailAddress ?? '',
+          lastLoginAt: new Date(),
+          lastLoginIp: clientIp
         },
         select: {
           id: true,
@@ -50,15 +60,45 @@ export default async function getSafeProfile() {
           email: true,
           role: true,
           createdAt: true,
-          updatedAt: true
+          updatedAt: true,
+          lastLoginAt: true,
+          lastLoginIp: true
         }
       });
+    } else {
+      // Logic to conditionally update the login timestamp and IP
+      const anHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+      const isStaleLogin = !currentProfile.lastLoginAt || currentProfile.lastLoginAt < anHourAgo;
+      const isNewIp = currentProfile.lastLoginIp !== clientIp;
+
+      if (isStaleLogin || isNewIp) {
+        currentProfile = await db.profile.update({
+          where: { id: currentProfile.id },
+          data: {
+            lastLoginAt: new Date(),
+            lastLoginIp: clientIp
+          },
+          select: {
+            id: true,
+            userId: true,
+            name: true,
+            imageUrl: true,
+            email: true,
+            role: true,
+            createdAt: true,
+            updatedAt: true,
+            lastLoginAt: true,
+            lastLoginIp: true
+          }
+        });
+      }
     }
 
     const safeProfile: SafeProfile = {
       ...currentProfile,
       createdAt: currentProfile.createdAt.toISOString(),
-      updatedAt: currentProfile.updatedAt.toISOString()
+      updatedAt: currentProfile.updatedAt.toISOString(),
+      lastLoginAt: currentProfile.lastLoginAt ? currentProfile.lastLoginAt.toISOString() : null
     };
 
     return safeProfile;

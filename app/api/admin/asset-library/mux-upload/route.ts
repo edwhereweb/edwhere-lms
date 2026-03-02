@@ -3,7 +3,7 @@ import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { canEditCourse } from '@/lib/course-auth';
-import { apiError, handleApiError } from '@/lib/api-utils';
+import { apiError, handleApiError, validateBody } from '@/lib/api-utils';
 import { z } from 'zod';
 
 function getMuxVideo() {
@@ -16,7 +16,7 @@ const bodySchema = z.object({
   videos: z
     .array(z.object({ title: z.string().min(1).max(200) }))
     .min(1)
-    .max(20)
+    .max(100)
 });
 
 export async function POST(req: Request) {
@@ -25,8 +25,8 @@ export async function POST(req: Request) {
     if (!userId) return apiError('Unauthorized', 401);
 
     const body = await req.json();
-    const parsed = bodySchema.safeParse(body);
-    if (!parsed.success) return apiError('Invalid request body', 400);
+    const parsed = validateBody(bodySchema, body);
+    if (!parsed.success) return parsed.response;
 
     const { courseId, videos } = parsed.data;
 
@@ -40,7 +40,7 @@ export async function POST(req: Request) {
       // Create Mux Direct Upload — client PUTs the file directly to this URL
       const upload = await muxVideo.Uploads.create({
         cors_origin: '*',
-        new_asset_settings: { playback_policy: 'public' }
+        new_asset_settings: { playback_policy: ['public'] }
       });
 
       // Create a library-only chapter (isLibraryAsset keeps it out of the structure)
@@ -76,6 +76,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ uploads: results });
   } catch (error) {
+    console.error('[MUX_UPLOAD_ERROR]', error);
     return handleApiError('ASSET_LIBRARY_MUX_UPLOAD_CREATE', error);
   }
 }

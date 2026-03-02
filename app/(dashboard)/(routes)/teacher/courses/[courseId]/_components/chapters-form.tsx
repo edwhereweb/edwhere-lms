@@ -4,7 +4,16 @@ import * as z from 'zod';
 import axios from 'axios';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { Loader2, PlusCircle, Video, Youtube, FileText, CheckCircle2, Code2 } from 'lucide-react';
+import {
+  Loader2,
+  PlusCircle,
+  Video,
+  Youtube,
+  FileText,
+  CheckCircle2,
+  Code2,
+  ClipboardList
+} from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
@@ -16,7 +25,13 @@ import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { ChaptersList } from './chapters-list';
 
-type ContentType = 'VIDEO_MUX' | 'VIDEO_YOUTUBE' | 'TEXT' | 'HTML_EMBED' | 'PDF_DOCUMENT';
+type ContentType =
+  | 'VIDEO_MUX'
+  | 'VIDEO_YOUTUBE'
+  | 'TEXT'
+  | 'HTML_EMBED'
+  | 'PDF_DOCUMENT'
+  | 'HANDS_ON_PROJECT';
 
 interface ContentTypeOption {
   value: ContentType;
@@ -56,6 +71,13 @@ const CONTENT_TYPES: ContentTypeOption[] = [
     description:
       'Upload a PDF file (max 16 MB). Students view it in-platform with zoom and fullscreen.',
     icon: FileText
+  },
+  {
+    value: 'HANDS_ON_PROJECT',
+    label: 'Hands-on Project',
+    description:
+      'Give students a task statement. They submit their work as a Google Drive / Docs / Sheets link.',
+    icon: ClipboardList
   }
 ];
 
