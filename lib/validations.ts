@@ -16,7 +16,16 @@ export const updateCourseSchema = z.object({
   description: z.string().max(5000).optional(),
   imageUrl: fileUrl.optional(),
   price: z.number().min(0).optional(),
-  categoryId: z.string().optional()
+  categoryId: z.string().optional(),
+  isWebVisible: z.boolean().optional(),
+  slug: z
+    .string()
+    .min(1)
+    .max(200)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug must be lowercase letters, numbers, and hyphens')
+    .optional(),
+  metaTitle: z.string().max(200).optional(),
+  metaDescription: z.string().max(500).optional()
 });
 
 export const updateChapterSchema = z.object({
@@ -27,6 +36,7 @@ export const updateChapterSchema = z.object({
   youtubeVideoId: z.string().max(50).nullable().optional(),
   content: z.string().max(100000).nullable().optional(),
   htmlContent: z.string().max(500000).nullable().optional(),
+  gamifiedFlag: z.string().max(200).nullable().optional(),
   pdfUrl: fileUrl.nullable().optional()
 });
 
@@ -47,7 +57,15 @@ export const createChapterSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200),
   moduleId: z.string().optional().nullable(),
   contentType: z
-    .enum(['VIDEO_MUX', 'VIDEO_YOUTUBE', 'TEXT', 'HTML_EMBED', 'PDF_DOCUMENT', 'HANDS_ON_PROJECT'])
+    .enum([
+      'VIDEO_MUX',
+      'VIDEO_YOUTUBE',
+      'TEXT',
+      'HTML_EMBED',
+      'PDF_DOCUMENT',
+      'HANDS_ON_PROJECT',
+      'EVALUATION'
+    ])
     .optional()
 });
 
@@ -63,6 +81,10 @@ export const reorderChaptersSchema = z.object({
 
 export const progressSchema = z.object({
   isCompleted: z.boolean()
+});
+
+export const submitFlagSchema = z.object({
+  flag: z.string().min(1, 'Flag is required')
 });
 
 export const attachmentSchema = z.object({
@@ -120,6 +142,29 @@ export const reorderModulesSchema = z.object({
   )
 });
 
+// ── Quiz / Evaluation schemas ─────────────────────────────────────────────
+
+export const createQuizSchema = z.object({
+  isGraded: z.boolean().optional(),
+  timeLimit: z.number().int().min(1, 'Timer must be at least 1 minute').nullable().optional(),
+  randomize: z.boolean().optional(),
+  maxAttempts: z.number().int().min(1, 'Attempts must be at least 1').nullable().optional(),
+  maxTabSwitches: z.number().int().min(0).nullable().optional()
+});
+
+export const createQuestionSchema = z.object({
+  body: z.string().min(1, 'Question text is required').max(10000),
+  imageUrl: fileUrl.nullable().optional(),
+  options: z
+    .array(z.string().min(1, 'Option text cannot be empty'))
+    .min(2, 'Must provide at least 2 options')
+    .max(10, 'Cannot exceed 10 options'),
+  correctOptions: z
+    .array(z.number().int().min(0))
+    .min(1, 'At least one correct option is required'),
+  isMultipleChoice: z.boolean().optional()
+});
+
 // ── Contact / Lead schemas ──────────────────────────────────────────────
 
 export const contactSchema = z.object({
@@ -166,7 +211,13 @@ export const markReadSchema = z.object({
 
 // ── Upload (R2 presign) schemas ─────────────────────────────────────────
 
-const UPLOAD_TYPE = z.enum(['profileImage', 'courseImage', 'courseAttachment', 'chapterPdf']);
+const UPLOAD_TYPE = z.enum([
+  'profileImage',
+  'courseImage',
+  'courseAttachment',
+  'chapterPdf',
+  'questionImage'
+]);
 export type UploadType = z.infer<typeof UPLOAD_TYPE>;
 
 const IMAGE_CONTENT_TYPES = [
@@ -192,14 +243,16 @@ export const ALLOWED_CONTENT_TYPES: Record<UploadType, readonly string[]> = {
   profileImage: IMAGE_CONTENT_TYPES,
   courseImage: IMAGE_CONTENT_TYPES,
   courseAttachment: ATTACHMENT_CONTENT_TYPES,
-  chapterPdf: ['application/pdf']
+  chapterPdf: ['application/pdf'],
+  questionImage: IMAGE_CONTENT_TYPES
 };
 
 export const MAX_FILE_SIZES: Record<UploadType, number> = {
   profileImage: 4 * 1024 * 1024,
   courseImage: 4 * 1024 * 1024,
   courseAttachment: 16 * 1024 * 1024,
-  chapterPdf: 16 * 1024 * 1024
+  chapterPdf: 16 * 1024 * 1024,
+  questionImage: 250 * 1024 // 250KB limit as requested
 };
 
 export const presignSchema = z.object({

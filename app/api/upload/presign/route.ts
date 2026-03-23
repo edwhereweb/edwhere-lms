@@ -30,6 +30,8 @@ function buildKey(
       return `private/attachments/${ids.courseId}/${uuid}-${safe}${ext}`;
     case 'chapterPdf':
       return `private/chapter-pdfs/${ids.chapterId}/${uuid}.pdf`;
+    case 'questionImage':
+      return `private/question-images/${ids.courseId}/${uuid}${ext}`;
   }
 }
 
@@ -75,7 +77,10 @@ export async function POST(req: Request) {
       chapterId
     } = validation.data;
 
-    if ((type === 'courseImage' || type === 'courseAttachment') && !courseId) {
+    if (
+      (type === 'courseImage' || type === 'courseAttachment' || type === 'questionImage') &&
+      !courseId
+    ) {
       return apiError('courseId is required for this upload type', 400);
     }
     if (type === 'chapterPdf' && !chapterId) {

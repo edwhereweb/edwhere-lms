@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 
+import { LearnerReportDrawer } from './learner-report-drawer';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -27,6 +28,7 @@ import {
 interface LearnerRowActionsProps {
   courseId: string;
   purchaseId: string;
+  studentId: string;
   learnerName: string;
   onboardingSource: 'PAID' | 'MANUAL' | 'PAID_MANUAL' | 'UNKNOWN';
 }
@@ -34,6 +36,7 @@ interface LearnerRowActionsProps {
 export const LearnerRowActions = ({
   courseId,
   purchaseId,
+  studentId,
   learnerName,
   onboardingSource
 }: LearnerRowActionsProps) => {
@@ -41,6 +44,7 @@ export const LearnerRowActions = ({
   const [isLoading, setIsLoading] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [doubleConfirmOpen, setDoubleConfirmOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
 
   const needsDoubleConfirmation = onboardingSource !== 'MANUAL';
 
@@ -74,6 +78,15 @@ export const LearnerRowActions = ({
           <DropdownMenuItem
             onSelect={(event) => {
               event.preventDefault();
+              setReportOpen(true);
+            }}
+          >
+            <MoreHorizontal className="h-4 w-4 mr-2" />
+            View Report
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={(event) => {
+              event.preventDefault();
               setConfirmOpen(true);
             }}
             className="text-rose-600 focus:text-rose-600"
@@ -83,6 +96,14 @@ export const LearnerRowActions = ({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <LearnerReportDrawer
+        isOpen={reportOpen}
+        onClose={() => setReportOpen(false)}
+        courseId={courseId}
+        studentId={studentId}
+        learnerName={learnerName}
+      />
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>

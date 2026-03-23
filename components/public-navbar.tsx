@@ -9,7 +9,7 @@ import { usePathname } from 'next/navigation';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 const NAV_LINKS = [
-  { label: 'Courses', href: '/search' },
+  { label: 'Courses', href: '/courses' },
   { label: 'About Us', href: 'https://edwhere.com/about-us/' },
   { label: 'Contact Us', href: '/contact' },
   { label: 'Webinars', href: '#' }

@@ -24,6 +24,19 @@ export async function PATCH(req: Request, { params }: { params: { courseId: stri
     const validation = validateBody(updateCourseSchema, body);
     if (!validation.success) return validation.response;
 
+    // Enforce slug uniqueness at app level (MongoDB can't do unique on nullable)
+    if (validation.data.slug) {
+      const existing = await db.course.findFirst({
+        where: { slug: validation.data.slug, NOT: { id: courseId } }
+      });
+      if (existing) {
+        return new NextResponse(
+          JSON.stringify({ error: 'This slug is already in use by another course' }),
+          { status: 409, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     if (validation.data.imageUrl !== undefined) {
       const existing = await db.course.findUnique({
         where: { id: courseId },

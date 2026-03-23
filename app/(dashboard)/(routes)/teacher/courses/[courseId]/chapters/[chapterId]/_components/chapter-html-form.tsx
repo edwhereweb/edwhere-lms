@@ -21,7 +21,8 @@ interface ChapterHtmlFormProps {
 }
 
 const formSchema = z.object({
-  htmlContent: z.string().min(1, 'HTML content is required')
+  htmlContent: z.string().min(1, 'HTML content is required'),
+  gamifiedFlag: z.string().optional()
 });
 
 export const ChapterHtmlForm = ({ initialData, courseId, chapterId }: ChapterHtmlFormProps) => {
@@ -37,7 +38,8 @@ export const ChapterHtmlForm = ({ initialData, courseId, chapterId }: ChapterHtm
   } = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      htmlContent: (initialData as unknown as { htmlContent?: string }).htmlContent ?? ''
+      htmlContent: (initialData as unknown as { htmlContent?: string }).htmlContent ?? '',
+      gamifiedFlag: (initialData as unknown as { gamifiedFlag?: string }).gamifiedFlag ?? ''
     }
   });
 
@@ -61,7 +63,7 @@ export const ChapterHtmlForm = ({ initialData, courseId, chapterId }: ChapterHtm
       <div className="font-medium flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Code2 className="h-4 w-4" />
-          HTML Embed
+          Gamified lesson
         </div>
         <div className="flex items-center gap-2">
           {isEditing && (
@@ -109,6 +111,26 @@ export const ChapterHtmlForm = ({ initialData, courseId, chapterId }: ChapterHtm
             name="htmlContent"
             render={({ field }) => (
               <HtmlCodeEditor value={field.value} onChange={field.onChange} height="380px" />
+            )}
+          />
+
+          <Controller
+            control={control}
+            name="gamifiedFlag"
+            render={({ field }) => (
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Correct Flag Answer (Optional)
+                </label>
+                <input
+                  {...field}
+                  placeholder="e.g. CTF{found_the_secret}"
+                  className="w-full flex h-10 px-3 py-2 text-sm border rounded-md disabled:opacity-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600"
+                />
+                <p className="text-xs text-slate-500">
+                  Students will need to submit this exact flag to mark the chapter as complete.
+                </p>
+              </div>
             )}
           />
 

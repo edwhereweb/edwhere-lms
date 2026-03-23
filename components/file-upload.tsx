@@ -5,7 +5,7 @@ import { useDropzone } from 'react-dropzone';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { Upload, Loader2, FileIcon } from 'lucide-react';
-import type { UploadType } from '@/lib/validations';
+import { type UploadType, MAX_FILE_SIZES } from '@/lib/validations';
 
 interface FileUploadProps {
   onChange: (url?: string, originalFilename?: string) => void;
@@ -23,6 +23,15 @@ export const FileUpload = ({ onChange, endpoint, courseId, chapterId }: FileUplo
     async (acceptedFiles: File[]) => {
       const file = acceptedFiles[0];
       if (!file) return;
+
+      const maxSize = MAX_FILE_SIZES[endpoint];
+      if (file.size > maxSize) {
+        const mb = (maxSize / (1024 * 1024)).toFixed(2);
+        toast.error(
+          `File size must be strictly under ${maxSize < 1024 * 1024 ? maxSize / 1024 + 'KB' : mb + 'MB'}.`
+        );
+        return;
+      }
 
       setSelectedFile(file);
       setIsUploading(true);

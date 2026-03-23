@@ -13,8 +13,10 @@ import {
   Eye,
   LayoutDashboard,
   Video,
-  Youtube
+  Youtube,
+  BarChart
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { IconBadge } from '@/components/icon-badge';
 import { ChapterTitleForm } from './_components/chapter-title-form';
 import { ChapterDescriptionForm } from './_components/chapter-description-form';
@@ -23,6 +25,8 @@ import { ChapterVideoForm } from './_components/chapter-video-form';
 import { ChapterYoutubeForm } from './_components/chapter-youtube-form';
 import { ChapterContentForm } from './_components/chapter-content-form';
 import { ChapterHtmlForm } from './_components/chapter-html-form';
+import { ChapterEvaluationForm } from './_components/chapter-evaluation-form';
+import { ChapterQuestionsForm } from './_components/chapter-questions-form';
 import { ChapterPdfForm } from './_components/chapter-pdf-form';
 import { ChapterProjectForm } from './_components/chapter-project-form';
 import { Banner } from '@/components/banner';
@@ -88,7 +92,15 @@ const ChapterIdPage: React.FC<ChapterIdPageProps> = async ({ params }) => {
       courseId: params.courseId
     },
     include: {
-      muxData: true
+      muxData: true,
+      quiz: {
+        include: {
+          questions: { orderBy: { createdAt: 'asc' } }
+        }
+      }
+    } as unknown as {
+      muxData: true;
+      quiz: { include: { questions: { orderBy: { createdAt: 'asc' } } } };
     }
   });
 
@@ -118,7 +130,16 @@ const ChapterIdPage: React.FC<ChapterIdPageProps> = async ({ params }) => {
                 chapter.title,
                 chapter.content || (chapter as unknown as { htmlContent?: string }).htmlContent
               ]
-            : [chapter.title, chapter.description, hasVideo];
+            : contentType === 'EVALUATION'
+              ? [
+                  chapter.title,
+                  chapter.description,
+                  (chapter as unknown as { quiz?: { questions: unknown[] } }).quiz?.questions
+                    ?.length
+                    ? true
+                    : false
+                ]
+              : [chapter.title, chapter.description, hasVideo];
 
   const totalFields = requiredFields.length;
   const completedFields = requiredFields.filter(Boolean).length;
@@ -255,6 +276,46 @@ const ChapterIdPage: React.FC<ChapterIdPageProps> = async ({ params }) => {
                   courseId={params.courseId}
                   chapterId={params.chapterId}
                 />
+              </>
+            )}
+
+            {chapter.contentType === 'EVALUATION' && (
+              <>
+                <ChapterEvaluationForm
+                  initialData={
+                    chapter as unknown as { quiz: Record<string, unknown> } & typeof chapter
+                  }
+                  courseId={params.courseId}
+                  chapterId={params.chapterId}
+                />
+                {(chapter as unknown as { quiz?: { questions: unknown[] } }).quiz && (
+                  <div className="space-y-6">
+                    <ChapterQuestionsForm
+                      courseId={params.courseId}
+                      chapterId={params.chapterId}
+                      initialQuestions={
+                        (chapter as unknown as { quiz?: { questions: unknown[] } }).quiz
+                          ?.questions || []
+                      }
+                    />
+                    <div>
+                      <div className="flex items-center gap-x-2 mb-4 mt-8">
+                        <IconBadge icon={BarChart} />
+                        <h2 className="text-xl font-medium">Submissions & Analytics</h2>
+                      </div>
+                      <Link
+                        href={`/teacher/courses/${params.courseId}/chapters/${params.chapterId}/submissions`}
+                      >
+                        <Button
+                          variant="outline"
+                          className="w-full text-indigo-700 border-indigo-200 hover:bg-indigo-50"
+                        >
+                          View Class Performance
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                )}
               </>
             )}
 

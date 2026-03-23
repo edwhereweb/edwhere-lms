@@ -1,7 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { CircleDollarSign, File, LayoutDashboard, Users, ArrowLeft } from 'lucide-react';
+import { CircleDollarSign, File, LayoutDashboard, Users, ArrowLeft, Globe } from 'lucide-react';
 
 import { db } from '@/lib/db';
 import { canEditCourse } from '@/lib/course-auth';
@@ -12,10 +12,12 @@ import { TitleForm } from '../_components/title-form';
 import { DescriptionForm } from '../_components/description-form';
 import { ImageForm } from '../_components/image-form';
 import { CategoryForm } from '../_components/category-form';
+import { WebVisibilityForm } from '../_components/web-visibility-form';
 import { PriceForm } from '../_components/price-form';
 import { AttachmentForm } from '../_components/attachment-form';
 import { Actions } from '../_components/actions';
 import { CourseInstructorsForm } from '../_components/course-instructors-form';
+import { SeoForm } from '../_components/seo-form';
 
 const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
   const { userId } = await auth();
@@ -114,6 +116,7 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
               courseId={course.id}
               options={categories.map((c) => ({ label: c.name, value: c.id }))}
             />
+            <WebVisibilityForm initialData={course} courseId={course.id} />
 
             {/* Instructors — visible to owner and admin only */}
             {(isOwner || isAdmin) && (
@@ -125,6 +128,13 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
                 <CourseInstructorsForm courseId={course.id} />
               </>
             )}
+
+            {/* SEO & URL Settings */}
+            <div className="flex items-center gap-x-2 mt-6">
+              <IconBadge icon={Globe} />
+              <h2 className="text-xl">SEO & URL</h2>
+            </div>
+            <SeoForm initialData={course} courseId={course.id} />
           </div>
           <div className="space-y-6">
             <div>

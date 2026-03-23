@@ -26,7 +26,7 @@ async function authorizePrivateAccess(
 
   if (!category || !resourceId) return apiError('Invalid path', 400);
 
-  if (category === 'attachments') {
+  if (category === 'attachments' || category === 'question-images') {
     const allowed = await hasAccessToCourse(userId, resourceId);
     if (!allowed) return apiError('Forbidden', 403);
     return null;

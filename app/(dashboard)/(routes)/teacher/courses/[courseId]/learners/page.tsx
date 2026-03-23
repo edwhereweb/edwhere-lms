@@ -50,6 +50,7 @@ const CourseLearnersPage = async ({ params }: { params: { courseId: string } }) 
         : 'UNKNOWN';
     return {
       id: purchase.id,
+      studentId: purchase.userId,
       name: profile?.name || 'Unknown User',
       email: profile?.email || 'No email',
       enrolledAt: purchase.createdAt,
@@ -143,6 +144,7 @@ const CourseLearnersPage = async ({ params }: { params: { courseId: string } }) 
                       <LearnerRowActions
                         courseId={params.courseId}
                         purchaseId={learner.id}
+                        studentId={learner.studentId}
                         learnerName={learner.name}
                         onboardingSource={learner.onboardingSource}
                       />

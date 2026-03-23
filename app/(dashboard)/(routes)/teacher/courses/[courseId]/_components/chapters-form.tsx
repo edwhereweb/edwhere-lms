@@ -12,7 +12,8 @@ import {
   FileText,
   CheckCircle2,
   Code2,
-  ClipboardList
+  ClipboardList,
+  ListChecks
 } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
@@ -31,7 +32,8 @@ type ContentType =
   | 'TEXT'
   | 'HTML_EMBED'
   | 'PDF_DOCUMENT'
-  | 'HANDS_ON_PROJECT';
+  | 'HANDS_ON_PROJECT'
+  | 'EVALUATION';
 
 interface ContentTypeOption {
   value: ContentType;
@@ -61,8 +63,9 @@ const CONTENT_TYPES: ContentTypeOption[] = [
   },
   {
     value: 'HTML_EMBED',
-    label: 'HTML Embed',
-    description: 'Write custom HTML/CSS to create dynamic, interactive content rendered live.',
+    label: 'Gamified lesson',
+    description:
+      'Provide an HTML embed game and set a secret flag for students to submit upon completion.',
     icon: Code2
   },
   {
@@ -78,6 +81,13 @@ const CONTENT_TYPES: ContentTypeOption[] = [
     description:
       'Give students a task statement. They submit their work as a Google Drive / Docs / Sheets link.',
     icon: ClipboardList
+  },
+  {
+    value: 'EVALUATION',
+    label: 'Evaluation / Quiz',
+    description:
+      'Create a graded or practice MCQ quiz with timers, randomized questions, and CSV bulk import.',
+    icon: ListChecks
   }
 ];
 

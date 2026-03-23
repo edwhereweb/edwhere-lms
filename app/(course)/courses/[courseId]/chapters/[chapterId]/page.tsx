@@ -13,6 +13,8 @@ import { CourseProgressButton } from './_components/course-progress-button';
 import { HtmlEmbedPreview } from '@/components/html-embed-preview';
 import { PdfViewer } from '@/components/pdf-viewer';
 import { ProjectSubmissionForm } from './_components/project-submission-form';
+import { GamifiedSubmissionForm } from './_components/gamified-submission-form';
+import { QuizPlayer } from './_components/quiz-player';
 import { db } from '@/lib/db';
 
 const ChapterIdPage = async ({ params }: { params: { courseId: string; chapterId: string } }) => {
@@ -51,6 +53,19 @@ const ChapterIdPage = async ({ params }: { params: { courseId: string; chapterId
   const isHtmlChapter = chapter.contentType === 'HTML_EMBED';
   const isPdfChapter = chapter.contentType === 'PDF_DOCUMENT';
   const isProjectChapter = chapter.contentType === 'HANDS_ON_PROJECT';
+  const isEvaluationChapter = chapter.contentType === 'EVALUATION';
+
+  let quizConfig = null;
+  if (isEvaluationChapter) {
+    quizConfig = await db.quiz.findUnique({
+      where: { chapterId: params.chapterId },
+      include: {
+        _count: {
+          select: { questions: true }
+        }
+      }
+    });
+  }
 
   const progressOrEnrollButton = purchase ? (
     <CourseProgressButton
@@ -170,7 +185,7 @@ const ChapterIdPage = async ({ params }: { params: { courseId: string; chapterId
               </div>
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-[#F80602] dark:text-red-400 mb-0.5">
-                  Interactive Content
+                  Gamified Lesson
                 </p>
                 <h1 className="text-2xl font-bold text-neutral-800 dark:text-neutral-100">
                   {chapter.title}
@@ -206,7 +221,20 @@ const ChapterIdPage = async ({ params }: { params: { courseId: string; chapterId
             </>
           )}
 
-          {!isLocked && <div className="mt-10 flex justify-end">{progressOrEnrollButton}</div>}
+          {!isLocked && (
+            <div className="mt-10">
+              {purchase ? (
+                <GamifiedSubmissionForm
+                  courseId={params.courseId}
+                  chapterId={params.chapterId}
+                  isCompleted={!!userProgress?.isCompleted}
+                  nextChapterId={nextChapter?.id}
+                />
+              ) : (
+                <div className="flex justify-end">{progressOrEnrollButton}</div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -372,6 +400,79 @@ const ChapterIdPage = async ({ params }: { params: { courseId: string; chapterId
           )}
 
           {!isLocked && <div className="mt-8 flex justify-end">{progressOrEnrollButton}</div>}
+        </div>
+      </div>
+    );
+  }
+
+  /* ── EVALUATION chapter layout ─────────────────────────────────────────────── */
+  if (isEvaluationChapter) {
+    // Determine if we show the QuizPlayer or a locked message
+    return (
+      <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950/50">
+        {userProgress?.isCompleted && (
+          <Banner variant="success" label="You already completed this evaluation." />
+        )}
+        {isLocked && (
+          <Banner
+            variant="warning"
+            label="You need to purchase this course to access this evaluation."
+          />
+        )}
+
+        <div className="max-w-5xl mx-auto px-4 md:px-6 py-8">
+          {/* Header */}
+          <div className="flex items-start justify-between gap-4 mb-8">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-indigo-50 dark:bg-indigo-900/40">
+                <svg
+                  className="h-5 w-5 text-indigo-600 dark:text-indigo-400"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-0.5">
+                  Evaluation
+                </p>
+                <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 leading-tight">
+                  {chapter.title}
+                </h1>
+              </div>
+            </div>
+            <div className="flex-shrink-0">{progressOrEnrollButton}</div>
+          </div>
+
+          {isLocked ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center text-slate-500 dark:text-slate-400 border border-dashed rounded-xl bg-white dark:bg-slate-900">
+              <p className="text-lg font-medium">This evaluation is locked.</p>
+              <p className="text-sm mt-1">Purchase the course to take this quiz.</p>
+            </div>
+          ) : !quizConfig || quizConfig._count.questions === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center text-slate-500 dark:text-slate-400 border border-dashed rounded-xl bg-white dark:bg-slate-900">
+              <p className="text-lg font-medium">No questions available.</p>
+              <p className="text-sm mt-1">
+                The instructor has not added any questions to this evaluation yet.
+              </p>
+            </div>
+          ) : (
+            <div className="mt-4">
+              {/* Dynamically import the player or just render it directly */}
+              <QuizPlayer
+                courseId={params.courseId}
+                chapterId={params.chapterId}
+                quizConfig={quizConfig}
+              />
+            </div>
+          )}
         </div>
       </div>
     );

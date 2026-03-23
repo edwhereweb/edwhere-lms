@@ -83,7 +83,7 @@ const CTA_CARDS = [
     ),
     image: '/images/cta-bootcamp-4873c6.png',
     cta: 'Enrol now',
-    href: '/search'
+    href: '/courses'
   },
   {
     text: (
@@ -94,7 +94,7 @@ const CTA_CARDS = [
     ),
     image: '/images/cta-50days-4873c6.png',
     cta: 'Enrol now',
-    href: '/search'
+    href: '/courses'
   },
   {
     text: (
@@ -146,7 +146,7 @@ export default async function LandingPage() {
 
               <div className="mt-5">
                 <Link
-                  href="/search"
+                  href="/courses"
                   className="inline-flex items-center gap-2 px-7 py-3.5 bg-[#171717] text-white font-poppins font-semibold text-sm uppercase tracking-[0.21em] border-2 border-[#171717] transition-all hover:bg-[#F80602] hover:border-[#F80602] hover:shadow-lg"
                 >
                   Explore All courses
@@ -233,7 +233,7 @@ export default async function LandingPage() {
                     {course.description}
                   </p>
                   <Link
-                    href="/search"
+                    href="/courses"
                     className="inline-flex items-center justify-center px-4 py-2.5 bg-[#6715FF] text-white font-opensans font-semibold text-base rounded-xl transition-all self-start hover:bg-[#F80602] hover:shadow-md"
                   >
                     Enroll for {course.price}

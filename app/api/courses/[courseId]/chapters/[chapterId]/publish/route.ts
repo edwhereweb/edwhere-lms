@@ -51,6 +51,15 @@ export async function PATCH(
       if (!chapter.description || !(chapter as unknown as { pdfUrl?: string }).pdfUrl) {
         return apiError('Missing required fields', 400);
       }
+    } else if (contentType === 'EVALUATION') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const quizWithQuestions = await (db as any).quiz.findUnique({
+        where: { chapterId: params.chapterId },
+        include: { questions: true }
+      });
+      if (!chapter.description || !quizWithQuestions?.questions?.length) {
+        return apiError('Quiz must have at least one question', 400);
+      }
     } else {
       // VIDEO_MUX (default / legacy)
       const hasVideo = (!!chapter.videoUrl && !!muxData) || !!chapter.youtubeVideoId;
