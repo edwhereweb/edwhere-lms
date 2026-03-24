@@ -33,16 +33,9 @@ const StudentProgressPage = async ({
   const course = await db.course.findUnique({
     where: { id: params.courseId },
     include: {
-      chapters: {
+      modules: {
         where: { isPublished: true },
         orderBy: { position: 'asc' },
-        include: {
-          userProgress: {
-            where: { userId: studentId }
-          }
-        }
-      },
-      modules: {
         include: {
           chapters: {
             where: { isPublished: true },
@@ -52,6 +45,18 @@ const StudentProgressPage = async ({
                 where: { userId: studentId }
               }
             }
+          }
+        }
+      },
+      chapters: {
+        where: {
+          isPublished: true,
+          moduleId: null
+        },
+        orderBy: { position: 'asc' },
+        include: {
+          userProgress: {
+            where: { userId: studentId }
           }
         }
       }
@@ -66,13 +71,13 @@ const StudentProgressPage = async ({
 
   if (!profile) return redirect(`/teacher/courses/${params.courseId}/learners`);
 
-  // Flatten chapters from chapters and modules
-  let allChapters = course.chapters.map((ch) => ({
-    id: ch.id,
-    title: ch.title,
-    isCompleted: !!ch.userProgress[0]?.isCompleted,
-    contentType: ch.contentType || null
-  }));
+  // Flatten chapters from modules first, then un-moduled chapters
+  let allChapters: {
+    id: string;
+    title: string;
+    isCompleted: boolean;
+    contentType: string | null;
+  }[] = [];
 
   course.modules.forEach((m) => {
     const moduleChapters = m.chapters.map((ch) => ({
@@ -83,6 +88,15 @@ const StudentProgressPage = async ({
     }));
     allChapters = [...allChapters, ...moduleChapters];
   });
+
+  const unmoduledChapters = course.chapters.map((ch) => ({
+    id: ch.id,
+    title: ch.title,
+    isCompleted: !!ch.userProgress[0]?.isCompleted,
+    contentType: ch.contentType || null
+  }));
+
+  allChapters = [...allChapters, ...unmoduledChapters];
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
