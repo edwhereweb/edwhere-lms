@@ -34,11 +34,9 @@ const StudentProgressPage = async ({
     where: { id: params.courseId },
     include: {
       modules: {
-        where: { isPublished: true },
         orderBy: { position: 'asc' },
         include: {
           chapters: {
-            where: { isPublished: true },
             orderBy: { position: 'asc' },
             include: {
               userProgress: {
@@ -50,7 +48,6 @@ const StudentProgressPage = async ({
       },
       chapters: {
         where: {
-          isPublished: true,
           moduleId: null
         },
         orderBy: { position: 'asc' },
