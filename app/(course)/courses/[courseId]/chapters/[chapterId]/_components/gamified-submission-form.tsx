@@ -63,8 +63,8 @@ export const GamifiedSubmissionForm = ({
         }, 1500);
       }
     } catch (error) {
-      if (error instanceof AxiosError && error.response?.data?.message) {
-        toast.error(error.response.data.message);
+      if (error instanceof AxiosError && error.response?.data?.error) {
+        toast.error(error.response.data.error);
       } else {
         toast.error('Something went wrong. Please try again.');
       }
