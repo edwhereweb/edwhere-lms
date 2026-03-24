@@ -28,13 +28,13 @@ interface Chapter {
 
 interface ProgressResetManagerProps {
   courseId: string;
-  studentId: string;
+  purchaseId: string;
   chapters: Chapter[];
 }
 
 export const ProgressResetManager = ({
   courseId,
-  studentId,
+  purchaseId,
   chapters
 }: ProgressResetManagerProps) => {
   const router = useRouter();
@@ -44,7 +44,7 @@ export const ProgressResetManager = ({
     try {
       setLoadingId(chapterId);
       await axios.post(
-        `/api/courses/${courseId}/learners/${studentId}/progress/${chapterId}/reset`
+        `/api/courses/${courseId}/learners/${purchaseId}/progress/${chapterId}/reset`
       );
       toast.success('Progress reset successfully');
       router.refresh();

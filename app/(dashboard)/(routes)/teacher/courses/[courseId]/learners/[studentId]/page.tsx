@@ -55,6 +55,15 @@ const StudentProgressPage = async ({
 
   if (!profile) return redirect(`/teacher/courses/${params.courseId}/learners`);
 
+  const purchase = await db.purchase.findFirst({
+    where: {
+      courseId: params.courseId,
+      userId: params.studentId
+    }
+  });
+
+  if (!purchase) return redirect(`/teacher/courses/${params.courseId}/learners`);
+
   // Flatten chapters from chapters and modules
   let allChapters = course.chapters.map((ch) => ({
     id: ch.id,
@@ -110,7 +119,7 @@ const StudentProgressPage = async ({
 
         <ProgressResetManager
           courseId={params.courseId}
-          studentId={params.studentId}
+          purchaseId={purchase.id}
           chapters={allChapters}
         />
       </div>
