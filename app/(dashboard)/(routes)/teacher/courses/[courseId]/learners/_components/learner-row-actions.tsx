@@ -85,7 +85,7 @@ export const LearnerRowActions = ({
             View Report
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={() => router.push(`/teacher/courses/${courseId}/learners/${studentId}`)}
+            onClick={() => router.push(`/teacher/courses/${courseId}/learners/${purchaseId}`)}
           >
             <TrendingUp className="h-4 w-4 mr-2" />
             Manage Progress
