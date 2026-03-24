@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
-import { Loader2, AlertTriangle, Clock, CheckCircle } from 'lucide-react';
+import { Loader2, AlertTriangle, Clock, CheckCircle, XCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
 
@@ -195,7 +195,16 @@ export const QuizPlayer = ({ courseId, chapterId, quizConfig }: QuizPlayerProps)
               tabSwitches: finalTabSwitches
           });
           setSession(res.data);
-          toast.success('Evaluation finalized!');
+          const passed = res.data.passed;
+          if (quizConfig.passScore != null) {
+            if (passed) {
+              toast.success('Evaluation passed! Chapter completed.');
+            } else {
+              toast.error(`You didn't reach the pass score (${quizConfig.passScore}%). Try again!`);
+            }
+          } else {
+            toast.success('Evaluation finalized!');
+          }
           router.refresh();
       } catch {
           toast.error('Failed to submit evaluation.');
@@ -262,20 +271,52 @@ export const QuizPlayer = ({ courseId, chapterId, quizConfig }: QuizPlayerProps)
       if (previousAttempts.length > 0) {
          const latestAttempt = previousAttempts[0];
          const attemptsLeft = quizConfig.maxAttempts ? Math.max(0, quizConfig.maxAttempts - previousAttempts.length) : null;
+         const passed = quizConfig.passScore == null || (latestAttempt.score ?? 0) >= quizConfig.passScore;
 
          return (
-             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-md text-center max-w-2xl mx-auto mt-8 shadow-sm">
-                 <CheckCircle className="h-12 w-12 text-emerald-500 mx-auto mb-4" />
-                 <h2 className="text-2xl font-bold mb-4">Evaluation Submitted</h2>
+             <div className={cn(
+               "border p-8 rounded-md text-center max-w-2xl mx-auto mt-8 shadow-sm",
+               passed
+                 ? "bg-emerald-50 dark:bg-emerald-950 border-emerald-200 dark:border-emerald-800"
+                 : "bg-rose-50 dark:bg-rose-950 border-rose-200 dark:border-rose-800"
+             )}>
+                 {passed ? (
+                   <CheckCircle className="h-12 w-12 text-emerald-500 mx-auto mb-4" />
+                 ) : (
+                   <XCircle className="h-12 w-12 text-rose-500 mx-auto mb-4" />
+                 )}
+                 <h2 className={cn(
+                   "text-2xl font-bold mb-4",
+                   passed ? "text-emerald-800 dark:text-emerald-200" : "text-rose-800 dark:text-rose-200"
+                 )}>
+                   {passed ? 'Evaluation Passed!' : 'Evaluation Failed'}
+                 </h2>
                  <div className="text-left space-y-4 text-slate-600 dark:text-slate-300 mb-8 border-y py-6">
                     {quizConfig.isGraded ? (
                        <>
-                          <p className="flex justify-between"><span>Latest Score:</span> <strong className="text-lg text-emerald-600">{latestAttempt.score}%</strong></p>
+                          <p className="flex justify-between">
+                            <span>Latest Score:</span>
+                            <strong className={cn(
+                              "text-lg",
+                              passed ? "text-emerald-600" : "text-rose-600"
+                            )}>{latestAttempt.score}%</strong>
+                          </p>
+                          {quizConfig.passScore != null && (
+                            <p className="flex justify-between">
+                              <span>Pass Score:</span>
+                              <strong>{quizConfig.passScore}%</strong>
+                            </p>
+                          )}
                        </>
                     ) : (
                        <p>Practice test was completed.</p>
                     )}
                     <p className="flex justify-between border-t pt-4"><span>Attempts Used:</span> <strong>{previousAttempts.length} {quizConfig.maxAttempts ? `/ ${quizConfig.maxAttempts}` : ''}</strong></p>
+                    {!passed && quizConfig.passScore != null && (
+                      <p className="text-sm text-rose-600 dark:text-rose-400">
+                        You need at least {quizConfig.passScore}% to pass this evaluation.
+                      </p>
+                    )}
                  </div>
 
                  <div className="flex flex-col sm:flex-row gap-4 justify-center mt-6">
@@ -284,9 +325,12 @@ export const QuizPlayer = ({ courseId, chapterId, quizConfig }: QuizPlayerProps)
                      </Button>
                      
                      {(!quizConfig.maxAttempts || attemptsLeft! > 0) && (
-                         <Button onClick={startTest} disabled={starting} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                         <Button onClick={startTest} disabled={starting} className={cn(
+                           passed ? "bg-indigo-600 hover:bg-indigo-700" : "bg-rose-600 hover:bg-rose-700",
+                           "text-white"
+                         )}>
                              {starting ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : null}
-                             Take Test Again
+                             {passed ? 'Take Test Again' : 'Retry Evaluation'}
                          </Button>
                      )}
                  </div>
@@ -321,14 +365,44 @@ export const QuizPlayer = ({ courseId, chapterId, quizConfig }: QuizPlayerProps)
   }
 
   if (session.isCompleted) {
+      const passed = quizConfig.passScore == null || (session.score ?? 0) >= quizConfig.passScore;
       return (
-          <div className="bg-emerald-50 dark:bg-emerald-900 border border-emerald-200 dark:border-emerald-800 p-8 rounded-md text-center">
-              <CheckCircle className="h-12 w-12 text-emerald-500 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold mb-2">Evaluation Completed</h2>
-              {quizConfig.isGraded ? (
-                 <p className="text-lg">Your score: <span className="font-bold text-emerald-700 dark:text-emerald-400">{session.score}%</span></p>
+          <div className={cn(
+            "border p-8 rounded-md text-center",
+            passed
+              ? "bg-emerald-50 dark:bg-emerald-950 border-emerald-200 dark:border-emerald-800"
+              : "bg-rose-50 dark:bg-rose-950 border-rose-200 dark:border-rose-800"
+          )}>
+              {passed ? (
+                <CheckCircle className="h-12 w-12 text-emerald-500 mx-auto mb-4" />
               ) : (
-                 <p className="text-muted-foreground">Practice test finished and submitted successfully.</p>
+                <XCircle className="h-12 w-12 text-rose-500 mx-auto mb-4" />
+              )}
+              <h2 className={cn(
+                "text-2xl font-bold mb-2",
+                passed ? "text-emerald-800 dark:text-emerald-200" : "text-rose-800 dark:text-rose-200"
+              )}>
+                {passed ? 'Evaluation Passed!' : 'Evaluation Failed'}
+              </h2>
+              {quizConfig.isGraded ? (
+                 <div className="mt-3 space-y-1">
+                   <p className="text-lg">
+                     Your score:{' '}
+                     <span className={cn(
+                       "font-bold",
+                       passed ? "text-emerald-700 dark:text-emerald-400" : "text-rose-700 dark:text-rose-400"
+                     )}>{session.score}%</span>
+                   </p>
+                   {quizConfig.passScore != null && (
+                     <p className="text-sm text-slate-500">
+                       {passed
+                         ? `You met the pass score of ${quizConfig.passScore}%.`
+                         : `Pass score is ${quizConfig.passScore}%. Please try again.`}
+                     </p>
+                   )}
+                 </div>
+              ) : (
+                 <p className="text-muted-foreground mt-2">Practice test finished and submitted successfully.</p>
               )}
               <div className="mt-6 flex justify-center">
                   <Button variant="outline" onClick={() => router.push(`/courses/${courseId}/start`)}>
