@@ -192,7 +192,6 @@ const ChapterIdPage = async ({ params }: { params: { courseId: string; chapterId
                 </h1>
               </div>
             </div>
-            <div className="flex-shrink-0">{progressOrEnrollButton}</div>
           </div>
 
           <Separator className="mb-8" />
@@ -282,7 +281,6 @@ const ChapterIdPage = async ({ params }: { params: { courseId: string; chapterId
                 </h1>
               </div>
             </div>
-            <div className="flex-shrink-0">{progressOrEnrollButton}</div>
           </div>
 
           <Separator className="mb-8" />
@@ -348,7 +346,7 @@ const ChapterIdPage = async ({ params }: { params: { courseId: string; chapterId
             </>
           )}
 
-          {!isLocked && <div className="mt-10 flex justify-end">{progressOrEnrollButton}</div>}
+
         </div>
       </div>
     );
@@ -448,7 +446,6 @@ const ChapterIdPage = async ({ params }: { params: { courseId: string; chapterId
                 </h1>
               </div>
             </div>
-            <div className="flex-shrink-0">{progressOrEnrollButton}</div>
           </div>
 
           {isLocked ? (
