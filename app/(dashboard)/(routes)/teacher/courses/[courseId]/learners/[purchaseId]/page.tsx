@@ -41,6 +41,18 @@ const StudentProgressPage = async ({
             include: {
               userProgress: {
                 where: { userId: studentId }
+              },
+              quiz: {
+                select: {
+                  id: true,
+                  maxAttempts: true,
+                  attempts: {
+                    where: { userId: studentId }
+                  }
+                }
+              },
+              projectSubmissions: {
+                where: { userId: studentId }
               }
             }
           }
@@ -53,6 +65,18 @@ const StudentProgressPage = async ({
         orderBy: { position: 'asc' },
         include: {
           userProgress: {
+            where: { userId: studentId }
+          },
+          quiz: {
+            select: {
+              id: true,
+              maxAttempts: true,
+              attempts: {
+                where: { userId: studentId }
+              }
+            }
+          },
+          projectSubmissions: {
             where: { userId: studentId }
           }
         }
@@ -74,6 +98,9 @@ const StudentProgressPage = async ({
     title: string;
     isCompleted: boolean;
     contentType: string | null;
+    attemptsCount?: number;
+    maxAttempts?: number;
+    hasProjectSubmission?: boolean;
   }[] = [];
 
   course.modules.forEach((m) => {
@@ -81,7 +108,10 @@ const StudentProgressPage = async ({
       id: ch.id,
       title: ch.title,
       isCompleted: !!ch.userProgress[0]?.isCompleted,
-      contentType: ch.contentType || null
+      contentType: ch.contentType || null,
+      attemptsCount: ch.quiz?.attempts.length,
+      maxAttempts: ch.quiz?.maxAttempts,
+      hasProjectSubmission: ch.projectSubmissions.length > 0
     }));
     allChapters = [...allChapters, ...moduleChapters];
   });
@@ -90,7 +120,10 @@ const StudentProgressPage = async ({
     id: ch.id,
     title: ch.title,
     isCompleted: !!ch.userProgress[0]?.isCompleted,
-    contentType: ch.contentType || null
+    contentType: ch.contentType || null,
+    attemptsCount: ch.quiz?.attempts.length,
+    maxAttempts: ch.quiz?.maxAttempts,
+    hasProjectSubmission: ch.projectSubmissions.length > 0
   }));
 
   allChapters = [...allChapters, ...unmoduledChapters];

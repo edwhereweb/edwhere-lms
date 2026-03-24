@@ -24,6 +24,9 @@ interface Chapter {
   title: string;
   isCompleted: boolean;
   contentType: string | null;
+  attemptsCount?: number;
+  maxAttempts?: number;
+  hasProjectSubmission?: boolean;
 }
 
 interface ProgressResetManagerProps {
@@ -77,6 +80,12 @@ export const ProgressResetManager = ({
         const Icon = getIcon(chapter.contentType);
         const isLoading = loadingId === chapter.id;
 
+        // Enable reset if completed OR has attempts OR has project submission
+        const canReset =
+          chapter.isCompleted ||
+          (chapter.attemptsCount !== undefined && chapter.attemptsCount > 0) ||
+          chapter.hasProjectSubmission;
+
         return (
           <div
             key={chapter.id}
@@ -106,6 +115,11 @@ export const ProgressResetManager = ({
                       Not Completed
                     </Badge>
                   )}
+                  {chapter.contentType === 'EVALUATION' && (
+                    <span className="text-xs text-slate-500 font-medium">
+                      Attempts: {chapter.attemptsCount ?? 0} / {chapter.maxAttempts ?? '∞'}
+                    </span>
+                  )}
                   <span className="text-[10px] uppercase font-bold text-slate-400">
                     {chapter.contentType?.replace('_', ' ') || 'Chapter'}
                   </span>
@@ -116,7 +130,7 @@ export const ProgressResetManager = ({
               <Button
                 size="sm"
                 variant="outline"
-                disabled={!chapter.isCompleted || isLoading}
+                disabled={!canReset || isLoading}
                 onClick={() => onReset(chapter.id)}
                 className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-100"
               >
