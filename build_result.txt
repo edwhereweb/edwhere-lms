@@ -1,0 +1,171 @@
+﻿
+> edwhere-lms@1.0.0 build
+> next build
+
+  Γû▓ Next.js 14.2.20
+  - Environments: .env
+
+   Creating an optimized production build ...
+ Γ£ô Compiled successfully
+   Linting and checking validity of types ...
+
+./app/(dashboard)/(routes)/dashboard/page.tsx
+3:30  Warning: 'InfoIcon' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./app/(dashboard)/(routes)/teacher/courses/[courseId]/_components/seo-form.tsx
+10:18  Warning: 'Globe' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/basic-features/eslint#disabling-rules
+   Collecting page data ...
+   Generating static pages (0/31) ...
+node.exe : 
+[ASSET_LIBRARY_GET] 
+Dynamic server usage: 
+Route /api/admin/asset-
+library couldn't be 
+rendered statically 
+because it used 
+`headers`. See more 
+info here: https://next
+js.org/docs/messages/dy
+namic-server-error
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: ([ASSET_LIBRAR   
+ Y_...ic-server-err    
+or:String) [], Rem    
+oteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+[PROJECT_SUBMISSIONS_CO
+URSES] Dynamic server 
+usage: Route /api/teach
+er/project-submissions/
+courses couldn't be 
+rendered statically 
+because it used 
+`headers`. See more 
+info here: https://next
+js.org/docs/messages/dy
+namic-server-error
+   Generating static pages (7/31) 
+   Generating static pages (15/31) 
+   Generating static pages (23/31) 
+ Γ£ô Generating static pages (31/31)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                                                 Size     First Load JS
+Γöî ╞Æ /                                                                       3.19 kB         122 kB
+Γö£ Γùï /_not-found                                                             880 B          88.5 kB
+Γö£ ╞Æ /api/admin/asset-library                                                0 B                0 B
+Γö£ ╞Æ /api/admin/asset-library/[chapterId]                                    0 B                0 B
+Γö£ ╞Æ /api/admin/asset-library/bulk-delete                                    0 B                0 B
+Γö£ ╞Æ /api/admin/asset-library/mux-upload                                     0 B                0 B
+Γö£ ╞Æ /api/admin/asset-library/mux-upload/[uploadId]                          0 B                0 B
+Γö£ ╞Æ /api/admin/courses/[courseId]/enrol                                     0 B                0 B
+Γö£ ╞Æ /api/categories                                                         0 B                0 B
+Γö£ ╞Æ /api/categories/[categoryId]                                            0 B                0 B
+Γö£ ╞Æ /api/contact                                                            0 B                0 B
+Γö£ ╞Æ /api/courses                                                            0 B                0 B
+Γö£ ╞Æ /api/courses/[courseId]                                                 0 B                0 B
+Γö£ ╞Æ /api/courses/[courseId]/approve                                         0 B                0 B
+Γö£ ╞Æ /api/courses/[courseId]/attachments                                     0 B                0 B
+Γö£ ╞Æ /api/courses/[courseId]/attachments/[attachmentId]                      0 B                0 B
+Γö£ ╞Æ /api/courses/[courseId]/chapters                                        0 B                0 B
+Γö£ ╞Æ /api/courses/[courseId]/chapters/[chapterId]                            0 B                0 B
+Γö£ ╞Æ /api/courses/[courseId]/chapters/[chapterId]/import-asset               0 B                0 B
+Γö£ ╞Æ /api/courses/[courseId]/chapters/[chapterId]/mux-upload                 0 B                0 B
+Γö£ ╞Æ /api/courses/[courseId]/chapters/[chapterId]/progress                   0 B                0 B
+Γö£ ╞Æ /api/courses/[courseId]/chapters/[chapterId]/project-submission         0 B                0 B
+Γö£ ╞Æ /api/courses/[courseId]/chapters/[chapterId]/publish                    0 B                0 B
+Γö£ ╞Æ /api/courses/[courseId]/chapters/[chapterId]/submit-flag                0 B                0 B
+Γö£ ╞Æ /api/courses/[courseId]/chapters/[chapterId]/unpublish                  0 B                0 B
+Γö£ ╞Æ /api/courses/[courseId]/chapters/[chapterId]/youtube-embed              0 B                0 B
+Γö£ ╞Æ /api/courses/[courseId]/chapters/reorder                                0 B                0 B
+Γö£ ╞Æ /api/courses/[courseId]/chat-students                                   0 B                0 B
+Γö£ ╞Æ /api/courses/[courseId]/checkout                                        0 B                0 B
+Γö£ ╞Æ /api/courses/[courseId]/instructors                                     0 B                0 B
+Γö£ ╞Æ /api/courses/[courseId]/learners/[purchaseId]                           0 B                0 B
+Γö£ ╞Æ /api/courses/[courseId]/messages                                        0 B                0 B
+Γö£ ╞Æ /api/courses/[courseId]/messages/read                                   0 B                0 B
+Γö£ ╞Æ /api/courses/[courseId]/messages/read-student                           0 B                0 B
+Γö£ ╞Æ /api/courses/[courseId]/modules                                         0 B                0 B
+Γö£ ╞Æ /api/courses/[courseId]/modules/[moduleId]                              0 B                0 B
+Γö£ ╞Æ /api/courses/[courseId]/modules/[moduleId]/publish                      0 B                0 B
+Γö£ ╞Æ /api/courses/[courseId]/modules/[moduleId]/unpublish                    0 B                0 B
+Γö£ ╞Æ /api/courses/[courseId]/modules/reorder                                 0 B                0 B
+Γö£ ╞Æ /api/courses/[courseId]/publish                                         0 B                0 B
+Γö£ ╞Æ /api/courses/[courseId]/reject                                          0 B                0 B
+Γö£ ╞Æ /api/courses/[courseId]/unpublish                                       0 B                0 B
+Γö£ ╞Æ /api/files/[...path]                                                    0 B                0 B
+Γö£ ╞Æ /api/health                                                             0 B                0 B
+Γö£ ╞Æ /api/leads                                                              0 B                0 B
+Γö£ ╞Æ /api/leads/[leadId]                                                     0 B                0 B
+Γö£ ╞Æ /api/profile/[id]                                                       0 B                0 B
+Γö£ ╞Æ /api/profiles/search                                                    0 B                0 B
+Γö£ ╞Æ /api/public/courses                                                     0 B                0 B
+Γö£ ╞Æ /api/public/courses/[slug]                                              0 B                0 B
+Γö£ ╞Æ /api/razorpay/verify                                                    0 B                0 B
+Γö£ ╞Æ /api/teacher/project-submissions/[courseId]                             0 B                0 B
+Γö£ ╞Æ /api/teacher/project-submissions/[courseId]/[chapterId]                 0 B                0 B
+Γö£ ╞Æ /api/teacher/project-submissions/[courseId]/[chapterId]/[submissionId]  0 B                0 B
+Γö£ ╞Æ /api/teacher/project-submissions/courses                                0 B                0 B
+Γö£ ╞Æ /api/upload/presign                                                     0 B                0 B
+Γö£ ╞Æ /contact                                                                6.19 kB         174 kB
+Γö£ ╞Æ /courses                                                                1.57 kB         101 kB
+Γö£ ╞Æ /courses/[courseId]                                                     193 B           100 kB
+Γö£ ╞Æ /courses/[courseId]/chapters/[chapterId]                                10.3 kB         346 kB
+Γö£ ╞Æ /courses/[courseId]/chat                                                2.96 kB         124 kB
+Γö£ ╞Æ /courses/[courseId]/start                                               153 B          87.7 kB
+Γö£ ╞Æ /dashboard                                                              2.74 kB         109 kB
+Γö£ Γùï /icon.png                                                               0 B                0 B
+Γö£ ╞Æ /marketer                                                               6.73 kB         186 kB
+Γö£ Γùï /robots.txt                                                             0 B                0 B
+Γö£ ╞Æ /search                                                                 10.1 kB         117 kB
+Γö£ ╞Æ /sign-in/[[...sign-in]]                                                 690 B           118 kB
+Γö£ ╞Æ /sign-up/[[...signup]]                                                  690 B           118 kB
+Γö£ Γùï /sitemap.xml                                                            0 B                0 B
+Γö£ ╞Æ /teacher/analytics                                                      96.8 kB         191 kB
+Γö£ ╞Æ /teacher/asset-library                                                  11.7 kB         169 kB
+Γö£ ╞Æ /teacher/asset-library/[chapterId]                                      9.92 kB         173 kB
+Γö£ ╞Æ /teacher/categories                                                     3.69 kB         136 kB
+Γö£ ╞Æ /teacher/courses                                                        4.15 kB         138 kB
+Γö£ ╞Æ /teacher/courses/[courseId]/chapters/[chapterId]                        11.7 kB         432 kB
+Γö£ ╞Æ /teacher/courses/[courseId]/details                                     8.26 kB         222 kB
+Γö£ ╞Æ /teacher/courses/[courseId]/learners                                    4.1 kB          161 kB
+Γö£ ╞Æ /teacher/courses/[courseId]/mentor-connect                              2.83 kB         131 kB
+Γö£ ╞Æ /teacher/courses/[courseId]/modules/[moduleId]                          6.03 kB         169 kB
+Γö£ ╞Æ /teacher/courses/[courseId]/structure                                   38.8 kB         189 kB
+Γö£ ╞Æ /teacher/create                                                         3.45 kB         154 kB
+Γö£ ╞Æ /teacher/enrolments                                                     5.98 kB         138 kB
+Γö£ ╞Æ /teacher/mentor-connect                                                 4.17 kB         125 kB
+Γö£ ╞Æ /teacher/pending-approvals                                              3.44 kB         143 kB
+Γö£ ╞Æ /teacher/project-submissions                                            190 B            95 kB
+Γö£ ╞Æ /teacher/project-submissions/[courseId]                                 190 B            95 kB
+Γö£ ╞Æ /teacher/project-submissions/[courseId]/[chapterId]                     3.23 kB         135 kB
+Γö£ ╞Æ /teacher/users                                                          17.7 kB         146 kB
+Γöö ╞Æ /teacher/users/[id]                                                     21.1 kB         200 kB
++ First Load JS shared by all                                               87.6 kB
+  Γö£ chunks/2117-5af9fc1fd34729cc.js                                         31.8 kB
+  Γö£ chunks/fd9d1056-c3f3314eb9e5326e.js                                     53.6 kB
+  Γöö other shared chunks (total)                                             2.2 kB
+
+
+╞Æ Middleware                                                                62.1 kB
+
+Γùï  (Static)   prerendered as static content
+╞Æ  (Dynamic)  server-rendered on demand
+

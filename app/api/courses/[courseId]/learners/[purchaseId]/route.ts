@@ -47,6 +47,42 @@ export async function DELETE(
       return apiError('This learner requires final confirmation before unenrollment', 400);
     }
 
+    // Wipe all progress and submission data for this course
+    const studentUserId = purchase.userId;
+
+    // 1. Delete UserProgress
+    await db.userProgress.deleteMany({
+      where: {
+        userId: studentUserId,
+        chapter: {
+          courseId: params.courseId
+        }
+      }
+    });
+
+    // 2. Delete QuizAttempts
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (db as any).quizAttempt.deleteMany({
+      where: {
+        userId: studentUserId,
+        quiz: {
+          chapter: {
+            courseId: params.courseId
+          }
+        }
+      }
+    });
+
+    // 3. Delete ProjectSubmissions
+    await db.projectSubmission.deleteMany({
+      where: {
+        userId: studentUserId,
+        chapter: {
+          courseId: params.courseId
+        }
+      }
+    });
+
     const deletedPurchase = await db.purchase.delete({
       where: { id: params.purchaseId }
     });

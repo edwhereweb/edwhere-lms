@@ -1,7 +1,7 @@
 'use client';
 
 import axios from 'axios';
-import { MoreHorizontal, UserMinus } from 'lucide-react';
+import { MoreHorizontal, UserMinus, TrendingUp } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
@@ -83,6 +83,14 @@ export const LearnerRowActions = ({
           >
             <MoreHorizontal className="h-4 w-4 mr-2" />
             View Report
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() =>
+              router.push(`/teacher/courses/${courseId}/learners/${studentId}/progress`)
+            }
+          >
+            <TrendingUp className="h-4 w-4 mr-2" />
+            Manage Progress
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={(event) => {

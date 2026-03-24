@@ -1,0 +1,18 @@
+
+> edwhere-lms@1.0.0 build
+> next build
+
+  ▲ Next.js 14.2.20
+  - Environments: .env
+
+   Creating an optimized production build ...
+Failed to compile.
+
+app\(course)\courses\[courseId]\page.tsx
+You cannot have two parallel pages that resolve to the same path. Please check /(course)/courses/[courseId]/page and /(public)/courses/[courseId]/page. Refer to the route group docs for more information: https://nextjs.org/docs/app/building-your-application/routing/route-groups
+
+app\(public)\courses\[courseId]\page.tsx
+You cannot have two parallel pages that resolve to the same path. Please check /(course)/courses/[courseId]/page and /(public)/courses/[courseId]/page. Refer to the route group docs for more information: https://nextjs.org/docs/app/building-your-application/routing/route-groups
+
+
+> Build failed because of webpack errors
