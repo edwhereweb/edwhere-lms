@@ -72,25 +72,30 @@ export async function POST(
       }
     });
 
-    // Mark Chapter as Completed
-    await db.userProgress.upsert({
+    // Only mark chapter complete if score meets passScore threshold (or no threshold set)
+    const passScore = attempt.quiz.passScore;
+    const passed = passScore == null || scorePercentage >= passScore;
+
+    if (passed) {
+      await db.userProgress.upsert({
         where: {
-            userId_chapterId: {
-                userId,
-                chapterId: params.chapterId
-            }
+          userId_chapterId: {
+            userId,
+            chapterId: params.chapterId
+          }
         },
         update: {
-            isCompleted: true
+          isCompleted: true
         },
         create: {
-            userId,
-            chapterId: params.chapterId,
-            isCompleted: true
+          userId,
+          chapterId: params.chapterId,
+          isCompleted: true
         }
-    });
+      });
+    }
 
-    return NextResponse.json(finalized);
+    return NextResponse.json({ ...finalized, passed });
   } catch (error) {
     return handleApiError('CHAPTER_QUIZ_SUBMIT', error);
   }

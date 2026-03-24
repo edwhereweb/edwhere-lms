@@ -149,7 +149,8 @@ export const createQuizSchema = z.object({
   timeLimit: z.number().int().min(1, 'Timer must be at least 1 minute').nullable().optional(),
   randomize: z.boolean().optional(),
   maxAttempts: z.number().int().min(1, 'Attempts must be at least 1').nullable().optional(),
-  maxTabSwitches: z.number().int().min(0).nullable().optional()
+  maxTabSwitches: z.number().int().min(0).nullable().optional(),
+  passScore: z.number().min(0).max(100).nullable().optional()
 });
 
 export const createQuestionSchema = z.object({

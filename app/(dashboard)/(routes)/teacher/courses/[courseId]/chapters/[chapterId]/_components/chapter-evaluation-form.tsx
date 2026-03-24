@@ -40,7 +40,8 @@ export const ChapterEvaluationForm = ({
       timeLimit: initialData.quiz?.timeLimit ?? null,
       randomize: initialData.quiz?.randomize ?? false,
       maxAttempts: initialData.quiz?.maxAttempts ?? 1,
-      maxTabSwitches: initialData.quiz?.maxTabSwitches ?? null
+      maxTabSwitches: initialData.quiz?.maxTabSwitches ?? null,
+      passScore: initialData.quiz?.passScore ?? null
     }
   });
 
@@ -92,6 +93,9 @@ export const ChapterEvaluationForm = ({
           </p>
           <p>
             <span className="font-semibold">Max Tab Switches (Anti-cheat):</span> {initialData.quiz?.maxTabSwitches ?? 'Disabled'}
+          </p>
+          <p>
+            <span className="font-semibold">Pass Score:</span> {initialData.quiz?.passScore != null ? `${initialData.quiz.passScore}%` : 'Not Set'}
           </p>
         </div>
       )}
@@ -181,6 +185,30 @@ export const ChapterEvaluationForm = ({
                     </FormControl>
                     <FormDescription>
                       Warnings issued if they navigate away from the test.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="passScore"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Pass Score (%)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        disabled={isSubmitting}
+                        placeholder="e.g. 60 (Leave empty for no threshold)"
+                        {...field}
+                        value={field.value || ''}
+                        onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Minimum percentage required to pass the evaluation.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

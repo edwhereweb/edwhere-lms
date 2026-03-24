@@ -111,6 +111,7 @@ model Quiz {
   timeLimit       Int?        // in minutes
   randomize       Boolean     @default(false)
   maxTabSwitches  Int?
+  passScore       Float?      // minimum % to pass (e.g. 60.0)
   maxAttempts     Int         @default(1)
 
   questions       Question[]
