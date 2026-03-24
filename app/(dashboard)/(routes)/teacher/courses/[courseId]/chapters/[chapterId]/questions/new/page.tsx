@@ -125,7 +125,7 @@ export default function NewQuestionPage({
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-md shadow-sm">
+        <form onSubmit={form.handleSubmit((values) => onSubmit(values))} className="space-y-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-md shadow-sm">
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-6">
