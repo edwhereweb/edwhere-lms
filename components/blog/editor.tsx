@@ -1,6 +1,13 @@
 'use client';
 
-import { useEditor, EditorContent, Editor as TiptapEditor } from '@tiptap/react';
+import {
+  useEditor,
+  EditorContent,
+  Editor as TiptapEditor,
+  ReactNodeViewRenderer,
+  NodeViewWrapper,
+  NodeViewProps
+} from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import Image from '@tiptap/extension-image';
@@ -12,6 +19,7 @@ import { Node, mergeAttributes } from '@tiptap/core';
 import { lowlight } from '@/lib/editor-utils';
 import { useState } from 'react';
 import axios from 'axios';
+import { TerminalBlock } from './terminal-block';
 import {
   Bold,
   Italic,
@@ -25,17 +33,27 @@ import {
   Terminal,
   Image as ImageIcon,
   Loader2,
-  Underline as UnderlineIcon
+  Underline as UnderlineIcon,
+  Link as LinkIcon
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 
 // --- Custom Terminal Extension ---
+const TerminalNodeView = (props: NodeViewProps) => {
+  const { 'data-command': command, 'data-content': content } = props.node.attrs;
+  return (
+    <NodeViewWrapper className="terminal-node-view">
+      <TerminalBlock content={content} command={command} />
+    </NodeViewWrapper>
+  );
+};
+
 const TerminalExtension = Node.create({
   name: 'terminal',
   group: 'block',
-  content: 'inline*',
+  atom: true, // This makes the node treatable as a single unit
   draggable: true,
   addAttributes() {
     return {
@@ -55,7 +73,10 @@ const TerminalExtension = Node.create({
     ];
   },
   renderHTML({ HTMLAttributes }) {
-    return ['div', mergeAttributes(HTMLAttributes, { class: 'terminal-block-placeholder' }), 0];
+    return ['div', mergeAttributes(HTMLAttributes, { class: 'terminal-block-placeholder' })];
+  },
+  addNodeView() {
+    return ReactNodeViewRenderer(TerminalNodeView);
   }
 });
 
@@ -114,6 +135,22 @@ const Toolbar = ({ editor, blogId }: { editor: TiptapEditor | null; blogId?: str
     }
   };
 
+  const setLink = () => {
+    const previousUrl = editor.getAttributes('link').href;
+    const url = window.prompt('URL', previousUrl);
+
+    if (url === null) {
+      return;
+    }
+
+    if (url === '') {
+      editor.chain().focus().extendMarkRange('link').unsetLink().run();
+      return;
+    }
+
+    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+  };
+
   return (
     <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-1 rounded-t-lg flex items-center flex-wrap gap-1 sticky top-0 z-10">
       <div className="px-2 py-1 text-[10px] uppercase font-bold text-slate-500 border-r border-slate-200 dark:border-slate-800 mr-1">
@@ -142,6 +179,15 @@ const Toolbar = ({ editor, blogId }: { editor: TiptapEditor | null; blogId?: str
         className={editor.isActive('underline') ? 'bg-slate-200 dark:bg-slate-800' : ''}
       >
         <UnderlineIcon className="h-4 w-4" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={setLink}
+        className={editor.isActive('link') ? 'bg-slate-200 dark:bg-slate-800' : ''}
+        title="Add Link"
+      >
+        <LinkIcon className="h-4 w-4" />
       </Button>
 
       <Separator orientation="vertical" className="h-6 mx-1" />

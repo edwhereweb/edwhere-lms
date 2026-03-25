@@ -9,7 +9,6 @@ import { db } from '@/lib/db';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { ArrowRight } from 'lucide-react';
-import type { BlogPost, BlogAuthor, BlogCategory } from '@prisma/client';
 
 const STATS = [
   { value: '35K+', label: 'Students' },

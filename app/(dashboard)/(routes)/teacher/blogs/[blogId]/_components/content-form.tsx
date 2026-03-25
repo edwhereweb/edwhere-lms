@@ -18,7 +18,7 @@ interface ContentFormProps {
 }
 
 // Lazy load the editor to improve initial page load and protect against SSR issues
-const Editor = dynamic<EditorProps>(() => import('./editor'), {
+const Editor = dynamic<EditorProps>(() => import('@/components/blog/editor'), {
   ssr: false,
   loading: () => (
     <div className="h-[400px] w-full bg-slate-200 dark:bg-slate-800 animate-pulse rounded-md" />
