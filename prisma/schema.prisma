@@ -43,6 +43,7 @@ model Course {
   title           String
   description     String?
   imageUrl        String?
+  imageAlt        String?
   price           Float?
   isPublished     Boolean    @default(false)
   pendingApproval Boolean    @default(false)
@@ -405,6 +406,7 @@ model BlogPost {
   slug            String       @unique
   content         String       // Markdown or HTML
   imageUrl        String?
+  imageAlt        String?
   isPublished     Boolean      @default(false)
   
   metaTitle       String?

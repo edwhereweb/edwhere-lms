@@ -10,6 +10,7 @@ interface CourseCardProps {
   id: string;
   title: string;
   imageUrl: string;
+  imageAlt?: string | null;
   chaptersLength: number;
   price: number;
   progress: number | null;
@@ -20,6 +21,7 @@ export const CourseCard = ({
   id,
   title,
   imageUrl,
+  imageAlt,
   chaptersLength,
   price,
   progress,
@@ -29,7 +31,7 @@ export const CourseCard = ({
     <Link href={`/courses/${id}/start`}>
       <div className="group hover:shadow-sm transition overflow-hidden border rounded-lg p-3 h-full">
         <div className="relative w-full aspect-video rounded-md overflow-hidden">
-          <Image fill className="object-cover" alt={title} src={imageUrl} />
+          <Image fill className="object-cover" alt={imageAlt || title} src={imageUrl} />
         </div>
         <div className="flex flex-col pt-2">
           <div className="text-lg md:text-base font-medium group-hover:text-primary transition line-clamp-2">

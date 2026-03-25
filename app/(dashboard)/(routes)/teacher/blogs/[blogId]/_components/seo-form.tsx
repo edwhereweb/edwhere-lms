@@ -9,6 +9,7 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { BlogPost } from '@prisma/client';
+import { cn } from '@/lib/utils';
 
 import {
   Form,
@@ -95,9 +96,30 @@ export const SEOForm = ({ initialData, blogId }: SEOFormProps) => {
               name="metaTitle"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Meta Title</FormLabel>
+                  <div className="flex items-center justify-between">
+                    <FormLabel>Meta Title</FormLabel>
+                    <span
+                      className={cn(
+                        'text-xs font-medium px-2 py-0.5 rounded-full',
+                        (field.value?.length || 0) >= 50 && (field.value?.length || 0) <= 60
+                          ? 'bg-emerald-100 text-emerald-700'
+                          : 'bg-amber-100 text-amber-700'
+                      )}
+                    >
+                      {field.value?.length || 0} chars |{' '}
+                      {(field.value?.length || 0) >= 50 && (field.value?.length || 0) <= 60
+                        ? 'Great'
+                        : (field.value?.length || 0) > 60
+                          ? 'Too Long'
+                          : 'Short'}
+                    </span>
+                  </div>
                   <FormControl>
-                    <Input disabled={isSubmitting} placeholder="SEO optimized title" {...field} />
+                    <Input
+                      disabled={isSubmitting}
+                      placeholder="SEO optimized title (50-60 chars)"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -108,11 +130,28 @@ export const SEOForm = ({ initialData, blogId }: SEOFormProps) => {
               name="metaDescription"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Meta Description</FormLabel>
+                  <div className="flex items-center justify-between">
+                    <FormLabel>Meta Description</FormLabel>
+                    <span
+                      className={cn(
+                        'text-xs font-medium px-2 py-0.5 rounded-full',
+                        (field.value?.length || 0) >= 120 && (field.value?.length || 0) <= 160
+                          ? 'bg-emerald-100 text-emerald-700'
+                          : 'bg-amber-100 text-amber-700'
+                      )}
+                    >
+                      {field.value?.length || 0} chars |{' '}
+                      {(field.value?.length || 0) >= 120 && (field.value?.length || 0) <= 160
+                        ? 'Great'
+                        : (field.value?.length || 0) > 160
+                          ? 'Too Long'
+                          : 'Short'}
+                    </span>
+                  </div>
                   <FormControl>
                     <Textarea
                       disabled={isSubmitting}
-                      placeholder="Brief summary for search results"
+                      placeholder="Brief summary for search results (120-160 chars)"
                       {...field}
                     />
                   </FormControl>

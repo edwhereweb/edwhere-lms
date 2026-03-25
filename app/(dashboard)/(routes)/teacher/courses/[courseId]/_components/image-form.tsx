@@ -21,7 +21,8 @@ interface ImageFormProps {
 const formSchema = z.object({
   imageUrl: z.string().min(1, {
     message: 'Image is required'
-  })
+  }),
+  imageAlt: z.string().max(255).optional()
 });
 
 export const ImageForm = ({ initialData, courseId }: ImageFormProps) => {
@@ -31,14 +32,34 @@ export const ImageForm = ({ initialData, courseId }: ImageFormProps) => {
 
   const router = useRouter();
 
+  const [imageAlt, setImageAlt] = useState(initialData.imageAlt || '');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
+      setIsSubmitting(true);
       await axios.patch(`/api/courses/${courseId}`, values);
       toast.success('Course updated');
       toggleEdit();
       router.refresh();
     } catch {
       toast.error('Something went wrong');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const onAltSave = async () => {
+    try {
+      setIsSubmitting(true);
+      await axios.patch(`/api/courses/${courseId}`, { imageAlt });
+      toast.success('Alt text updated');
+      toggleEdit();
+      router.refresh();
+    } catch {
+      toast.error('Something went wrong');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -68,27 +89,50 @@ export const ImageForm = ({ initialData, courseId }: ImageFormProps) => {
             <ImageIcon className="h-10 w-10 text-slate-500" />
           </div>
         ) : (
-          <div className="relative aspect-video mt-2">
-            <Image
-              alt="Upload"
-              fill
-              className="object-cover rounded-md"
-              src={initialData.imageUrl}
-            />
-          </div>
+          <>
+            <div className="relative aspect-video mt-2">
+              <Image
+                alt={initialData.imageAlt || 'Course image'}
+                fill
+                className="object-cover rounded-md"
+                src={initialData.imageUrl}
+              />
+            </div>
+            {initialData.imageAlt && (
+              <div className="text-xs text-slate-500 mt-1 italic">Alt: {initialData.imageAlt}</div>
+            )}
+          </>
         ))}
       {isEditing && (
-        <div>
+        <div className="space-y-4">
           <FileUpload
             endpoint="courseImage"
             courseId={courseId}
             onChange={(url) => {
               if (url) {
-                onSubmit({ imageUrl: url });
+                onSubmit({ imageUrl: url, imageAlt });
               }
             }}
           />
           <div className="text-xs text-muted-foreground mt-4">16:9 aspect ratio recommended</div>
+
+          {initialData.imageUrl && (
+            <div className="flex flex-col gap-y-2 mt-4">
+              <div className="text-sm font-medium">Image Alternate Text (SEO)</div>
+              <div className="flex items-center gap-x-2">
+                <input
+                  disabled={isSubmitting}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  placeholder="Describe the image for search engines..."
+                  value={imageAlt}
+                  onChange={(e) => setImageAlt(e.target.value)}
+                />
+                <Button disabled={isSubmitting} onClick={onAltSave}>
+                  Save
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

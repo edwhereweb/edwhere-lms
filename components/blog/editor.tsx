@@ -34,7 +34,8 @@ import {
   Image as ImageIcon,
   Loader2,
   Underline as UnderlineIcon,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Info
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -108,7 +109,12 @@ const Toolbar = ({ editor, blogId }: { editor: TiptapEditor | null; blogId?: str
       });
 
       const url = `/api/files/${data.key}`;
-      editor.chain().focus().setImage({ src: url }).run();
+      const altText = window.prompt('Enter alt text for SEO (optional):', file.name.split('.')[0]);
+      editor
+        .chain()
+        .focus()
+        .setImage({ src: url, alt: altText || '' })
+        .run();
     } catch (error) {
       console.error(error);
     } finally {
@@ -271,6 +277,25 @@ const Toolbar = ({ editor, blogId }: { editor: TiptapEditor | null; blogId?: str
           onChange={onImageUpload}
         />
       </div>
+
+      {editor.isActive('image') && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            const currentAlt = editor.getAttributes('image').alt || '';
+            const newAlt = window.prompt('Enter Image Alt Text (for SEO):', currentAlt);
+            if (newAlt !== null) {
+              editor.chain().focus().updateAttributes('image', { alt: newAlt }).run();
+            }
+          }}
+          title="Edit Image Alt Text"
+          className="bg-emerald-50 dark:bg-emerald-900/20"
+        >
+          <Info className="h-4 w-4 text-emerald-600" />
+          <span className="ml-1 text-[10px] text-emerald-600 font-bold">ALT</span>
+        </Button>
+      )}
 
       <div className="ml-auto flex items-center gap-1">
         <Button variant="ghost" size="sm" onClick={() => editor.chain().focus().undo().run()}>

@@ -9,6 +9,7 @@ interface BlogCardProps {
     title: string;
     slug: string;
     imageUrl: string | null;
+    imageAlt: string | null;
     createdAt: Date;
     author: {
       name: string;
@@ -29,7 +30,7 @@ export const BlogCard = ({ post }: BlogCardProps) => {
           {post.imageUrl ? (
             <Image
               src={post.imageUrl}
-              alt={post.title}
+              alt={post.imageAlt || post.title}
               fill
               className="object-cover transition-transform duration-500 group-hover:scale-105"
             />

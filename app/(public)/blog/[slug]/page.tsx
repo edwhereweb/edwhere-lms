@@ -141,7 +141,13 @@ const BlogPostPage = async ({ params }: BlogPostPageProps) => {
         <div className="max-w-5xl mx-auto px-6 -mt-8 md:-mt-16 flex justify-center">
           <div className="relative aspect-video rounded-3xl overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800 w-full max-w-[750px]">
             {/* Note: I'm using relative sizing that feels like 50% of content width but fixed classes for precision */}
-            <Image src={post.imageUrl} alt={post.title} fill className="object-cover" priority />
+            <Image
+              src={post.imageUrl}
+              alt={post.imageAlt || post.title}
+              fill
+              className="object-cover"
+              priority
+            />
           </div>
         </div>
       )}

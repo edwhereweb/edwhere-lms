@@ -346,7 +346,7 @@ export default async function LandingPage() {
                   >
                     <Image
                       src={blog.imageUrl || '/images/course-cybersecurity-56586a.png'}
-                      alt={blog.title}
+                      alt={(blog as { imageAlt?: string | null }).imageAlt || blog.title}
                       fill
                       className="object-cover transition-transform duration-300 group-hover:scale-105"
                     />
