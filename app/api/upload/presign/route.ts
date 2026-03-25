@@ -15,7 +15,7 @@ function buildKey(
   type: UploadType,
   userId: string,
   filename: string,
-  ids: { courseId?: string; chapterId?: string }
+  ids: { courseId?: string; chapterId?: string; blogId?: string }
 ): string {
   const uuid = crypto.randomUUID();
   const ext = path.extname(filename).toLowerCase() || '.bin';
@@ -32,6 +32,12 @@ function buildKey(
       return `private/chapter-pdfs/${ids.chapterId}/${uuid}.pdf`;
     case 'questionImage':
       return `private/question-images/${ids.courseId}/${uuid}${ext}`;
+    case 'blogAuthorImage':
+      return `public/blog-authors/${uuid}${ext}`;
+    case 'blogPostImage':
+      return `public/blog-images/${ids.blogId || 'general'}/${uuid}${ext}`;
+    case 'blogPostCover':
+      return `public/blog-covers/${ids.blogId || 'general'}/${uuid}${ext}`;
   }
 }
 
@@ -74,7 +80,8 @@ export async function POST(req: Request) {
       filename,
       contentType: explicitContentType,
       courseId,
-      chapterId
+      chapterId,
+      blogId
     } = validation.data;
 
     if (
@@ -93,7 +100,7 @@ export async function POST(req: Request) {
       return apiError(`Content type "${contentType}" is not allowed for ${type}`, 400);
     }
 
-    const key = buildKey(type, userId, filename, { courseId, chapterId });
+    const key = buildKey(type, userId, filename, { courseId, chapterId, blogId });
     const uploadUrl = await createPresignedPutUrl(key, contentType);
 
     return NextResponse.json({ uploadUrl, key });

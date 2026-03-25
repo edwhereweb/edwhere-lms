@@ -5,6 +5,11 @@ import { redirect } from 'next/navigation';
 import { Quote } from 'lucide-react';
 import { StatsCounter } from './_components/stats-counter';
 import { PublicNavbar } from '@/components/public-navbar';
+import { db } from '@/lib/db';
+import { Badge } from '@/components/ui/badge';
+import { format } from 'date-fns';
+import { ArrowRight } from 'lucide-react';
+import type { BlogPost, BlogAuthor, BlogCategory } from '@prisma/client';
 
 const STATS = [
   { value: '35K+', label: 'Students' },
@@ -115,6 +120,20 @@ export default async function LandingPage() {
   if (userId) {
     redirect('/dashboard');
   }
+
+  const blogs = await db.blogPost.findMany({
+    where: {
+      isPublished: true
+    },
+    include: {
+      author: true,
+      category: true
+    },
+    orderBy: {
+      createdAt: 'desc'
+    },
+    take: 3
+  });
 
   return (
     <div className="min-h-screen bg-white text-black">
@@ -304,6 +323,75 @@ export default async function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* Latest from our blog */}
+      {blogs.length > 0 && (
+        <section className="bg-white">
+          <div className="max-w-[1400px] mx-auto px-6 py-20">
+            <div className="flex items-center justify-between mb-12">
+              <h2 className="font-opensans text-4xl font-semibold">Latest from our Blog</h2>
+              <Link
+                href="/blog"
+                className="flex items-center gap-2 text-[#6715FF] font-medium hover:underline"
+              >
+                View all articles <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {blogs.map((blog) => (
+                <div key={blog.id} className="group flex flex-col">
+                  <Link
+                    href={`/blog/${blog.slug}`}
+                    className="block relative aspect-video overflow-hidden rounded-2xl mb-4"
+                  >
+                    <Image
+                      src={blog.imageUrl || '/images/course-cybersecurity-56586a.png'}
+                      alt={blog.title}
+                      fill
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  </Link>
+                  <div className="flex-1 flex flex-col">
+                    <div className="flex items-center gap-x-2 mb-2">
+                      {blog.category && (
+                        <Badge variant="outline" className="text-xs font-normal">
+                          {blog.category.name}
+                        </Badge>
+                      )}
+                      <span className="text-xs text-slate-500">
+                        {format(blog.createdAt, 'MMM d, yyyy')}
+                      </span>
+                    </div>
+                    <Link href={`/blog/${blog.slug}`}>
+                      <h3 className="font-poppins text-xl font-medium text-black mb-2 line-clamp-2 hover:text-[#F80602] transition-colors">
+                        {blog.title}
+                      </h3>
+                    </Link>
+                    <p className="text-slate-600 text-sm line-clamp-2 mb-4">
+                      {blog.metaDescription || blog.title}
+                    </p>
+                    <div className="mt-auto flex items-center gap-x-2">
+                      <div className="relative h-6 w-6 rounded-full overflow-hidden">
+                        <Image
+                          src={
+                            blog.author.imageUrl ||
+                            'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200'
+                          }
+                          alt={blog.author.name}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      <span className="text-xs font-medium text-slate-900">{blog.author.name}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Free Cybersecurity content */}
       <section className="bg-[#111111] text-white">

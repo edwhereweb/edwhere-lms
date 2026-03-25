@@ -12,7 +12,9 @@ import {
   Megaphone,
   MessageCircle,
   Library,
-  UserPlus
+  UserPlus,
+  Newspaper,
+  UserCircle
 } from 'lucide-react';
 import SidebarItem from './sidebar-item';
 import { usePathname } from 'next/navigation';
@@ -32,10 +34,16 @@ const teacherRoutes = [
   { icon: ClipboardCheck, label: 'Pending Approvals', href: '/teacher/pending-approvals' },
   { icon: ClipboardList, label: 'Student Submissions', href: '/teacher/project-submissions' },
   { icon: Library, label: 'Asset Library', href: '/teacher/asset-library' },
+  { icon: Newspaper, label: 'Blogs', href: '/teacher/blogs' },
+  { icon: UserCircle, label: 'My Profile', href: '/teacher/profile' },
   { icon: MessageCircle, label: 'Mentor Connect', href: '/teacher/mentor-connect' }
 ];
 
-const marketerRoutes = [{ icon: Megaphone, label: 'Leads', href: '/marketer' }];
+const marketerRoutes = [
+  { icon: Megaphone, label: 'Leads', href: '/marketer' },
+  { icon: Newspaper, label: 'Blogs', href: '/marketer/blogs' },
+  { icon: UserCircle, label: 'My Profile', href: '/marketer/profile' }
+];
 
 interface SidebarRoutesProps {
   currentProfile?: SafeProfile | null;
@@ -61,10 +69,18 @@ export const SidebarRoutes = ({ currentProfile }: SidebarRoutesProps) => {
     );
   }
 
-  // For student view: append Marketing link for MARKETER/ADMIN users
+  const isStaffRole =
+    currentProfile?.role === 'ADMIN' ||
+    currentProfile?.role === 'TEACHER' ||
+    currentProfile?.role === 'MARKETER';
+
+  // For student view: append links for STAFF users
   const extraRoutes =
-    !isTeacherPage && !isMarketerPage && isMarketerRole
-      ? [{ icon: Megaphone, label: 'Marketing', href: '/marketer' }]
+    !isTeacherPage && !isMarketerPage && isStaffRole
+      ? [
+          ...(isMarketerRole ? [{ icon: Megaphone, label: 'Marketing', href: '/marketer' }] : []),
+          { icon: UserCircle, label: 'My Public Profile', href: '/teacher/profile' }
+        ]
       : [];
 
   return (

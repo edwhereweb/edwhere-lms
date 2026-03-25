@@ -1,0 +1,139 @@
+import { redirect } from 'next/navigation';
+import { LayoutDashboard, FileText, Settings } from 'lucide-react';
+
+import { db } from '@/lib/db';
+import { Banner } from '@/components/banner';
+import { TitleForm } from './_components/title-form';
+import { ImageForm } from './_components/image-form';
+import { ContentForm } from './_components/content-form';
+import { CategoryForm } from './_components/category-form';
+import { AuthorForm } from './_components/author-form';
+import { SEOForm } from './_components/seo-form';
+import { RelatedCoursesForm } from '@/components/blog/related-courses-form';
+import { BlogActions } from './_components/blog-actions';
+import { canManageBlogs } from '@/lib/blog-auth';
+
+interface BlogIdPageProps {
+  params: {
+    blogId: string;
+  };
+}
+
+const BlogIdPage = async ({ params }: BlogIdPageProps) => {
+  const isAuthorized = await canManageBlogs();
+  if (!isAuthorized) return redirect('/');
+
+  const blog = await db.blogPost.findUnique({
+    where: {
+      id: params.blogId
+    },
+    include: {
+      author: true,
+      category: true
+    }
+  });
+
+  if (!blog) return redirect('/');
+
+  const categories = await db.blogCategory.findMany({
+    orderBy: { name: 'asc' }
+  });
+
+  const authors = await db.blogAuthor.findMany({
+    orderBy: { name: 'asc' }
+  });
+
+  const courses = await db.course.findMany({
+    orderBy: { title: 'asc' }
+  });
+
+  const requiredFields = [blog.title, blog.content, blog.categoryId, blog.authorId, blog.imageUrl];
+
+  const totalFields = requiredFields.length;
+  const completedFields = requiredFields.filter(Boolean).length;
+
+  const completionText = `(${completedFields}/${totalFields})`;
+  const isComplete = requiredFields.every(Boolean);
+
+  return (
+    <>
+      {!blog.isPublished && (
+        <Banner label="This blog post is unpublished. It will not be visible to the public." />
+      )}
+      <div className="p-6">
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-y-2">
+            <h1 className="text-2xl font-medium">Blog Setup</h1>
+            <span className="text-sm text-slate-700 dark:text-slate-400">
+              Complete all fields {completionText}
+            </span>
+          </div>
+          <BlogActions
+            disabled={!isComplete}
+            blogId={params.blogId}
+            isPublished={blog.isPublished}
+            slug={blog.slug}
+          />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-16">
+          <div>
+            <div className="flex items-center gap-x-2">
+              <div className="p-2 bg-sky-100 rounded-full dark:bg-sky-900">
+                <LayoutDashboard className="h-6 w-6 text-sky-700 dark:text-sky-300" />
+              </div>
+              <h2 className="text-xl">Customize your blog post</h2>
+            </div>
+            <TitleForm initialData={blog} blogId={blog.id} />
+            <ImageForm initialData={blog} blogId={blog.id} />
+            <CategoryForm
+              initialData={blog}
+              blogId={blog.id}
+              options={categories.map((cat) => ({
+                label: cat.name,
+                value: cat.id
+              }))}
+            />
+            <AuthorForm
+              initialData={blog}
+              blogId={blog.id}
+              options={authors.map((author) => ({
+                label: author.name,
+                value: author.id
+              }))}
+            />
+          </div>
+          <div className="space-y-6">
+            <div>
+              <div className="flex items-center gap-x-2">
+                <div className="p-2 bg-sky-100 rounded-full dark:bg-sky-900">
+                  <Settings className="h-6 w-6 text-sky-700 dark:text-sky-300" />
+                </div>
+                <h2 className="text-xl">SEO & Meta Tags</h2>
+              </div>
+              <SEOForm initialData={blog} blogId={blog.id} />
+              <RelatedCoursesForm
+                initialData={blog}
+                blogId={blog.id}
+                options={courses.map((course) => ({
+                  label: course.title,
+                  value: course.id
+                }))}
+              />
+            </div>
+            <div>
+              <div className="flex items-center gap-x-2">
+                <div className="p-2 bg-sky-100 rounded-full dark:bg-sky-900">
+                  <FileText className="h-6 w-6 text-sky-700 dark:text-sky-300" />
+                </div>
+                <h2 className="text-xl">Article Content</h2>
+              </div>
+              <ContentForm initialData={blog} blogId={blog.id} />
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+export default BlogIdPage;

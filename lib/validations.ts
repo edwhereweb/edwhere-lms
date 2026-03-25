@@ -217,7 +217,10 @@ const UPLOAD_TYPE = z.enum([
   'courseImage',
   'courseAttachment',
   'chapterPdf',
-  'questionImage'
+  'questionImage',
+  'blogAuthorImage',
+  'blogPostImage',
+  'blogPostCover'
 ]);
 export type UploadType = z.infer<typeof UPLOAD_TYPE>;
 
@@ -245,7 +248,10 @@ export const ALLOWED_CONTENT_TYPES: Record<UploadType, readonly string[]> = {
   courseImage: IMAGE_CONTENT_TYPES,
   courseAttachment: ATTACHMENT_CONTENT_TYPES,
   chapterPdf: ['application/pdf'],
-  questionImage: IMAGE_CONTENT_TYPES
+  questionImage: IMAGE_CONTENT_TYPES,
+  blogAuthorImage: IMAGE_CONTENT_TYPES,
+  blogPostImage: IMAGE_CONTENT_TYPES,
+  blogPostCover: IMAGE_CONTENT_TYPES
 };
 
 export const MAX_FILE_SIZES: Record<UploadType, number> = {
@@ -253,7 +259,10 @@ export const MAX_FILE_SIZES: Record<UploadType, number> = {
   courseImage: 4 * 1024 * 1024,
   courseAttachment: 16 * 1024 * 1024,
   chapterPdf: 16 * 1024 * 1024,
-  questionImage: 250 * 1024 // 250KB limit as requested
+  questionImage: 250 * 1024,
+  blogAuthorImage: 4 * 1024 * 1024,
+  blogPostImage: 8 * 1024 * 1024,
+  blogPostCover: 8 * 1024 * 1024
 };
 
 export const presignSchema = z.object({
@@ -261,5 +270,54 @@ export const presignSchema = z.object({
   filename: z.string().min(1).max(255),
   contentType: z.string().min(1).optional(),
   courseId: z.string().optional(),
-  chapterId: z.string().optional()
+  chapterId: z.string().optional(),
+  blogId: z.string().optional()
+});
+
+// ── Blog schemas ────────────────────────────────────────────────────────
+
+export const upsertBlogAuthorSchema = z.object({
+  name: z.string().min(1, 'Name is required').max(100),
+  bio: z.string().max(2000).optional(),
+  imageUrl: fileUrl.optional(),
+  credentials: z.array(z.string()).optional(),
+  role: z.string().max(100).optional(),
+  userId: z.string().optional()
+});
+
+export const upsertBlogCategorySchema = z.object({
+  name: z.string().min(1, 'Name is required').max(100),
+  slug: z
+    .string()
+    .min(1)
+    .max(100)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug must be lowercase letters, numbers, and hyphens')
+});
+
+export const createBlogPostSchema = z.object({
+  title: z.string().min(1, 'Title is required').max(300)
+});
+
+export const updateBlogPostSchema = z.object({
+  title: z.string().min(1).max(300).optional(),
+  slug: z
+    .string()
+    .min(1)
+    .max(300)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug must be lowercase letters, numbers, and hyphens')
+    .optional(),
+  content: z.string().min(1, 'Content is required').optional(),
+  imageUrl: fileUrl.nullable().optional(),
+  isPublished: z.boolean().optional(),
+  authorId: z.string().optional(),
+  categoryId: z.string().nullable().optional(),
+  tags: z.array(z.string()).optional(),
+  courseIds: z.array(z.string()).optional(),
+  metaTitle: z.string().max(200).optional(),
+  metaDescription: z.string().max(500).optional()
+});
+
+export const upsertBlogTagMappingSchema = z.object({
+  tagName: z.string().min(1, 'Tag name is required').max(100),
+  courseId: z.string().min(1, 'Course ID is required')
 });

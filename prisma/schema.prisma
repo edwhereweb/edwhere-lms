@@ -59,8 +59,13 @@ model Course {
   purchases   Purchase[]
   instructors CourseInstructor[]
   messages    CourseMessage[]
+  blogTagMappings BlogTagMapping[]
+
+  blogPostIds     String[]   @db.ObjectId
+  blogPosts       BlogPost[] @relation(fields: [blogPostIds], references: [id])
 
   createdAt   DateTime   @default(now())
+
   updatedAt   DateTime   @updatedAt
 
   @@index([categoryId])
@@ -368,3 +373,68 @@ model ProjectSubmission {
   @@index([chapterId])
   @@index([status])
 }
+
+model BlogAuthor {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String?  @unique
+  name        String
+  bio         String?
+  imageUrl    String?
+  role        String?
+  credentials String[] // e.g. ["EC-Council CEH", "ISO 27001 Auditor"]
+
+  posts       BlogPost[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model BlogCategory {
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  name      String     @unique
+  slug      String     @unique
+  posts     BlogPost[]
+
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model BlogPost {
+  id              String       @id @default(auto()) @map("_id") @db.ObjectId
+  title           String
+  slug            String       @unique
+  content         String       // Markdown or HTML
+  imageUrl        String?
+  isPublished     Boolean      @default(false)
+  
+  metaTitle       String?
+  metaDescription String?
+  tags            String[]     // For dynamic course mapping
+
+  courseIds       String[]     @db.ObjectId
+  courses         Course[]     @relation(fields: [courseIds], references: [id])
+
+  authorId        String       @db.ObjectId
+  author          BlogAuthor   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  categoryId      String?      @db.ObjectId
+  category        BlogCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([authorId])
+  @@index([categoryId])
+}
+
+model BlogTagMapping {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  tagName   String   @unique // The tag to match (e.g. "IoT")
+  courseId  String   @db.ObjectId
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([courseId])
+}

@@ -12,9 +12,16 @@ interface FileUploadProps {
   endpoint: UploadType;
   courseId?: string;
   chapterId?: string;
+  blogId?: string;
 }
 
-export const FileUpload = ({ onChange, endpoint, courseId, chapterId }: FileUploadProps) => {
+export const FileUpload = ({
+  onChange,
+  endpoint,
+  courseId,
+  chapterId,
+  blogId
+}: FileUploadProps) => {
   const [isUploading, setIsUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -45,7 +52,8 @@ export const FileUpload = ({ onChange, endpoint, courseId, chapterId }: FileUplo
             filename: file.name,
             contentType: file.type || undefined,
             courseId,
-            chapterId
+            chapterId,
+            blogId
           }
         );
 
@@ -74,7 +82,7 @@ export const FileUpload = ({ onChange, endpoint, courseId, chapterId }: FileUplo
         setSelectedFile(null);
       }
     },
-    [endpoint, courseId, chapterId, onChange]
+    [endpoint, courseId, chapterId, blogId, onChange]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
