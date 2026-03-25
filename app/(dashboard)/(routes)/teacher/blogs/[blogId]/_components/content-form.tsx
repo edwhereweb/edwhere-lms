@@ -8,7 +8,7 @@ import dynamic from 'next/dynamic';
 import debounce from 'lodash.debounce';
 
 import { Button } from '@/components/ui/button';
-import type { EditorProps } from './editor';
+import type { EditorProps } from '@/components/blog/editor';
 
 interface ContentFormProps {
   initialData: {
