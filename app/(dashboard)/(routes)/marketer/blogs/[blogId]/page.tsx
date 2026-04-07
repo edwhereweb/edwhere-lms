@@ -4,11 +4,13 @@ import { LayoutDashboard, FileText, Settings } from 'lucide-react';
 import { db } from '@/lib/db';
 import { Banner } from '@/components/banner';
 import { TitleForm } from './_components/title-form';
+import { SlugForm } from '@/components/blog/slug-form';
 import { ImageForm } from './_components/image-form';
 import { ContentForm } from './_components/content-form';
 import { CategoryForm } from './_components/category-form';
 import { AuthorForm } from './_components/author-form';
 import { SEOForm } from './_components/seo-form';
+import { SEOAnalyzer } from '@/components/blog/seo-analyzer';
 import { RelatedCoursesForm } from '@/components/blog/related-courses-form';
 import { BlogActions } from './_components/blog-actions';
 import { canManageBlogs } from '@/lib/blog-auth';
@@ -84,7 +86,11 @@ const BlogIdPage = async ({ params }: BlogIdPageProps) => {
               <h2 className="text-xl">Customize your blog post</h2>
             </div>
             <TitleForm initialData={blog} blogId={blog.id} />
-            <ImageForm initialData={blog} blogId={blog.id} />
+            <SlugForm initialData={blog} blogId={blog.id} />
+            <ImageForm
+              initialData={blog as { imageUrl: string | null; imageAlt: string | null }}
+              blogId={blog.id}
+            />
             <CategoryForm
               initialData={blog}
               blogId={blog.id}
@@ -111,6 +117,7 @@ const BlogIdPage = async ({ params }: BlogIdPageProps) => {
                 <h2 className="text-xl">SEO & Meta Tags</h2>
               </div>
               <SEOForm initialData={blog} blogId={blog.id} />
+              <SEOAnalyzer initialData={blog} />
               <RelatedCoursesForm
                 initialData={blog}
                 blogId={blog.id}

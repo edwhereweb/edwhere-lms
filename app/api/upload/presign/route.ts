@@ -3,9 +3,12 @@ import { NextResponse } from 'next/server';
 import { validateBody, apiError, handleApiError } from '@/lib/api-utils';
 import { presignSchema, ALLOWED_CONTENT_TYPES, type UploadType } from '@/lib/validations';
 import { isTeacher } from '@/lib/teacher';
+import { canManageBlogs } from '@/lib/blog-auth';
 import { createPresignedPutUrl } from '@/lib/r2';
 import crypto from 'crypto';
 import path from 'path';
+
+const BLOG_UPLOAD_TYPES: UploadType[] = ['blogPostImage', 'blogPostCover', 'blogAuthorImage'];
 
 function sanitizeFilename(name: string): string {
   return name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 100);
@@ -68,9 +71,6 @@ export async function POST(req: Request) {
     const { userId } = await auth();
     if (!userId) return apiError('Unauthorized', 401);
 
-    const authorized = await isTeacher();
-    if (!authorized) return apiError('Unauthorized', 401);
-
     const body = await req.json();
     const validation = validateBody(presignSchema, body);
     if (!validation.success) return validation.response;
@@ -83,6 +83,10 @@ export async function POST(req: Request) {
       chapterId,
       blogId
     } = validation.data;
+
+    const isBlogUpload = BLOG_UPLOAD_TYPES.includes(type);
+    const authorized = isBlogUpload ? await canManageBlogs() : await isTeacher();
+    if (!authorized) return apiError('Unauthorized', 401);
 
     if (
       (type === 'courseImage' || type === 'courseAttachment' || type === 'questionImage') &&
