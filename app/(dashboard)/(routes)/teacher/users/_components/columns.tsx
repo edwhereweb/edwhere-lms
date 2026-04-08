@@ -57,7 +57,16 @@ export const columns: ColumnDef<Profile, keyof Profile>[] = [
     },
     cell: ({ row }) => {
       const role = row.getValue('role');
-      const badgeColor = role === 'ADMIN' ? 'green' : role === 'TEACHER' ? 'blue' : 'gray';
+      const badgeColor =
+        role === 'ADMIN'
+          ? 'green'
+          : role === 'TEACHER'
+            ? 'blue'
+            : role === 'MARKETER'
+              ? 'purple'
+              : role === 'BLOGGER'
+                ? 'orange'
+                : 'gray';
       return typeof role === 'string' ? <Badge color={badgeColor}>{role}</Badge> : null;
     }
   },

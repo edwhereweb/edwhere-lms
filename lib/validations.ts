@@ -115,7 +115,7 @@ export const razorpayVerifySchema = z.object({
 export const profileUpdateSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   imageUrl: fileUrl.optional(),
-  role: z.enum(['ADMIN', 'TEACHER', 'STUDENT']).optional()
+  role: z.enum(['ADMIN', 'TEACHER', 'STUDENT', 'MARKETER', 'BLOGGER']).optional()
 });
 
 export const unenrollLearnerSchema = z.object({
