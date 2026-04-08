@@ -45,6 +45,11 @@ const marketerRoutes = [
   { icon: UserCircle, label: 'My Profile', href: '/marketer/profile' }
 ];
 
+const bloggerRoutes = [
+  { icon: Newspaper, label: 'Blogs', href: '/blogger/blogs' },
+  { icon: UserCircle, label: 'My Profile', href: '/blogger/profile' }
+];
+
 interface SidebarRoutesProps {
   currentProfile?: SafeProfile | null;
 }
@@ -54,10 +59,18 @@ export const SidebarRoutes = ({ currentProfile }: SidebarRoutesProps) => {
 
   const isTeacherPage = pathname?.startsWith('/teacher');
   const isMarketerPage = pathname?.startsWith('/marketer');
+  const isBloggerPage = pathname?.startsWith('/blogger');
 
   const isMarketerRole = currentProfile?.role === 'MARKETER' || currentProfile?.role === 'ADMIN';
+  const isBloggerRole = currentProfile?.role === 'BLOGGER' || currentProfile?.role === 'ADMIN';
 
-  let routes = isMarketerPage ? marketerRoutes : isTeacherPage ? teacherRoutes : STUDENTRoutes;
+  let routes = isBloggerPage
+    ? bloggerRoutes
+    : isMarketerPage
+      ? marketerRoutes
+      : isTeacherPage
+        ? teacherRoutes
+        : STUDENTRoutes;
 
   // Restrict admin-only teacher routes
   if (isTeacherPage && currentProfile?.role !== 'ADMIN') {
@@ -72,14 +85,20 @@ export const SidebarRoutes = ({ currentProfile }: SidebarRoutesProps) => {
   const isStaffRole =
     currentProfile?.role === 'ADMIN' ||
     currentProfile?.role === 'TEACHER' ||
-    currentProfile?.role === 'MARKETER';
+    currentProfile?.role === 'MARKETER' ||
+    currentProfile?.role === 'BLOGGER';
 
   // For student view: append links for STAFF users
   const extraRoutes =
-    !isTeacherPage && !isMarketerPage && isStaffRole
+    !isTeacherPage && !isMarketerPage && !isBloggerPage && isStaffRole
       ? [
           ...(isMarketerRole ? [{ icon: Megaphone, label: 'Marketing', href: '/marketer' }] : []),
-          { icon: UserCircle, label: 'My Public Profile', href: '/teacher/profile' }
+          ...(isBloggerRole
+            ? [{ icon: Newspaper, label: 'Blogger Dashboard', href: '/blogger/blogs' }]
+            : []),
+          ...(currentProfile?.role === 'TEACHER' || currentProfile?.role === 'ADMIN'
+            ? [{ icon: UserCircle, label: 'My Public Profile', href: '/teacher/profile' }]
+            : [])
         ]
       : [];
 

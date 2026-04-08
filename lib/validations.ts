@@ -283,7 +283,10 @@ export const upsertBlogAuthorSchema = z.object({
   imageUrl: fileUrl.optional(),
   credentials: z.array(z.string()).optional(),
   role: z.string().max(100).optional(),
-  userId: z.string().optional()
+  userId: z.string().optional(),
+  linkedinUrl: z.string().url('Must be a valid URL').optional().or(z.literal('')),
+  twitterUrl: z.string().url('Must be a valid URL').optional().or(z.literal('')),
+  websiteUrl: z.string().url('Must be a valid URL').optional().or(z.literal(''))
 });
 
 export const upsertBlogCategorySchema = z.object({

@@ -37,9 +37,14 @@ interface Blog {
 interface BlogFilterGridProps {
   blogs: Blog[];
   categories: { id: string; name: string }[];
+  basePath?: string;
 }
 
-export const BlogFilterGrid = ({ blogs, categories }: BlogFilterGridProps) => {
+export const BlogFilterGrid = ({
+  blogs,
+  categories,
+  basePath = '/teacher'
+}: BlogFilterGridProps) => {
   const router = useRouter();
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -78,11 +83,11 @@ export const BlogFilterGrid = ({ blogs, categories }: BlogFilterGridProps) => {
             placeholder="Search blogs..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950"
+            className="pl-9 h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus-visible:ring-slate-400"
           />
         </div>
         <select
-          className="h-10 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none ring-offset-white focus:ring-2 focus:ring-slate-950"
+          className="h-10 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none ring-offset-white focus:ring-2 focus:ring-slate-950 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-slate-400"
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
         >
@@ -94,7 +99,7 @@ export const BlogFilterGrid = ({ blogs, categories }: BlogFilterGridProps) => {
           ))}
         </select>
         <select
-          className="h-10 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none ring-offset-white focus:ring-2 focus:ring-slate-950"
+          className="h-10 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none ring-offset-white focus:ring-2 focus:ring-slate-950 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-slate-400"
           value={selectedStatus}
           onChange={(e) => setSelectedStatus(e.target.value)}
         >
@@ -104,23 +109,38 @@ export const BlogFilterGrid = ({ blogs, categories }: BlogFilterGridProps) => {
         </select>
       </div>
 
-      <div className="rounded-md border bg-white overflow-hidden">
+      <div className="rounded-md border bg-white dark:bg-slate-900 dark:border-slate-700 overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 border-b">
+          <thead className="bg-slate-50 dark:bg-slate-800 border-b dark:border-slate-700">
             <tr>
-              <th className="text-left p-4 font-medium text-slate-500">Title</th>
-              <th className="text-left p-4 font-medium text-slate-500">Author</th>
-              <th className="text-left p-4 font-medium text-slate-500">Category</th>
-              <th className="text-left p-4 font-medium text-slate-500">Status</th>
-              <th className="text-left p-4 font-medium text-slate-500">Created At</th>
-              <th className="text-right p-4 font-medium text-slate-500">Actions</th>
+              <th className="text-left p-4 font-medium text-slate-500 dark:text-slate-400">
+                Title
+              </th>
+              <th className="text-left p-4 font-medium text-slate-500 dark:text-slate-400">
+                Author
+              </th>
+              <th className="text-left p-4 font-medium text-slate-500 dark:text-slate-400">
+                Category
+              </th>
+              <th className="text-left p-4 font-medium text-slate-500 dark:text-slate-400">
+                Status
+              </th>
+              <th className="text-left p-4 font-medium text-slate-500 dark:text-slate-400">
+                Created At
+              </th>
+              <th className="text-right p-4 font-medium text-slate-500 dark:text-slate-400">
+                Actions
+              </th>
             </tr>
           </thead>
-          <tbody className="divide-y">
+          <tbody className="divide-y dark:divide-slate-700">
             {filteredBlogs.map((blog) => (
-              <tr key={blog.id} className="hover:bg-slate-50 transition-colors">
-                <td className="p-4 font-medium">{blog.title}</td>
-                <td className="p-4 text-slate-600">{blog.author}</td>
+              <tr
+                key={blog.id}
+                className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+              >
+                <td className="p-4 font-medium dark:text-slate-100">{blog.title}</td>
+                <td className="p-4 text-slate-600 dark:text-slate-400">{blog.author}</td>
                 <td className="p-4">
                   {blog.category ? <Badge variant="secondary">{blog.category}</Badge> : '-'}
                 </td>
@@ -135,7 +155,7 @@ export const BlogFilterGrid = ({ blogs, categories }: BlogFilterGridProps) => {
                     {blog.isPublished ? 'Published' : 'Draft'}
                   </Badge>
                 </td>
-                <td className="p-4 text-slate-600">
+                <td className="p-4 text-slate-600 dark:text-slate-400">
                   {format(new Date(blog.createdAt), 'MMM d, yyyy')}
                 </td>
                 <td className="p-4 text-right">
@@ -146,7 +166,7 @@ export const BlogFilterGrid = ({ blogs, categories }: BlogFilterGridProps) => {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <Link href={`/teacher/blogs/${blog.id}`}>
+                      <Link href={`${basePath}/blogs/${blog.id}`}>
                         <DropdownMenuItem className="cursor-pointer">
                           <Pencil className="h-4 w-4 mr-2" />
                           Edit
@@ -183,7 +203,7 @@ export const BlogFilterGrid = ({ blogs, categories }: BlogFilterGridProps) => {
           </tbody>
         </table>
         {filteredBlogs.length === 0 && (
-          <div className="p-20 text-center text-slate-500">No blogs found.</div>
+          <div className="p-20 text-center text-slate-500 dark:text-slate-400">No blogs found.</div>
         )}
       </div>
     </div>

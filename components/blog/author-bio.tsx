@@ -1,5 +1,6 @@
 import Image from 'next/image';
-import { Award, ShieldCheck } from 'lucide-react';
+import Link from 'next/link';
+import { Award, ShieldCheck, Linkedin, Twitter, Globe } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 interface AuthorBioProps {
@@ -8,10 +9,21 @@ interface AuthorBioProps {
     bio: string | null;
     imageUrl: string | null;
     credentials: string[];
+    linkedinUrl?: string | null;
+    twitterUrl?: string | null;
+    websiteUrl?: string | null;
   };
 }
 
+const SOCIAL_LINKS = [
+  { key: 'linkedinUrl' as const, icon: Linkedin, label: 'LinkedIn' },
+  { key: 'twitterUrl' as const, icon: Twitter, label: 'Twitter / X' },
+  { key: 'websiteUrl' as const, icon: Globe, label: 'Website' }
+];
+
 export const AuthorBio = ({ author }: AuthorBioProps) => {
+  const activeSocials = SOCIAL_LINKS.filter(({ key }) => Boolean(author[key]));
+
   return (
     <div className="mt-16 p-6 md:p-8 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
       <div className="flex flex-col md:flex-row gap-6 items-center md:items-start text-center md:text-left">
@@ -43,7 +55,7 @@ export const AuthorBio = ({ author }: AuthorBioProps) => {
           </p>
 
           {author.credentials.length > 0 && (
-            <div className="flex flex-wrap gap-2 pt-2 justify-center md:justify-start">
+            <div className="flex flex-wrap gap-2 pt-1 justify-center md:justify-start">
               {author.credentials.map((cred, index) => (
                 <Badge
                   key={index}
@@ -53,6 +65,24 @@ export const AuthorBio = ({ author }: AuthorBioProps) => {
                   <Award className="h-3 w-3" />
                   {cred}
                 </Badge>
+              ))}
+            </div>
+          )}
+
+          {activeSocials.length > 0 && (
+            <div className="flex flex-wrap gap-4 pt-1 justify-center md:justify-start">
+              {activeSocials.map(({ key, icon: Icon, label }) => (
+                <Link
+                  key={key}
+                  href={author[key]!}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={label}
+                  className="flex items-center gap-x-1.5 text-sm text-slate-500 dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors"
+                >
+                  <Icon className="h-4 w-4" />
+                  <span>{label}</span>
+                </Link>
               ))}
             </div>
           )}

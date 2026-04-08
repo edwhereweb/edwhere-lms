@@ -4,11 +4,12 @@ import * as z from 'zod';
 import axios from 'axios';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { Pencil, User, Plus, X } from 'lucide-react';
+import { Pencil, User, Plus, X, Linkedin, Twitter, Globe } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { BlogAuthor } from '@prisma/client';
+import Link from 'next/link';
 
 import {
   Form,
@@ -29,6 +30,8 @@ interface ProfileFormProps {
   initialData: BlogAuthor | null;
 }
 
+type FormValues = z.infer<typeof upsertBlogAuthorSchema>;
+
 export const ProfileForm = ({ initialData }: ProfileFormProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [newCredential, setNewCredential] = useState('');
@@ -36,22 +39,32 @@ export const ProfileForm = ({ initialData }: ProfileFormProps) => {
 
   const toggleEdit = () => setIsEditing((prev) => !prev);
 
-  const form = useForm<z.infer<typeof upsertBlogAuthorSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(upsertBlogAuthorSchema),
     defaultValues: {
       name: initialData?.name || '',
       role: initialData?.role || '',
       bio: initialData?.bio || '',
       imageUrl: initialData?.imageUrl || '',
-      credentials: initialData?.credentials || []
+      credentials: initialData?.credentials || [],
+      linkedinUrl: initialData?.linkedinUrl || '',
+      twitterUrl: initialData?.twitterUrl || '',
+      websiteUrl: initialData?.websiteUrl || ''
     }
   });
 
   const { isSubmitting, isValid } = form.formState;
 
-  const onSubmit = async (values: z.infer<typeof upsertBlogAuthorSchema>) => {
+  const onSubmit = async (values: FormValues) => {
     try {
-      await axios.patch('/api/blogs/authors/me', values);
+      // Treat empty strings as absent so the DB stores null rather than ''
+      const payload = {
+        ...values,
+        linkedinUrl: values.linkedinUrl || undefined,
+        twitterUrl: values.twitterUrl || undefined,
+        websiteUrl: values.websiteUrl || undefined
+      };
+      await axios.patch('/api/blogs/authors/me', payload);
       toast.success('Profile updated');
       toggleEdit();
       router.refresh();
@@ -74,6 +87,12 @@ export const ProfileForm = ({ initialData }: ProfileFormProps) => {
       current.filter((_, i) => i !== index)
     );
   };
+
+  const socialLinks = [
+    { url: initialData?.linkedinUrl, icon: Linkedin, label: 'LinkedIn' },
+    { url: initialData?.twitterUrl, icon: Twitter, label: 'Twitter / X' },
+    { url: initialData?.websiteUrl, icon: Globe, label: 'Website' }
+  ].filter((s) => Boolean(s.url));
 
   return (
     <div className="mt-6 border bg-slate-100 rounded-md p-4 dark:bg-slate-900/50">
@@ -122,7 +141,7 @@ export const ProfileForm = ({ initialData }: ProfileFormProps) => {
           </div>
 
           <div>
-            <p className="text-sm font-medium mb-2">Credentials & Certifications</p>
+            <p className="text-sm font-medium mb-2">Credentials &amp; Certifications</p>
             <div className="flex flex-wrap gap-2">
               {initialData?.credentials?.map((cred: string, i: number) => (
                 <span
@@ -137,6 +156,33 @@ export const ProfileForm = ({ initialData }: ProfileFormProps) => {
               )}
             </div>
           </div>
+
+          {socialLinks.length > 0 && (
+            <div>
+              <p className="text-sm font-medium mb-2">Social &amp; Web</p>
+              <div className="flex flex-wrap gap-3">
+                {socialLinks.map(({ url, icon: Icon, label }) => (
+                  <Link
+                    key={label}
+                    href={url!}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-x-1.5 text-sm text-slate-600 dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors"
+                  >
+                    <Icon className="h-4 w-4" />
+                    {label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {socialLinks.length === 0 && (
+            <div>
+              <p className="text-sm font-medium mb-1">Social &amp; Web</p>
+              <p className="text-sm text-slate-500 italic">No social links added.</p>
+            </div>
+          )}
         </div>
       )}
 
@@ -195,6 +241,70 @@ export const ProfileForm = ({ initialData }: ProfileFormProps) => {
                     </FormItem>
                   )}
                 />
+
+                {/* Social links */}
+                <FormField
+                  control={form.control}
+                  name="linkedinUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-x-1.5">
+                        <Linkedin className="h-3.5 w-3.5" /> LinkedIn URL
+                        <span className="text-slate-400 font-normal">(optional)</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          disabled={isSubmitting}
+                          placeholder="https://linkedin.com/in/yourprofile"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="twitterUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-x-1.5">
+                        <Twitter className="h-3.5 w-3.5" /> Twitter / X URL
+                        <span className="text-slate-400 font-normal">(optional)</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          disabled={isSubmitting}
+                          placeholder="https://twitter.com/yourhandle"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="websiteUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-x-1.5">
+                        <Globe className="h-3.5 w-3.5" /> Website URL
+                        <span className="text-slate-400 font-normal">(optional)</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          disabled={isSubmitting}
+                          placeholder="https://yourwebsite.com"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
               <div className="space-y-4">
@@ -228,7 +338,7 @@ export const ProfileForm = ({ initialData }: ProfileFormProps) => {
                 />
 
                 <div className="space-y-2">
-                  <FormLabel>Credentials & Certifications</FormLabel>
+                  <FormLabel>Credentials &amp; Certifications</FormLabel>
                   <div className="flex gap-x-2">
                     <Input
                       value={newCredential}

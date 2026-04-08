@@ -13,6 +13,7 @@ enum MemberRole {
   TEACHER
   STUDENT
   MARKETER
+  BLOGGER
 }
 
 enum PurchaseOnboardingSource {
@@ -383,6 +384,9 @@ model BlogAuthor {
   imageUrl    String?
   role        String?
   credentials String[] // e.g. ["EC-Council CEH", "ISO 27001 Auditor"]
+  linkedinUrl String?
+  twitterUrl  String?
+  websiteUrl  String?
 
   posts       BlogPost[]
 
