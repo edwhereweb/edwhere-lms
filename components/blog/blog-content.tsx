@@ -1,23 +1,44 @@
-'use client';
-
 import { TerminalBlock } from './terminal-block';
-import parse, { HTMLReactParserOptions, Element } from 'html-react-parser';
 
 interface BlogContentProps {
   content: string;
 }
 
-export const BlogContent = ({ content }: BlogContentProps) => {
-  const options: HTMLReactParserOptions = {
-    replace: (domNode) => {
-      if (domNode instanceof Element && domNode.attribs.class === 'terminal-block-placeholder') {
-        const command = domNode.attribs['data-command'];
-        const terminalContent = domNode.attribs['data-content'];
+function renderContentParts(html: string) {
+  const placeholder = 'terminal-block-placeholder';
+  const regex = new RegExp(
+    `<div\\s+class="${placeholder}"\\s+data-command="([^"]*)"\\s+data-content="([^"]*)"[^>]*>\\s*</div>`,
+    'g'
+  );
 
-        return <TerminalBlock content={terminalContent} command={command} />;
-      }
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(html)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(
+        <span
+          key={`html-${lastIndex}`}
+          dangerouslySetInnerHTML={{ __html: html.slice(lastIndex, match.index) }}
+        />
+      );
     }
-  };
+    parts.push(<TerminalBlock key={`term-${match.index}`} command={match[1]} content={match[2]} />);
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < html.length) {
+    parts.push(
+      <span key={`html-${lastIndex}`} dangerouslySetInnerHTML={{ __html: html.slice(lastIndex) }} />
+    );
+  }
+
+  return parts;
+}
+
+export const BlogContent = ({ content }: BlogContentProps) => {
+  const hasTerminalBlocks = content.includes('terminal-block-placeholder');
 
   return (
     <div
@@ -28,7 +49,11 @@ export const BlogContent = ({ content }: BlogContentProps) => {
                     prose-pre:bg-slate-900 dark:prose-pre:bg-slate-950
                     prose-img:rounded-2xl"
     >
-      {parse(content, options)}
+      {hasTerminalBlocks ? (
+        renderContentParts(content)
+      ) : (
+        <div dangerouslySetInnerHTML={{ __html: content }} />
+      )}
     </div>
   );
 };

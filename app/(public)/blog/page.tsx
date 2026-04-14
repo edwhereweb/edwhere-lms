@@ -17,24 +17,25 @@ interface BlogIndexPageProps {
 }
 
 const BlogIndexPage = async ({ searchParams }: BlogIndexPageProps) => {
-  const categories = await db.blogCategory.findMany({
-    orderBy: { name: 'asc' }
-  });
-
-  const posts = await db.blogPost.findMany({
-    where: {
-      isPublished: true,
-      ...(searchParams.categoryId ? { categoryId: searchParams.categoryId } : {}),
-      ...(searchParams.tag ? { tags: { has: searchParams.tag } } : {})
-    },
-    include: {
-      author: true,
-      category: true
-    },
-    orderBy: {
-      createdAt: 'desc'
-    }
-  });
+  const [categories, posts] = await Promise.all([
+    db.blogCategory.findMany({
+      orderBy: { name: 'asc' }
+    }),
+    db.blogPost.findMany({
+      where: {
+        isPublished: true,
+        ...(searchParams.categoryId ? { categoryId: searchParams.categoryId } : {}),
+        ...(searchParams.tag ? { tags: { has: searchParams.tag } } : {})
+      },
+      include: {
+        author: true,
+        category: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    })
+  ]);
 
   return (
     <div className="pb-20">
