@@ -82,29 +82,9 @@ export const SidebarRoutes = ({ currentProfile }: SidebarRoutesProps) => {
     );
   }
 
-  const isStaffRole =
-    currentProfile?.role === 'ADMIN' ||
-    currentProfile?.role === 'TEACHER' ||
-    currentProfile?.role === 'MARKETER' ||
-    currentProfile?.role === 'BLOGGER';
-
-  // For student view: append links for STAFF users
-  const extraRoutes =
-    !isTeacherPage && !isMarketerPage && !isBloggerPage && isStaffRole
-      ? [
-          ...(isMarketerRole ? [{ icon: Megaphone, label: 'Marketing', href: '/marketer' }] : []),
-          ...(isBloggerRole
-            ? [{ icon: Newspaper, label: 'Blogger Dashboard', href: '/blogger/blogs' }]
-            : []),
-          ...(currentProfile?.role === 'TEACHER' || currentProfile?.role === 'ADMIN'
-            ? [{ icon: UserCircle, label: 'My Public Profile', href: '/teacher/profile' }]
-            : [])
-        ]
-      : [];
-
   return (
     <div className="flex flex-col w-full">
-      {[...routes, ...extraRoutes].map((route, index) => (
+      {routes.map((route, index) => (
         <SidebarItem key={index} icon={route.icon} label={route.label} href={route.href} />
       ))}
     </div>

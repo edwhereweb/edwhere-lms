@@ -76,7 +76,14 @@ export const getChapter = async ({ userId, courseId, chapterId }: GetChapterProp
     }
 
     return {
-      chapter,
+      chapter: hasAccess
+        ? chapter
+        : {
+            ...chapter,
+            description: null,
+            content: null,
+            htmlContent: null
+          },
       course,
       muxData,
       attachments,

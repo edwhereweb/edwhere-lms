@@ -28,7 +28,13 @@ export async function PATCH(
     if (!validation.success) return validation.response;
 
     const submission = await db.projectSubmission.update({
-      where: { id: params.submissionId, chapterId: params.chapterId },
+      where: {
+        id: params.submissionId,
+        chapterId: params.chapterId,
+        chapter: {
+          courseId: params.courseId
+        }
+      },
       data: {
         status: validation.data.status,
         reviewNote: validation.data.reviewNote ?? null,
