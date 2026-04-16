@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { cache } from 'react';
 import { BookOpen, Users, Tag, ChevronRight } from 'lucide-react';
 
 import { db } from '@/lib/db';
@@ -9,7 +10,7 @@ import { formatPrice, stripHtml } from '@/lib/format';
 
 // ── Helpers ─────────────────────────────────────────────────────────────
 
-async function getCourseBySlug(slug: string) {
+const getCourseBySlug = cache(async function getCourseBySlug(slug: string) {
   // Try slug first, then fallback to ObjectId
   let course = await db.course.findFirst({
     where: { slug, isPublished: true },
@@ -68,7 +69,7 @@ async function getCourseBySlug(slug: string) {
   }
 
   return course;
-}
+});
 
 // ── Metadata ────────────────────────────────────────────────────────────
 

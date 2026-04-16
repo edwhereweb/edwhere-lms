@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { cache } from 'react';
 import { format } from 'date-fns';
 import { Calendar, Tag } from 'lucide-react';
 
@@ -25,10 +26,26 @@ interface BlogPostPageProps {
   };
 }
 
-export async function generateMetadata({ params }: BlogPostPageProps): Promise<Metadata> {
-  const post = await db.blogPost.findUnique({
-    where: { slug: params.slug }
+const getPostBySlug = cache(async (slug: string) => {
+  return db.blogPost.findUnique({
+    where: { slug },
+    include: {
+      author: true,
+      category: true,
+      courses: {
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          imageUrl: true
+        }
+      }
+    }
   });
+});
+
+export async function generateMetadata({ params }: BlogPostPageProps): Promise<Metadata> {
+  const post = await getPostBySlug(params.slug);
 
   if (!post) return { title: 'Blog Not Found' };
 
@@ -46,21 +63,7 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
 }
 
 const BlogPostPage = async ({ params }: BlogPostPageProps) => {
-  const post = await db.blogPost.findUnique({
-    where: { slug: params.slug },
-    include: {
-      author: true,
-      category: true,
-      courses: {
-        select: {
-          id: true,
-          title: true,
-          description: true,
-          imageUrl: true
-        }
-      }
-    }
-  });
+  const post = await getPostBySlug(params.slug);
 
   const isAuthorized = await canManageBlogs();
 

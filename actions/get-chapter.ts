@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import { logError } from '@/lib/debug';
-import { type Attachment, type Chapter, type Module } from '@prisma/client';
+import { type Attachment, type Chapter } from '@prisma/client';
 
 interface GetChapterProps {
   userId: string;
@@ -8,7 +8,12 @@ interface GetChapterProps {
   chapterId: string;
 }
 
-type ChapterWithModule = Chapter & { module: Module | null };
+type ChapterNavItem = {
+  id: string;
+  position: number;
+  moduleId: string | null;
+  module: { position: number } | null;
+};
 
 export const getChapter = async ({ userId, courseId, chapterId }: GetChapterProps) => {
   try {
@@ -34,7 +39,7 @@ export const getChapter = async ({ userId, courseId, chapterId }: GetChapterProp
 
     let muxData = null;
     let attachments: Attachment[] = [];
-    let nextChapter: Chapter | null = null;
+    let nextChapter: ChapterNavItem | null = null;
 
     const hasAccess = chapter.isFree || !!purchase;
 
@@ -48,10 +53,13 @@ export const getChapter = async ({ userId, courseId, chapterId }: GetChapterProp
             isPublished: true,
             isLibraryAsset: false
           },
-          include: {
-            module: true
+          select: {
+            id: true,
+            position: true,
+            moduleId: true,
+            module: { select: { position: true } }
           }
-        }) as Promise<ChapterWithModule[]>
+        }) as Promise<ChapterNavItem[]>
       ]);
       muxData = mux;
       attachments = atts;

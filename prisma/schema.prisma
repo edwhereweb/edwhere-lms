@@ -71,6 +71,7 @@ model Course {
   updatedAt   DateTime   @updatedAt
 
   @@index([categoryId])
+  @@index([slug])
   @@fulltext([title])
 }
 
@@ -431,6 +432,7 @@ model BlogPost {
 
   @@index([authorId])
   @@index([categoryId])
+  @@index([isPublished])
 }
 
 model BlogTagMapping {
@@ -443,4 +445,4 @@ model BlogTagMapping {
   updatedAt DateTime @updatedAt
 
   @@index([courseId])
-}
+}

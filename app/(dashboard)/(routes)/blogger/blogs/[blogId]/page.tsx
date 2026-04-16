@@ -51,17 +51,18 @@ const BloggerBlogIdPage = async ({ params }: BlogIdPageProps) => {
 
   if (!blog) return redirect('/blogger/blogs');
 
-  const categories = await db.blogCategory.findMany({
-    orderBy: { name: 'asc' }
-  });
-
-  const authors = await db.blogAuthor.findMany({
-    orderBy: { name: 'asc' }
-  });
-
-  const courses = await db.course.findMany({
-    orderBy: { title: 'asc' }
-  });
+  const [categories, authors, courses] = await Promise.all([
+    db.blogCategory.findMany({
+      orderBy: { name: 'asc' }
+    }),
+    db.blogAuthor.findMany({
+      orderBy: { name: 'asc' }
+    }),
+    db.course.findMany({
+      select: { id: true, title: true },
+      orderBy: { title: 'asc' }
+    })
+  ]);
 
   const requiredFields = [blog.title, blog.content, blog.categoryId, blog.authorId, blog.imageUrl];
 

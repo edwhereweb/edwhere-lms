@@ -1,5 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { BookOpen } from 'lucide-react';
 
 import { getChapter } from '@/actions/get-chapter';
@@ -10,12 +11,26 @@ import { Preview } from '@/components/preview';
 import { VideoPlayer } from './_components/video-player';
 import { CourseEnrollButton } from './_components/course-enroll-button';
 import { CourseProgressButton } from './_components/course-progress-button';
-import { HtmlEmbedPreview } from '@/components/html-embed-preview';
-import { PdfViewer } from '@/components/pdf-viewer';
-import { ProjectSubmissionForm } from './_components/project-submission-form';
-import { GamifiedSubmissionForm } from './_components/gamified-submission-form';
-import { QuizPlayer } from './_components/quiz-player';
 import { db } from '@/lib/db';
+
+const HtmlEmbedPreview = dynamic(
+  () => import('@/components/html-embed-preview').then((m) => m.HtmlEmbedPreview),
+  { ssr: false }
+);
+const PdfViewer = dynamic(() => import('@/components/pdf-viewer').then((m) => m.PdfViewer), {
+  ssr: false
+});
+const GamifiedSubmissionForm = dynamic(
+  () => import('./_components/gamified-submission-form').then((m) => m.GamifiedSubmissionForm),
+  { ssr: false }
+);
+const ProjectSubmissionForm = dynamic(
+  () => import('./_components/project-submission-form').then((m) => m.ProjectSubmissionForm),
+  { ssr: false }
+);
+const QuizPlayer = dynamic(() => import('./_components/quiz-player').then((m) => m.QuizPlayer), {
+  ssr: false
+});
 
 const ChapterIdPage = async ({ params }: { params: { courseId: string; chapterId: string } }) => {
   const { userId } = await auth();
@@ -345,8 +360,6 @@ const ChapterIdPage = async ({ params }: { params: { courseId: string; chapterId
               />
             </>
           )}
-
-
         </div>
       </div>
     );

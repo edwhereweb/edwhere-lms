@@ -28,6 +28,8 @@ export async function GET(
         },
         attempts: {
           where: { isCompleted: true },
+          take: 500,
+          orderBy: { submittedAt: 'desc' },
           include: {
             responses: true
           }
@@ -52,8 +54,9 @@ export async function GET(
     // 1. Averages and Medians
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const scores = attempts.map((a: any) => a.score || 0).sort((a: number, b: number) => a - b);
-    const averageScore = scores.reduce((sum: number, score: number) => sum + score, 0) / totalAttempts;
-    
+    const averageScore =
+      scores.reduce((sum: number, score: number) => sum + score, 0) / totalAttempts;
+
     let medianScore = 0;
     const mid = Math.floor(scores.length / 2);
     if (scores.length % 2 === 0) {
@@ -93,52 +96,53 @@ export async function GET(
       const optionFrequency: Record<number, number> = {};
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const relevantResponses = question.responses.filter((r: any) => 
-         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-         attempts.some((a: any) => a.id === r.attemptId)
+      const relevantResponses = question.responses.filter((r: any) =>
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        attempts.some((a: any) => a.id === r.attemptId)
       );
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       relevantResponses.forEach((response: any) => {
-         const selected = response.selectedOptions || [];
-         const isCorrect = 
-            selected.length === question.correctOptions.length &&
-            selected.every((val: number) => question.correctOptions.includes(val));
-         
-         if (isCorrect) correctCount++;
-         else incorrectCount++;
+        const selected = response.selectedOptions || [];
+        const isCorrect =
+          selected.length === question.correctOptions.length &&
+          selected.every((val: number) => question.correctOptions.includes(val));
 
-         selected.forEach((optIndex: number) => {
-            if (!optionFrequency[optIndex]) optionFrequency[optIndex] = 0;
-            optionFrequency[optIndex]++;
-         });
+        if (isCorrect) correctCount++;
+        else incorrectCount++;
+
+        selected.forEach((optIndex: number) => {
+          if (!optionFrequency[optIndex]) optionFrequency[optIndex] = 0;
+          optionFrequency[optIndex]++;
+        });
       });
 
       const totalResponsesForQ = correctCount + incorrectCount;
-      const successRate = totalResponsesForQ === 0 ? 0 : Math.round((correctCount / totalResponsesForQ) * 100);
+      const successRate =
+        totalResponsesForQ === 0 ? 0 : Math.round((correctCount / totalResponsesForQ) * 100);
 
       // Map Distractors (Incorrect options chosen frequently)
       const distractors = question.options
-         .map((optText: string, idx: number) => {
-            if (question.correctOptions.includes(idx)) return null; // Not a distractor if it is the correct answer
-            return {
-               optionIndex: idx,
-               text: optText,
-               count: optionFrequency[idx] || 0
-            };
-         })
-         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-         .filter((d: any) => d !== null)
-         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-         .sort((a: any, b: any) => b.count - a.count);
+        .map((optText: string, idx: number) => {
+          if (question.correctOptions.includes(idx)) return null; // Not a distractor if it is the correct answer
+          return {
+            optionIndex: idx,
+            text: optText,
+            count: optionFrequency[idx] || 0
+          };
+        })
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .filter((d: any) => d !== null)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .sort((a: any, b: any) => b.count - a.count);
 
       return {
-         id: question.id,
-         body: question.body,
-         successRate,
-         totalAttempts: totalResponsesForQ,
-         needsReview: successRate < 50, // Flag if failure rate > 50%
-         distractors
+        id: question.id,
+        body: question.body,
+        successRate,
+        totalAttempts: totalResponsesForQ,
+        needsReview: successRate < 50, // Flag if failure rate > 50%
+        distractors
       };
     });
 
@@ -146,7 +150,7 @@ export async function GET(
       averageScore: Math.round(averageScore * 10) / 10,
       medianScore: Math.round(medianScore * 10) / 10,
       totalAttempts,
-      gradeDistribution: distributionBuckets.map(b => ({ range: b.range, count: b.count })),
+      gradeDistribution: distributionBuckets.map((b) => ({ range: b.range, count: b.count })),
       questionAnalysis
     });
   } catch (error) {
