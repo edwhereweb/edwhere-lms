@@ -36,3 +36,11 @@ yarn-error.log*
 next-env.d.ts
 .aider*
 /tmp/
+
+# scratch / debug artifacts
+*.log
+/eslint*.txt
+/build_*.txt
+/git-*.txt
+/staged*.txt
+/lint.json
