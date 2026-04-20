@@ -36,7 +36,7 @@ const BloggerBlogsPage = async () => {
     isPublished: b.isPublished,
     createdAt: b.createdAt,
     category: b.category?.name ?? null,
-    author: b.author.name,
+    author: b.author?.name ?? 'Unknown Author',
     slug: b.slug
   }));
 

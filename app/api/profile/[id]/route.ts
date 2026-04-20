@@ -50,7 +50,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
     const updateData = {
       ...safeFields,
-      ...(role ? { role: role as 'ADMIN' | 'TEACHER' | 'STUDENT' } : {})
+      ...(role ? { role: role as 'ADMIN' | 'TEACHER' | 'STUDENT' | 'MARKETER' | 'BLOGGER' } : {})
     };
 
     const updatedProfile = await db.profile.update({

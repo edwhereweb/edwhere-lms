@@ -15,6 +15,10 @@ import Link from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
 import Underline from '@tiptap/extension-underline';
 import Heading from '@tiptap/extension-heading';
+import { Table } from '@tiptap/extension-table';
+import { TableRow } from '@tiptap/extension-table-row';
+import { TableHeader } from '@tiptap/extension-table-header';
+import { TableCell } from '@tiptap/extension-table-cell';
 import { Node, mergeAttributes } from '@tiptap/core';
 import { lowlight } from '@/lib/editor-utils';
 import { useState } from 'react';
@@ -35,7 +39,12 @@ import {
   Loader2,
   Underline as UnderlineIcon,
   Link as LinkIcon,
-  Info
+  Info,
+  Table as TableIcon,
+  Plus,
+  Minus,
+  Combine,
+  SplitSquareHorizontal
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -54,7 +63,7 @@ const TerminalNodeView = (props: NodeViewProps) => {
 const TerminalExtension = Node.create({
   name: 'terminal',
   group: 'block',
-  atom: true, // This makes the node treatable as a single unit
+  atom: true,
   draggable: true,
   addAttributes() {
     return {
@@ -133,9 +142,7 @@ const Toolbar = ({ editor, blogId }: { editor: TiptapEditor | null; blogId?: str
         .chain()
         .focus()
         .insertContent(
-          `
-        <div class="terminal-block-placeholder" data-command="${command || ''}" data-content="${content}"></div>
-      `
+          `<div class="terminal-block-placeholder" data-command="${command || ''}" data-content="${content}"></div>`
         )
         .run();
     }
@@ -145,9 +152,7 @@ const Toolbar = ({ editor, blogId }: { editor: TiptapEditor | null; blogId?: str
     const previousUrl = editor.getAttributes('link').href;
     const url = window.prompt('URL', previousUrl);
 
-    if (url === null) {
-      return;
-    }
+    if (url === null) return;
 
     if (url === '') {
       editor.chain().focus().extendMarkRange('link').unsetLink().run();
@@ -157,11 +162,19 @@ const Toolbar = ({ editor, blogId }: { editor: TiptapEditor | null; blogId?: str
     editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
   };
 
+  const insertTable = () => {
+    editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+  };
+
+  const isInTable = editor.isActive('table');
+
   return (
     <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-1 rounded-t-lg flex items-center flex-wrap gap-1 sticky top-0 z-10">
       <div className="px-2 py-1 text-[10px] uppercase font-bold text-slate-500 border-r border-slate-200 dark:border-slate-800 mr-1">
         Rich Text
       </div>
+
+      {/* ── Text formatting ── */}
       <Button
         variant="ghost"
         size="sm"
@@ -198,6 +211,7 @@ const Toolbar = ({ editor, blogId }: { editor: TiptapEditor | null; blogId?: str
 
       <Separator orientation="vertical" className="h-6 mx-1" />
 
+      {/* ── Headings ── */}
       <Button
         variant="ghost"
         size="sm"
@@ -217,6 +231,7 @@ const Toolbar = ({ editor, blogId }: { editor: TiptapEditor | null; blogId?: str
 
       <Separator orientation="vertical" className="h-6 mx-1" />
 
+      {/* ── Lists ── */}
       <Button
         variant="ghost"
         size="sm"
@@ -236,6 +251,7 @@ const Toolbar = ({ editor, blogId }: { editor: TiptapEditor | null; blogId?: str
 
       <Separator orientation="vertical" className="h-6 mx-1" />
 
+      {/* ── Code & media ── */}
       <Button
         variant="ghost"
         size="sm"
@@ -297,6 +313,100 @@ const Toolbar = ({ editor, blogId }: { editor: TiptapEditor | null; blogId?: str
         </Button>
       )}
 
+      <Separator orientation="vertical" className="h-6 mx-1" />
+
+      {/* ── Table ── */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={insertTable}
+        title="Insert Table"
+        className={isInTable ? 'bg-violet-100 dark:bg-violet-900/30' : ''}
+      >
+        <TableIcon className="h-4 w-4 text-violet-600" />
+      </Button>
+
+      {/* Context toolbar — only visible when cursor is inside a table */}
+      {isInTable && (
+        <>
+          <div className="flex items-center gap-0.5 bg-violet-50 dark:bg-violet-900/20 rounded-md px-1.5 py-0.5">
+            <span className="text-[9px] font-bold uppercase text-violet-500 mr-1">Row</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0"
+              onClick={() => editor.chain().focus().addRowAfter().run()}
+              title="Add Row Below"
+            >
+              <Plus className="h-3 w-3 text-violet-600" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0"
+              onClick={() => editor.chain().focus().deleteRow().run()}
+              title="Delete Row"
+            >
+              <Minus className="h-3 w-3 text-violet-600" />
+            </Button>
+          </div>
+
+          <div className="flex items-center gap-0.5 bg-violet-50 dark:bg-violet-900/20 rounded-md px-1.5 py-0.5">
+            <span className="text-[9px] font-bold uppercase text-violet-500 mr-1">Col</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0"
+              onClick={() => editor.chain().focus().addColumnAfter().run()}
+              title="Add Column After"
+            >
+              <Plus className="h-3 w-3 text-violet-600" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0"
+              onClick={() => editor.chain().focus().deleteColumn().run()}
+              title="Delete Column"
+            >
+              <Minus className="h-3 w-3 text-violet-600" />
+            </Button>
+          </div>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => editor.chain().focus().mergeCells().run()}
+            title="Merge Selected Cells"
+            className="h-7 px-2"
+          >
+            <Combine className="h-3.5 w-3.5 text-violet-600" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => editor.chain().focus().splitCell().run()}
+            title="Split Cell"
+            className="h-7 px-2"
+          >
+            <SplitSquareHorizontal className="h-3.5 w-3.5 text-violet-600" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => editor.chain().focus().deleteTable().run()}
+            title="Delete Table"
+            className="h-7 px-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+          >
+            <TableIcon className="h-3.5 w-3.5" />
+            <Minus className="h-3 w-3 ml-0.5" />
+          </Button>
+        </>
+      )}
+
+      {/* ── Undo / Redo ── */}
       <div className="ml-auto flex items-center gap-1">
         <Button variant="ghost" size="sm" onClick={() => editor.chain().focus().undo().run()}>
           <Undo className="h-4 w-4" />
@@ -334,6 +444,15 @@ export const Editor = ({ onChange, initialContent, blogId }: EditorProps) => {
           class: 'rounded-lg border border-slate-200 max-w-full h-auto my-4'
         }
       }),
+      Table.configure({
+        resizable: true,
+        HTMLAttributes: {
+          class: 'border-collapse table-auto w-full my-4'
+        }
+      }),
+      TableRow,
+      TableHeader,
+      TableCell,
       TerminalExtension
     ],
     content: initialContent || '',
@@ -352,6 +471,70 @@ export const Editor = ({ onChange, initialContent, blogId }: EditorProps) => {
     <div className="flex flex-col w-full">
       <Toolbar editor={editor} blogId={blogId} />
       <EditorContent editor={editor} />
+      <style>{`
+        .ProseMirror table {
+          border-collapse: collapse;
+          width: 100%;
+          margin: 1rem 0;
+          overflow: hidden;
+        }
+        .ProseMirror table td,
+        .ProseMirror table th {
+          border: 1px solid #e2e8f0;
+          padding: 0.5rem 0.75rem;
+          vertical-align: top;
+          position: relative;
+          min-width: 80px;
+          box-sizing: border-box;
+        }
+        .dark .ProseMirror table td,
+        .dark .ProseMirror table th {
+          border-color: #334155;
+        }
+        .ProseMirror table th {
+          background-color: #f8fafc;
+          font-weight: 600;
+          text-align: left;
+        }
+        .dark .ProseMirror table th {
+          background-color: #1e293b;
+        }
+        .ProseMirror table tr:nth-child(even) td {
+          background-color: #f8fafc;
+        }
+        .dark .ProseMirror table tr:nth-child(even) td {
+          background-color: #0f172a;
+        }
+        .ProseMirror table .selectedCell::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: rgba(139, 92, 246, 0.15);
+          pointer-events: none;
+          z-index: 2;
+        }
+        .ProseMirror table .column-resize-handle {
+          position: absolute;
+          right: -2px;
+          top: 0;
+          bottom: 0;
+          width: 4px;
+          background-color: #8b5cf6;
+          cursor: col-resize;
+          opacity: 0;
+          transition: opacity 0.15s;
+          z-index: 3;
+        }
+        .ProseMirror table:hover .column-resize-handle {
+          opacity: 0.6;
+        }
+        .tableWrapper {
+          overflow-x: auto;
+        }
+        .resize-cursor {
+          cursor: col-resize;
+        }
+      `}</style>
     </div>
   );
 };

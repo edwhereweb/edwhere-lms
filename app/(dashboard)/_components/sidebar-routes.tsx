@@ -61,8 +61,8 @@ export const SidebarRoutes = ({ currentProfile }: SidebarRoutesProps) => {
   const isMarketerPage = pathname?.startsWith('/marketer');
   const isBloggerPage = pathname?.startsWith('/blogger');
 
-  const isMarketerRole = currentProfile?.role === 'MARKETER' || currentProfile?.role === 'ADMIN';
-  const isBloggerRole = currentProfile?.role === 'BLOGGER' || currentProfile?.role === 'ADMIN';
+  const _isMarketerRole = currentProfile?.role === 'MARKETER' || currentProfile?.role === 'ADMIN';
+  const _isBloggerRole = currentProfile?.role === 'BLOGGER' || currentProfile?.role === 'ADMIN';
 
   let routes = isBloggerPage
     ? bloggerRoutes
