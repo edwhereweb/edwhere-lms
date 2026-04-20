@@ -1,6 +1,6 @@
 'use client';
 
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
@@ -24,7 +24,7 @@ export const CourseEnrollButton = ({ courseId, price }: CourseEnrollButtonProps)
     try {
       setIsLoading(true);
 
-      const { data } = await axios.post(`/api/courses/${courseId}/checkout`);
+      const { data } = await api.post(`/courses/${courseId}/checkout`);
 
       // Load Razorpay script if not already loaded
       const loadRazorpayScript = () => {
@@ -61,7 +61,7 @@ export const CourseEnrollButton = ({ courseId, price }: CourseEnrollButtonProps)
           razorpay_signature: string;
         }) => {
           try {
-            await axios.post('/api/razorpay/verify', {
+            await api.post('/razorpay/verify', {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,

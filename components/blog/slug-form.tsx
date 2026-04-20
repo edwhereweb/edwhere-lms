@@ -1,7 +1,7 @@
 'use client';
 
 import * as z from 'zod';
-import axios from 'axios';
+import { api, ApiError } from '@/lib/api-client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { Pencil } from 'lucide-react';
@@ -44,12 +44,12 @@ export const SlugForm = ({ initialData, blogId }: SlugFormProps) => {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await axios.patch(`/api/blogs/${blogId}`, values);
+      await api.patch(`/blogs/${blogId}`, values);
       toast.success('Blog URL updated');
       toggleEdit();
       router.refresh();
     } catch (error: unknown) {
-      if (axios.isAxiosError(error) && error.response?.status === 409) {
+      if (error instanceof ApiError && error.httpStatus === 409) {
         toast.error('Slug already exists');
       } else {
         toast.error('Something went wrong');

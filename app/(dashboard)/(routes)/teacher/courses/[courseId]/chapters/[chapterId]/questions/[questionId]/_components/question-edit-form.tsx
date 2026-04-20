@@ -1,7 +1,7 @@
 'use client';
 
 import * as z from 'zod';
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { ArrowLeft, Loader2, PlusCircle, Trash } from 'lucide-react';
@@ -9,7 +9,15 @@ import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormDescription
+} from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -28,8 +36,13 @@ interface QuestionEditFormProps {
   courseId: string;
   chapterId: string;
   questionId: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  initialData: any;
+  initialData: {
+    body?: string;
+    imageUrl?: string | null;
+    isMultipleChoice?: boolean;
+    options?: string[];
+    correctOptions?: number[];
+  };
 }
 
 export const QuestionEditForm = ({
@@ -46,8 +59,9 @@ export const QuestionEditForm = ({
       body: initialData.body || '',
       imageUrl: initialData.imageUrl || null,
       isMultipleChoice: initialData.isMultipleChoice || false,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      options: initialData.options ? initialData.options.map((opt: any) => ({ value: opt })) : [{ value: '' }, { value: '' }],
+      options: initialData.options
+        ? initialData.options.map((opt: string) => ({ value: opt }))
+        : [{ value: '' }, { value: '' }],
       correctIndices: initialData.correctOptions || [0]
     }
   });
@@ -69,7 +83,11 @@ export const QuestionEditForm = ({
     }
     const current = [...correctIndices];
     if (current.includes(index)) {
-      form.setValue('correctIndices', current.filter(i => i !== index), { shouldValidate: true });
+      form.setValue(
+        'correctIndices',
+        current.filter((i) => i !== index),
+        { shouldValidate: true }
+      );
     } else {
       current.push(index);
       form.setValue('correctIndices', current, { shouldValidate: true });
@@ -82,7 +100,7 @@ export const QuestionEditForm = ({
         toast.error('You must select at least one correct option.');
         return;
       }
-      
+
       const payload = {
         body: values.body,
         imageUrl: values.imageUrl,
@@ -91,9 +109,12 @@ export const QuestionEditForm = ({
         correctOptions: values.correctIndices
       };
 
-      await axios.patch(`/api/courses/${courseId}/chapters/${chapterId}/questions/${questionId}`, payload);
+      await api.patch(
+        `/courses/${courseId}/chapters/${chapterId}/questions/${questionId}`,
+        payload
+      );
       toast.success('Question updated');
-      
+
       router.push(`/teacher/courses/${courseId}/chapters/${chapterId}`);
       router.refresh();
     } catch {
@@ -113,15 +134,17 @@ export const QuestionEditForm = ({
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-             <h1 className="text-2xl font-bold">Edit Question</h1>
-             <p className="text-sm text-muted-foreground mt-1">Modify your evaluation question.</p>
+            <h1 className="text-2xl font-bold">Edit Question</h1>
+            <p className="text-sm text-muted-foreground mt-1">Modify your evaluation question.</p>
           </div>
         </div>
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-md shadow-sm">
-          
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="space-y-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-md shadow-sm"
+        >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-6">
               <FormField
@@ -156,7 +179,9 @@ export const QuestionEditForm = ({
                         }
                       }}
                     />
-                    <div className="text-xs text-muted-foreground mt-4 text-center">Max 250KB. Use standard dimensions.</div>
+                    <div className="text-xs text-muted-foreground mt-4 text-center">
+                      Max 250KB. Use standard dimensions.
+                    </div>
                   </div>
                 ) : (
                   <div className="relative aspect-video mt-2 bg-slate-100 rounded-md flex items-center justify-center overflow-hidden border">
@@ -168,7 +193,12 @@ export const QuestionEditForm = ({
                       src={imageUrl}
                     />
                     <div className="absolute top-2 right-2 flex gap-x-2">
-                      <Button onClick={() => form.setValue('imageUrl', null)} variant="destructive" size="sm" type="button">
+                      <Button
+                        onClick={() => form.setValue('imageUrl', null)}
+                        variant="destructive"
+                        size="sm"
+                        type="button"
+                      >
                         <Trash className="h-4 w-4" />
                       </Button>
                     </div>
@@ -184,14 +214,13 @@ export const QuestionEditForm = ({
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 bg-slate-50 dark:bg-slate-800">
                     <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
+                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                     </FormControl>
                     <div className="space-y-1 leading-none">
                       <FormLabel>Multiple Correct Answers</FormLabel>
-                      <FormDescription>Check this if the user must select multiple valid options.</FormDescription>
+                      <FormDescription>
+                        Check this if the user must select multiple valid options.
+                      </FormDescription>
                     </div>
                   </FormItem>
                 )}
@@ -214,7 +243,10 @@ export const QuestionEditForm = ({
                 </div>
 
                 {fields.map((field, index) => (
-                  <div key={field.id} className="flex flex-row items-center gap-x-4 p-3 border rounded-md bg-slate-50 dark:bg-slate-800/50">
+                  <div
+                    key={field.id}
+                    className="flex flex-row items-center gap-x-4 p-3 border rounded-md bg-slate-50 dark:bg-slate-800/50"
+                  >
                     <Checkbox
                       checked={correctIndices.includes(index)}
                       onCheckedChange={() => toggleCorrectIndex(index)}
@@ -250,7 +282,9 @@ export const QuestionEditForm = ({
                   </div>
                 ))}
                 {(form.formState.errors.correctIndices || correctIndices.length === 0) && (
-                   <p className="text-sm font-medium text-destructive">You must select at least one correct answer using the checkboxes.</p>
+                  <p className="text-sm font-medium text-destructive">
+                    You must select at least one correct answer using the checkboxes.
+                  </p>
                 )}
               </div>
             </div>
@@ -258,15 +292,15 @@ export const QuestionEditForm = ({
 
           <div className="flex items-center justify-end border-t pt-6 gap-x-2">
             <Button
-                onClick={() => router.push(`/teacher/courses/${courseId}/chapters/${chapterId}`)}
-                variant="outline"
-                type="button"
+              onClick={() => router.push(`/teacher/courses/${courseId}/chapters/${chapterId}`)}
+              variant="outline"
+              type="button"
             >
               Cancel
             </Button>
-            <Button 
-                disabled={!isValid || isSubmitting || correctIndices.length === 0} 
-                type="submit"
+            <Button
+              disabled={!isValid || isSubmitting || correctIndices.length === 0}
+              type="submit"
             >
               {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Save Changes

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import { Send, Loader2, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -58,8 +58,8 @@ export function MentorChat({
   const fetchMessages = useCallback(async () => {
     if (!resolvedThreadId) return;
     try {
-      const { data } = await axios.get(
-        `/api/courses/${courseId}/messages?threadStudentId=${resolvedThreadId}`
+      const { data } = await api.get(
+        `/courses/${courseId}/messages?threadStudentId=${resolvedThreadId}`
       );
       setMessages(data);
     } catch {
@@ -78,16 +78,16 @@ export function MentorChat({
     if (!markedRead.current) {
       markedRead.current = true;
       if (isInstructor && threadStudentId) {
-        axios
-          .post(`/api/courses/${courseId}/messages/read`, { studentId: threadStudentId })
+        api
+          .post(`/courses/${courseId}/messages/read`, { studentId: threadStudentId })
           .then(() => onMarkedRead?.())
           .catch(() => {
             /* non-critical */
           });
       } else if (!isInstructor) {
         // Students mark their own thread read
-        axios
-          .post(`/api/courses/${courseId}/messages/read-student`)
+        api
+          .post(`/courses/${courseId}/messages/read-student`)
           .then(() => onMarkedRead?.())
           .catch(() => {
             /* non-critical */
@@ -113,7 +113,7 @@ export function MentorChat({
 
     setSending(true);
     try {
-      const { data } = await axios.post(`/api/courses/${courseId}/messages`, {
+      const { data } = await api.post(`/courses/${courseId}/messages`, {
         content: trimmed,
         ...(isInstructor ? { threadStudentId: resolvedThreadId } : {})
       });

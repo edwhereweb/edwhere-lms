@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import toast from 'react-hot-toast';
 import {
   Library,
@@ -141,9 +141,10 @@ export const AssetLibraryPicker = ({
   useEffect(() => {
     if (!open) return;
     // Fetch with the locked content type so the course list only reflects relevant courses
-    fetch(`/api/admin/asset-library?pageSize=30&page=1&contentType=${currentContentType}`)
+    fetch(`/api/v1/admin/asset-library?pageSize=30&page=1&contentType=${currentContentType}`)
       .then((r) => r.json())
-      .then((d: ApiResponse) => {
+      .then((body: { data: ApiResponse }) => {
+        const d = body.data;
         const seen = new Set<string>();
         const list: Course[] = [];
         d.items.forEach((item) => {
@@ -168,9 +169,10 @@ export const AssetLibraryPicker = ({
       params.set('page', String(page));
       params.set('pageSize', String(PAGE_SIZE));
 
-      const res = await fetch(`/api/admin/asset-library?${params.toString()}`);
+      const res = await fetch(`/api/v1/admin/asset-library?${params.toString()}`);
       if (!res.ok) throw new Error('Failed');
-      setData(await res.json());
+      const json = (await res.json()) as { data: ApiResponse };
+      setData(json.data);
     } catch {
       setData(null);
     } finally {
@@ -199,7 +201,7 @@ export const AssetLibraryPicker = ({
   const handleImport = async (sourceChapterId: string) => {
     setImporting(sourceChapterId);
     try {
-      await axios.post(`/api/courses/${courseId}/chapters/${chapterId}/import-asset`, {
+      await api.post(`/courses/${courseId}/chapters/${chapterId}/import-asset`, {
         sourceChapterId
       });
       toast.success('Asset imported successfully');

@@ -1,7 +1,7 @@
 'use client';
 
 import * as z from 'zod';
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { Pencil } from 'lucide-react';
@@ -46,7 +46,7 @@ export const ChapterContentForm = ({
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await axios.patch(`/api/courses/${courseId}/chapters/${chapterId}`, values);
+      await api.patch(`/courses/${courseId}/chapters/${chapterId}`, values);
       toast.success('Chapter content updated');
       toggleEdit();
       router.refresh();

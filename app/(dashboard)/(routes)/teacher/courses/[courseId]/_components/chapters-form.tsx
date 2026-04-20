@@ -1,7 +1,7 @@
 'use client';
 
 import * as z from 'zod';
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import {
@@ -124,7 +124,7 @@ export const ChaptersForm = ({ initialData, courseId, moduleId }: ChaptersFormPr
 
   const onSubmit = async (values: z.infer<typeof titleSchema>) => {
     try {
-      const res = await axios.post(`/api/courses/${courseId}/chapters`, {
+      const res = await api.post(`/courses/${courseId}/chapters`, {
         ...values,
         moduleId: moduleId || null,
         contentType: selectedType
@@ -141,7 +141,7 @@ export const ChaptersForm = ({ initialData, courseId, moduleId }: ChaptersFormPr
   const onReorder = async (updateData: { id: string; position: number }[]) => {
     try {
       setIsUpdating(true);
-      await axios.put(`/api/courses/${courseId}/chapters/reorder`, {
+      await api.put(`/courses/${courseId}/chapters/reorder`, {
         list: updateData.map((item) => ({ ...item, moduleId: moduleId || null }))
       });
       toast.success('Chapters reordered');

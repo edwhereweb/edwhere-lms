@@ -1,6 +1,6 @@
 'use client';
 
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import { MoreHorizontal, UserMinus, TrendingUp } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -51,7 +51,7 @@ export const LearnerRowActions = ({
   const onUnenroll = async (force: boolean) => {
     try {
       setIsLoading(true);
-      await axios.delete(`/api/courses/${courseId}/learners/${purchaseId}`, {
+      await api.delete(`/courses/${courseId}/learners/${purchaseId}`, {
         data: { force }
       });
       toast.success('Learner unenrolled');

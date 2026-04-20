@@ -1,6 +1,6 @@
 'use client';
 import * as z from 'zod';
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import { PlusCircle, File, Loader2, X } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
@@ -32,7 +32,7 @@ export const AttachmentForm = ({ initialData, courseId }: AttachmentFormProps) =
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await axios.post(`/api/courses/${courseId}/attachments`, values);
+      await api.post(`/courses/${courseId}/attachments`, values);
       toast.success('Course updated');
       toggleEdit();
       router.refresh();
@@ -44,7 +44,7 @@ export const AttachmentForm = ({ initialData, courseId }: AttachmentFormProps) =
   const onDelete = async (id: string) => {
     try {
       setDeletingId(id);
-      await axios.delete(`/api/courses/${courseId}/attachments/${id}`);
+      await api.delete(`/courses/${courseId}/attachments/${id}`);
       toast.success('Attachment deleted');
       router.refresh();
     } catch {

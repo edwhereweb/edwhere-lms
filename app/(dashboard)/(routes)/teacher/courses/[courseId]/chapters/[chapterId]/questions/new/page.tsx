@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import * as z from 'zod';
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { ArrowLeft, Loader2, PlusCircle, Trash } from 'lucide-react';
@@ -10,7 +10,15 @@ import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormDescription
+} from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -62,7 +70,11 @@ export default function NewQuestionPage({
     }
     const current = [...correctIndices];
     if (current.includes(index)) {
-      form.setValue('correctIndices', current.filter(i => i !== index), { shouldValidate: true });
+      form.setValue(
+        'correctIndices',
+        current.filter((i) => i !== index),
+        { shouldValidate: true }
+      );
     } else {
       current.push(index);
       form.setValue('correctIndices', current, { shouldValidate: true });
@@ -75,7 +87,7 @@ export default function NewQuestionPage({
         toast.error('You must select at least one correct option.');
         return;
       }
-      
+
       const payload = {
         body: values.body,
         imageUrl: values.imageUrl,
@@ -84,22 +96,22 @@ export default function NewQuestionPage({
         correctOptions: values.correctIndices
       };
 
-      await axios.post(`/api/courses/${params.courseId}/chapters/${params.chapterId}/questions`, payload);
+      await api.post(`/courses/${params.courseId}/chapters/${params.chapterId}/questions`, payload);
       toast.success('Question created');
-      
+
       if (isAddingAnotherFlag) {
-          form.reset({
-            body: '',
-            imageUrl: null,
-            isMultipleChoice: false,
-            options: [{ value: '' }, { value: '' }, { value: '' }, { value: '' }],
-            correctIndices: [0]
-          });
-          setIsAddingAnother(false);
-          router.refresh();
+        form.reset({
+          body: '',
+          imageUrl: null,
+          isMultipleChoice: false,
+          options: [{ value: '' }, { value: '' }, { value: '' }, { value: '' }],
+          correctIndices: [0]
+        });
+        setIsAddingAnother(false);
+        router.refresh();
       } else {
-          router.push(`/teacher/courses/${params.courseId}/chapters/${params.chapterId}`);
-          router.refresh();
+        router.push(`/teacher/courses/${params.courseId}/chapters/${params.chapterId}`);
+        router.refresh();
       }
     } catch {
       toast.error('Something went wrong');
@@ -111,22 +123,26 @@ export default function NewQuestionPage({
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-x-4">
           <Button
-            onClick={() => router.push(`/teacher/courses/${params.courseId}/chapters/${params.chapterId}`)}
+            onClick={() =>
+              router.push(`/teacher/courses/${params.courseId}/chapters/${params.chapterId}`)
+            }
             variant="ghost"
             className="p-2 h-auto"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-             <h1 className="text-2xl font-bold">Add Question</h1>
-             <p className="text-sm text-muted-foreground mt-1">Configure your evaluation options.</p>
+            <h1 className="text-2xl font-bold">Add Question</h1>
+            <p className="text-sm text-muted-foreground mt-1">Configure your evaluation options.</p>
           </div>
         </div>
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit((values) => onSubmit(values))} className="space-y-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-md shadow-sm">
-          
+        <form
+          onSubmit={form.handleSubmit((values) => onSubmit(values))}
+          className="space-y-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-md shadow-sm"
+        >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-6">
               <FormField
@@ -161,7 +177,9 @@ export default function NewQuestionPage({
                         }
                       }}
                     />
-                    <div className="text-xs text-muted-foreground mt-4 text-center">Max 250KB. Use standard dimensions.</div>
+                    <div className="text-xs text-muted-foreground mt-4 text-center">
+                      Max 250KB. Use standard dimensions.
+                    </div>
                   </div>
                 ) : (
                   <div className="relative aspect-video mt-2 bg-slate-100 rounded-md flex items-center justify-center overflow-hidden border">
@@ -173,7 +191,12 @@ export default function NewQuestionPage({
                       src={imageUrl}
                     />
                     <div className="absolute top-2 right-2 flex gap-x-2">
-                      <Button onClick={() => form.setValue('imageUrl', null)} variant="destructive" size="sm" type="button">
+                      <Button
+                        onClick={() => form.setValue('imageUrl', null)}
+                        variant="destructive"
+                        size="sm"
+                        type="button"
+                      >
                         <Trash className="h-4 w-4" />
                       </Button>
                     </div>
@@ -189,14 +212,13 @@ export default function NewQuestionPage({
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 bg-slate-50 dark:bg-slate-800">
                     <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
+                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                     </FormControl>
                     <div className="space-y-1 leading-none">
                       <FormLabel>Multiple Correct Answers</FormLabel>
-                      <FormDescription>Check this if the user must select multiple valid options.</FormDescription>
+                      <FormDescription>
+                        Check this if the user must select multiple valid options.
+                      </FormDescription>
                     </div>
                   </FormItem>
                 )}
@@ -219,7 +241,10 @@ export default function NewQuestionPage({
                 </div>
 
                 {fields.map((field, index) => (
-                  <div key={field.id} className="flex flex-row items-center gap-x-4 p-3 border rounded-md bg-slate-50 dark:bg-slate-800/50">
+                  <div
+                    key={field.id}
+                    className="flex flex-row items-center gap-x-4 p-3 border rounded-md bg-slate-50 dark:bg-slate-800/50"
+                  >
                     <Checkbox
                       checked={correctIndices.includes(index)}
                       onCheckedChange={() => toggleCorrectIndex(index)}
@@ -255,7 +280,9 @@ export default function NewQuestionPage({
                   </div>
                 ))}
                 {(form.formState.errors.correctIndices || correctIndices.length === 0) && (
-                   <p className="text-sm font-medium text-destructive">You must select at least one correct answer using the checkboxes.</p>
+                  <p className="text-sm font-medium text-destructive">
+                    You must select at least one correct answer using the checkboxes.
+                  </p>
                 )}
               </div>
             </div>
@@ -263,33 +290,39 @@ export default function NewQuestionPage({
 
           <div className="flex items-center justify-end border-t pt-6 gap-x-2">
             <Button
-                onClick={() => router.push(`/teacher/courses/${params.courseId}/chapters/${params.chapterId}`)}
-                variant="outline"
-                type="button"
+              onClick={() =>
+                router.push(`/teacher/courses/${params.courseId}/chapters/${params.chapterId}`)
+              }
+              variant="outline"
+              type="button"
             >
               Cancel
             </Button>
-            <Button 
-                disabled={!isValid || isSubmitting || correctIndices.length === 0} 
-                onClick={() => {
-                   setIsAddingAnother(true);
-                   form.handleSubmit((values) => onSubmit(values, true))();
-                }}
-                variant="secondary"
-                type="button"
+            <Button
+              disabled={!isValid || isSubmitting || correctIndices.length === 0}
+              onClick={() => {
+                setIsAddingAnother(true);
+                form.handleSubmit((values) => onSubmit(values, true))();
+              }}
+              variant="secondary"
+              type="button"
             >
-              {isSubmitting && isAddingAnother ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              {isSubmitting && isAddingAnother ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
               Save & Add Another
             </Button>
-            <Button 
-                disabled={!isValid || isSubmitting || correctIndices.length === 0} 
-                onClick={() => {
-                   setIsAddingAnother(false);
-                   form.handleSubmit((values) => onSubmit(values, false))();
-                }}
-                type="button"
+            <Button
+              disabled={!isValid || isSubmitting || correctIndices.length === 0}
+              onClick={() => {
+                setIsAddingAnother(false);
+                form.handleSubmit((values) => onSubmit(values, false))();
+              }}
+              type="button"
             >
-              {isSubmitting && !isAddingAnother ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              {isSubmitting && !isAddingAnother ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
               Create Question
             </Button>
           </div>

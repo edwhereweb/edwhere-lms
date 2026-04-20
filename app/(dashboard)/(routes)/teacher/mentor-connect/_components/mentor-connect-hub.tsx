@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import { format } from 'date-fns';
 import { MessageCircle, ArrowLeft, BookOpen, User } from 'lucide-react';
 import { MentorChat } from '@/app/(course)/courses/[courseId]/chat/_components/mentor-chat';
@@ -53,7 +53,7 @@ export function MentorConnectHub({
   const loadStudents = useCallback(async (courseId: string) => {
     setLoadingStudents(true);
     try {
-      const { data } = await axios.get(`/api/courses/${courseId}/chat-students`);
+      const { data } = await api.get(`/courses/${courseId}/chat-students`);
       setStudents(data);
     } catch {
       setStudents([]);

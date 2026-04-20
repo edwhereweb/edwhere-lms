@@ -1,6 +1,6 @@
 'use client';
 
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { useState } from 'react';
@@ -29,7 +29,7 @@ export const ImageForm = ({ initialData, blogId }: ImageFormProps) => {
   const onSubmit = async (url?: string) => {
     try {
       setIsSubmitting(true);
-      await axios.patch(`/api/blogs/${blogId}`, {
+      await api.patch(`/blogs/${blogId}`, {
         imageUrl: url || initialData.imageUrl,
         imageAlt: imageAlt
       });
@@ -46,7 +46,7 @@ export const ImageForm = ({ initialData, blogId }: ImageFormProps) => {
   const onAltSave = async () => {
     try {
       setIsSubmitting(true);
-      await axios.patch(`/api/blogs/${blogId}`, { imageAlt });
+      await api.patch(`/blogs/${blogId}`, { imageAlt });
       toast.success('Alt text updated');
       toggleEdit();
       router.refresh();

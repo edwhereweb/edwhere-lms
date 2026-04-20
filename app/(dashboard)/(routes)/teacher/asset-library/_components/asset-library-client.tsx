@@ -27,7 +27,7 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import toast from 'react-hot-toast';
 import { ConfirmModal } from '@/components/modals/confirm-modal';
 
@@ -128,10 +128,10 @@ export const AssetLibraryClient = ({ courses }: AssetLibraryClientProps) => {
       params.set('page', String(page));
       params.set('pageSize', String(pageSize));
 
-      const res = await fetch(`/api/admin/asset-library?${params.toString()}`);
+      const res = await fetch(`/api/v1/admin/asset-library?${params.toString()}`);
       if (!res.ok) throw new Error('Failed to fetch');
-      const json: ApiResponse = await res.json();
-      setData(json);
+      const json = (await res.json()) as { data: ApiResponse };
+      setData(json.data);
     } catch {
       setData(null);
     } finally {
@@ -182,7 +182,7 @@ export const AssetLibraryClient = ({ courses }: AssetLibraryClientProps) => {
     try {
       setIsDeleting(true);
       const assetIds = Array.from(selected);
-      await axios.post('/api/admin/asset-library/bulk-delete', { assetIds });
+      await api.post('/admin/asset-library/bulk-delete', { assetIds });
 
       toast.success('Assets deleted successfully');
       setSelected(new Set());

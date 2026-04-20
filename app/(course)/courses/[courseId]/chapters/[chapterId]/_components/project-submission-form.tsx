@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
+import { ApiError, api } from '@/lib/api-client';
 import toast from 'react-hot-toast';
 import { CheckCircle, ExternalLink, Send, Pencil, Clock, XCircle } from 'lucide-react';
 
@@ -86,17 +86,14 @@ export const ProjectSubmissionForm = ({
     setError('');
     setIsSubmitting(true);
     try {
-      await axios.post(`/api/courses/${courseId}/chapters/${chapterId}/project-submission`, {
+      await api.post(`/courses/${courseId}/chapters/${chapterId}/project-submission`, {
         driveUrl: url
       });
       toast.success(initialSubmission ? 'Submission updated!' : 'Submission saved!');
       setIsEditing(false);
       router.refresh();
     } catch (e: unknown) {
-      const msg =
-        axios.isAxiosError(e) && e.response?.data?.message
-          ? e.response.data.message
-          : 'Something went wrong. Please try again.';
+      const msg = e instanceof ApiError ? e.message : 'Something went wrong. Please try again.';
       toast.error(msg);
     } finally {
       setIsSubmitting(false);

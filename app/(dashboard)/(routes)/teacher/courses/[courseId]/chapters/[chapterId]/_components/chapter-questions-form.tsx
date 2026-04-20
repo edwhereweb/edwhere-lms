@@ -1,6 +1,6 @@
 'use client';
 
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import { UploadCloud, PlusCircle, Loader2, List, Trash2, Pencil } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
@@ -40,7 +40,7 @@ export const ChapterQuestionsForm = ({
             const body = row['Question'] || row['question'] || '';
             const typeStr = (row['Type'] || row['type'] || 'SINGLE').toUpperCase();
             const isMultipleChoice = typeStr === 'MULTIPLE';
-            
+
             // Build options
             const options = [];
             if (row['Option A']) options.push(row['Option A']);
@@ -50,9 +50,9 @@ export const ChapterQuestionsForm = ({
 
             // Parse Correct Option (e.g. A, C -> [0, 2])
             const correctStr = String(row['Correct Option'] || row['correct option'] || '');
-            const correctChars = correctStr.split(',').map(s => s.trim().toUpperCase());
+            const correctChars = correctStr.split(',').map((s) => s.trim().toUpperCase());
             const correctOptions: number[] = [];
-            correctChars.forEach(char => {
+            correctChars.forEach((char) => {
               if (char === 'A' && options.length > 0) correctOptions.push(0);
               if (char === 'B' && options.length > 1) correctOptions.push(1);
               if (char === 'C' && options.length > 2) correctOptions.push(2);
@@ -75,14 +75,14 @@ export const ChapterQuestionsForm = ({
           }
 
           if (toUpload.length === 0) {
-             toast.error('No valid questions found in CSV.');
-             return;
+            toast.error('No valid questions found in CSV.');
+            return;
           }
 
-          await axios.post(`/api/courses/${courseId}/chapters/${chapterId}/questions/bulk`, {
+          await api.post(`/courses/${courseId}/chapters/${chapterId}/questions/bulk`, {
             questions: toUpload
           });
-          
+
           toast.success(`${toUpload.length} questions imported successfully`);
           router.refresh();
         } catch (error) {
@@ -104,7 +104,7 @@ export const ChapterQuestionsForm = ({
   const onDelete = async (questionId: string) => {
     try {
       setIsUpdating(true);
-      await axios.delete(`/api/courses/${courseId}/chapters/${chapterId}/questions/${questionId}`);
+      await api.delete(`/courses/${courseId}/chapters/${chapterId}/questions/${questionId}`);
       toast.success('Question deleted');
       router.refresh();
     } catch {
@@ -138,7 +138,12 @@ export const ChapterQuestionsForm = ({
             <UploadCloud className="h-4 w-4 mr-2" />
             Import CSV
           </Button>
-          <Button onClick={() => router.push(`/teacher/courses/${courseId}/chapters/${chapterId}/questions/new`)} size="sm">
+          <Button
+            onClick={() =>
+              router.push(`/teacher/courses/${courseId}/chapters/${chapterId}/questions/new`)
+            }
+            size="sm"
+          >
             <PlusCircle className="h-4 w-4 mr-2" />
             Add manually
           </Button>
@@ -146,32 +151,53 @@ export const ChapterQuestionsForm = ({
       </div>
 
       <div className="text-xs text-muted-foreground mt-2 mb-4">
-        CSV Columns: <code>Question, Type, Option A, Option B, Option C, Option D, Correct Option</code>. Type is SINGLE or MULTIPLE. Correct Option is A/B/C/D or A, C for multiple. Max 200 questions.
+        CSV Columns:{' '}
+        <code>Question, Type, Option A, Option B, Option C, Option D, Correct Option</code>. Type is
+        SINGLE or MULTIPLE. Correct Option is A/B/C/D or A, C for multiple. Max 200 questions.
       </div>
 
       {!initialQuestions.length && (
-        <div className="text-sm mt-4 text-slate-500 italic">
-          No questions exist yet.
-        </div>
+        <div className="text-sm mt-4 text-slate-500 italic">No questions exist yet.</div>
       )}
 
       {initialQuestions.length > 0 && (
         <div className="mt-4 space-y-3">
           {initialQuestions.map((q, index) => (
-            <div key={q.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-3 rounded-md flex justify-between items-start">
+            <div
+              key={q.id}
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-3 rounded-md flex justify-between items-start"
+            >
               <div>
-                <p className="text-sm font-medium">Q{index + 1}. {q.body}</p>
+                <p className="text-sm font-medium">
+                  Q{index + 1}. {q.body}
+                </p>
                 <p className="text-xs text-slate-500 mt-1">
-                  {q.options.length} options | {q.isMultipleChoice ? 'Multiple-Choice' : 'Single-Choice'} | Answer: {q.correctOptions.map((n: number) => String.fromCharCode(65 + n)).join(', ')}
+                  {q.options.length} options |{' '}
+                  {q.isMultipleChoice ? 'Multiple-Choice' : 'Single-Choice'} | Answer:{' '}
+                  {q.correctOptions.map((n: number) => String.fromCharCode(65 + n)).join(', ')}
                 </p>
               </div>
               <div className="flex items-center gap-x-2">
-                 <Button onClick={() => router.push(`/teacher/courses/${courseId}/chapters/${chapterId}/questions/${q.id}`)} variant="ghost" size="sm" className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
-                   <Pencil className="h-4 w-4" />
-                 </Button>
-                 <Button onClick={() => onDelete(q.id)} variant="ghost" size="sm" className="text-rose-500 hover:text-rose-600 dark:hover:text-rose-400 dark:hover:bg-rose-950">
-                   <Trash2 className="h-4 w-4" />
-                 </Button>
+                <Button
+                  onClick={() =>
+                    router.push(
+                      `/teacher/courses/${courseId}/chapters/${chapterId}/questions/${q.id}`
+                    )
+                  }
+                  variant="ghost"
+                  size="sm"
+                  className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button
+                  onClick={() => onDelete(q.id)}
+                  variant="ghost"
+                  size="sm"
+                  className="text-rose-500 hover:text-rose-600 dark:hover:text-rose-400 dark:hover:bg-rose-950"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
             </div>
           ))}

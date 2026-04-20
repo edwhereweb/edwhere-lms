@@ -1,7 +1,7 @@
 'use client';
 
 import * as z from 'zod';
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { Pencil, User, Plus, X, Linkedin, Twitter, Globe } from 'lucide-react';
@@ -64,7 +64,7 @@ export const ProfileForm = ({ initialData }: ProfileFormProps) => {
         twitterUrl: values.twitterUrl || undefined,
         websiteUrl: values.websiteUrl || undefined
       };
-      await axios.patch('/api/blogs/authors/me', payload);
+      await api.patch('/blogs/authors/me', payload);
       toast.success('Profile updated');
       toggleEdit();
       router.refresh();

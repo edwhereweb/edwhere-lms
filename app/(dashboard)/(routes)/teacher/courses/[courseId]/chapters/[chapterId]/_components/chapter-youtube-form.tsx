@@ -1,6 +1,6 @@
 'use client';
 
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import { Youtube, Pencil, PlusCircle, X } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
@@ -54,7 +54,7 @@ export const ChapterYoutubeForm = ({
       return;
     }
     try {
-      await axios.patch(`/api/courses/${courseId}/chapters/${chapterId}`, {
+      await api.patch(`/courses/${courseId}/chapters/${chapterId}`, {
         youtubeVideoId: videoId
       });
       toast.success('YouTube video saved');
@@ -67,7 +67,7 @@ export const ChapterYoutubeForm = ({
 
   const onRemove = async () => {
     try {
-      await axios.patch(`/api/courses/${courseId}/chapters/${chapterId}`, {
+      await api.patch(`/courses/${courseId}/chapters/${chapterId}`, {
         youtubeVideoId: null
       });
       toast.success('YouTube video removed');

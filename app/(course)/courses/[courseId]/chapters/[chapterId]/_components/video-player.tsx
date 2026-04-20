@@ -1,6 +1,6 @@
 'use client';
 
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import { useEffect, useRef, useState } from 'react';
 import { Loader2, Lock } from 'lucide-react';
 import { toast } from 'react-hot-toast';
@@ -36,8 +36,8 @@ const YoutubePlayer = ({
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
-    axios
-      .get(`/api/courses/${courseId}/chapters/${chapterId}/youtube-embed`)
+    api
+      .get(`/courses/${courseId}/chapters/${chapterId}/youtube-embed`)
       .then((res) => setEmbedUrl(res.data.embedUrl))
       .catch(() => toast.error('Could not load video'))
       .finally(() => setLoading(false));
@@ -96,7 +96,7 @@ export const VideoPlayer = ({
   const onEnd = async () => {
     try {
       if (completeOnEnd) {
-        await axios.put(`/api/courses/${courseId}/chapters/${chapterId}/progress`, {
+        await api.put(`/courses/${courseId}/chapters/${chapterId}/progress`, {
           isCompleted: true
         });
 

@@ -1,6 +1,6 @@
 'use client';
 
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import { ConfirmModal } from '@/components/modals/confirm-modal';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -30,7 +30,7 @@ export const Actions = ({
   const onSubmitForReview = async () => {
     try {
       setIsLoading(true);
-      await axios.patch(`/api/courses/${courseId}/publish`);
+      await api.patch(`/courses/${courseId}/publish`);
       toast.success('Course submitted for admin review');
       router.refresh();
     } catch {
@@ -43,7 +43,7 @@ export const Actions = ({
   const onUnpublish = async () => {
     try {
       setIsLoading(true);
-      await axios.patch(`/api/courses/${courseId}/unpublish`);
+      await api.patch(`/courses/${courseId}/unpublish`);
       toast.success('Course unpublished');
       router.refresh();
     } catch {
@@ -56,7 +56,7 @@ export const Actions = ({
   const onApprove = async () => {
     try {
       setIsLoading(true);
-      await axios.patch(`/api/courses/${courseId}/approve`);
+      await api.patch(`/courses/${courseId}/approve`);
       toast.success('Course approved and published!');
       router.refresh();
     } catch {
@@ -69,7 +69,7 @@ export const Actions = ({
   const onReject = async () => {
     try {
       setIsLoading(true);
-      await axios.patch(`/api/courses/${courseId}/reject`);
+      await api.patch(`/courses/${courseId}/reject`);
       toast.success('Course review rejected');
       router.refresh();
     } catch {
@@ -82,7 +82,7 @@ export const Actions = ({
   const onDelete = async () => {
     try {
       setIsLoading(true);
-      await axios.delete(`/api/courses/${courseId}`);
+      await api.delete(`/courses/${courseId}`);
       toast.success('Course deleted');
       router.refresh();
       router.push(`/teacher/courses`);

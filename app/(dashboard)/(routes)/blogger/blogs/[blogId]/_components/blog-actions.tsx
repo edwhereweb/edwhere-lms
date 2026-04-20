@@ -1,6 +1,6 @@
 'use client';
 
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import { Trash, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -24,7 +24,7 @@ export const BlogActions = ({ disabled, blogId, isPublished, slug }: BlogActions
   const onClick = async () => {
     try {
       setIsLoading(true);
-      await axios.patch(`/api/blogs/${blogId}`, { isPublished: !isPublished });
+      await api.patch(`/blogs/${blogId}`, { isPublished: !isPublished });
       toast.success(isPublished ? 'Blog post unpublished' : 'Blog post published');
       router.refresh();
     } catch {
@@ -37,7 +37,7 @@ export const BlogActions = ({ disabled, blogId, isPublished, slug }: BlogActions
   const onDelete = async () => {
     try {
       setIsLoading(true);
-      await axios.delete(`/api/blogs/${blogId}`);
+      await api.delete(`/blogs/${blogId}`);
       toast.success('Blog post deleted');
       router.push('/blogger/blogs');
       router.refresh();

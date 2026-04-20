@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { Phone, MapPin, MessageCircle, Send, Loader2, CheckCircle2 } from 'lucide-react';
@@ -48,7 +48,7 @@ export default function ContactPage() {
 
   const onSubmit = async (values: FormValues) => {
     try {
-      await axios.post('/api/contact', values);
+      await api.post('/contact', values);
       setSubmitted(true);
       toast.success("Your enquiry has been received! We'll reach out soon.");
     } catch {

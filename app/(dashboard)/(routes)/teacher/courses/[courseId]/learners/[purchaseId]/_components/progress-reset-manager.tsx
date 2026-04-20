@@ -1,6 +1,6 @@
 'use client';
 
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
@@ -46,9 +46,7 @@ export const ProgressResetManager = ({
   const onReset = async (chapterId: string) => {
     try {
       setLoadingId(chapterId);
-      await axios.post(
-        `/api/courses/${courseId}/learners/${purchaseId}/progress/${chapterId}/reset`
-      );
+      await api.post(`/courses/${courseId}/learners/${purchaseId}/progress/${chapterId}/reset`);
       toast.success('Progress reset successfully');
       router.refresh();
     } catch {

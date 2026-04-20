@@ -21,7 +21,10 @@
 app/                    # Next.js App Router pages and API routes
   (course)/             # Course consumption layout group
   (dashboard)/          # Dashboard layout group (teacher + student)
-  api/                  # API route handlers
+  api/
+    v1/                 # Versioned API route handlers (standard envelope)
+    health/             # Health check (unversioned)
+    files/              # Binary file serving (unversioned)
 actions/                # Server-side data fetching functions
 components/             # Shared React components
   ui/                   # shadcn/ui generated components — do NOT manually edit
@@ -45,38 +48,64 @@ types/                  # Shared TypeScript type definitions
 
 ## API Routes
 
-All API route handlers in `app/api/` must follow this pattern:
+All API route handlers live under `app/api/v1/` and use the standardized response envelope from `lib/api-response.ts`.
+
+### Response envelope
+
+Success: `{ data: T, meta?: PageMeta }` — returned via `apiOk(data, meta?)`.
+
+Error: `{ error: { code: ErrorCode, message: string, details?: unknown } }` — returned via `apiErr(code, message, status, details?)`.
+
+`ErrorCode` values: `UNAUTHORIZED`, `FORBIDDEN`, `NOT_FOUND`, `VALIDATION`, `CONFLICT`, `RATE_LIMITED`, `INTERNAL`.
+
+### Route handler pattern
 
 1. **Auth check** first — `auth()` from Clerk.
-2. **Validate request body** — Zod schemas from `lib/validations.ts`, validated via `validateBody()` from `lib/api-utils.ts`.
-3. **Return errors** — `apiError(message, status)` from `lib/api-utils.ts`.
-4. **Catch all** — `handleApiError(tag, error)` from `lib/api-utils.ts`.
+2. **Validate request body** — Zod schemas from `lib/validations.ts`, validated via `validateRequest()` from `lib/api-response.ts`.
+3. **Return errors** — `apiErr(code, message, status)` from `lib/api-response.ts`.
+4. **Catch all** — `handleRouteError(tag, error)` from `lib/api-response.ts`.
 
 ```typescript
 import { auth } from '@clerk/nextjs/server';
-import { NextResponse } from 'next/server';
-import { validateBody, apiError, handleApiError } from '@/lib/api-utils';
+import { apiOk, apiErr, validateRequest, handleRouteError } from '@/lib/api-response';
 import { mySchema } from '@/lib/validations';
 
 export async function POST(req: Request) {
   try {
     const { userId } = await auth();
-    if (!userId) return apiError('Unauthorized', 401);
+    if (!userId) return apiErr('UNAUTHORIZED', 'Unauthorized', 401);
 
     const body = await req.json();
-    const validation = validateBody(mySchema, body);
+    const validation = validateRequest(mySchema, body);
     if (!validation.success) return validation.response;
 
     // ... business logic ...
 
-    return NextResponse.json(result);
+    return apiOk(result);
   } catch (error) {
-    return handleApiError('MY_ROUTE', error);
+    return handleRouteError('MY_ROUTE', error);
   }
 }
 ```
 
 - Add all new Zod schemas to `lib/validations.ts` — do not define inline schemas in route files.
+- Unversioned routes (`/api/health`, `/api/files/...`) are exempt from the envelope — they serve infra checks and binary content.
+
+### Frontend API client
+
+All client-side HTTP calls use the shared `api` instance from `lib/api-client.ts`:
+
+```typescript
+import { api } from '@/lib/api-client';
+
+const response = await api.post('/courses', values);
+// response.data is the unwrapped entity (interceptor strips the { data } envelope)
+```
+
+- `api` is an axios instance with `baseURL: '/api/v1'`.
+- The response interceptor unwraps `{ data: T }` so `response.data` gives the entity directly.
+- Errors throw `ApiError` with `.code`, `.message`, `.httpStatus`, `.details`.
+- Do NOT use raw `axios` for API calls — always use `import { api } from '@/lib/api-client'`.
 
 ## Client Components
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import { api, ApiError } from '@/lib/api-client';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { UserPlus, X, Users } from 'lucide-react';
@@ -31,8 +31,8 @@ export const CourseInstructorsForm = ({ courseId }: CourseInstructorsFormProps) 
 
   // Load current instructors
   useEffect(() => {
-    axios
-      .get(`/api/courses/${courseId}/instructors`)
+    api
+      .get(`/courses/${courseId}/instructors`)
       .then((res) => setInstructors(res.data))
       .catch(() => toast.error('Failed to load instructors'));
   }, [courseId]);
@@ -41,7 +41,7 @@ export const CourseInstructorsForm = ({ courseId }: CourseInstructorsFormProps) 
     if (!search.trim()) return;
     try {
       setIsSearching(true);
-      const res = await axios.get(`/api/profiles/search?q=${encodeURIComponent(search)}`);
+      const res = await api.get(`/profiles/search?q=${encodeURIComponent(search)}`);
       setSearchResults(res.data);
     } catch {
       toast.error('Search failed');
@@ -53,7 +53,7 @@ export const CourseInstructorsForm = ({ courseId }: CourseInstructorsFormProps) 
   const onAdd = async (profile: Profile) => {
     try {
       setIsLoading(true);
-      const res = await axios.post(`/api/courses/${courseId}/instructors`, {
+      const res = await api.post(`/courses/${courseId}/instructors`, {
         profileId: profile.id
       });
       setInstructors((prev) => [...prev, res.data]);
@@ -62,12 +62,7 @@ export const CourseInstructorsForm = ({ courseId }: CourseInstructorsFormProps) 
       toast.success(`${profile.name} added as instructor`);
       router.refresh();
     } catch (err: unknown) {
-      if (
-        err &&
-        typeof err === 'object' &&
-        'response' in err &&
-        (err as { response: { status: number } }).response?.status === 409
-      ) {
+      if (err instanceof ApiError && err.httpStatus === 409) {
         toast.error('Already an instructor');
       } else {
         toast.error('Something went wrong');
@@ -80,7 +75,7 @@ export const CourseInstructorsForm = ({ courseId }: CourseInstructorsFormProps) 
   const onRemove = async (profile: Profile) => {
     try {
       setIsLoading(true);
-      await axios.delete(`/api/courses/${courseId}/instructors`, {
+      await api.delete(`/courses/${courseId}/instructors`, {
         data: { profileId: profile.id }
       });
       setInstructors((prev) => prev.filter((i) => i.id !== profile.id));

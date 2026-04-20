@@ -2,7 +2,7 @@
 
 import { ConfirmModal } from '@/components/modals/confirm-modal';
 import { Button } from '@/components/ui/button';
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import { Trash } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -27,7 +27,7 @@ export const ChapterActions = ({
   const onPublish = async () => {
     try {
       setIsLoading(true);
-      await axios.patch(`/api/courses/${courseId}/chapters/${chapterId}/publish`);
+      await api.patch(`/courses/${courseId}/chapters/${chapterId}/publish`);
       toast.success('Chapter published');
       router.refresh();
     } catch {
@@ -40,7 +40,7 @@ export const ChapterActions = ({
   const onUnpublish = async () => {
     try {
       setIsLoading(true);
-      await axios.patch(`/api/courses/${courseId}/chapters/${chapterId}/unpublish`);
+      await api.patch(`/courses/${courseId}/chapters/${chapterId}/unpublish`);
       toast.success('Chapter unpublished');
       router.refresh();
     } catch {
@@ -52,7 +52,7 @@ export const ChapterActions = ({
   const onDelete = async () => {
     try {
       setIsLoading(true);
-      await axios.delete(`/api/courses/${courseId}/chapters/${chapterId}`);
+      await api.delete(`/courses/${courseId}/chapters/${chapterId}`);
       toast.success('Chapter deleted');
       router.push(`/teacher/courses/${courseId}/structure`);
       router.refresh();

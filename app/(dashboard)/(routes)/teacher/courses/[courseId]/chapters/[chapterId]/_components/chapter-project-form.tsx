@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import toast from 'react-hot-toast';
 import { Pencil, FileText, Code2, Eye } from 'lucide-react';
 
@@ -64,7 +64,7 @@ export const ChapterProjectForm = ({
   const onSaveText = async (values: z.infer<typeof textSchema>) => {
     try {
       // Clear htmlContent when switching to text
-      await axios.patch(`/api/courses/${courseId}/chapters/${chapterId}`, {
+      await api.patch(`/courses/${courseId}/chapters/${chapterId}`, {
         content: values.content,
         htmlContent: null
       });
@@ -79,7 +79,7 @@ export const ChapterProjectForm = ({
   const onSaveHtml = async (values: z.infer<typeof htmlSchema>) => {
     try {
       // Clear content when switching to HTML
-      await axios.patch(`/api/courses/${courseId}/chapters/${chapterId}`, {
+      await api.patch(`/courses/${courseId}/chapters/${chapterId}`, {
         htmlContent: values.htmlContent,
         content: null
       });

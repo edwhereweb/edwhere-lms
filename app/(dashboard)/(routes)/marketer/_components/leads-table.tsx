@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import {
@@ -119,7 +119,7 @@ function LeadDialog({
   const handleSave = async () => {
     setSaving(true);
     try {
-      await axios.patch(`/api/leads/${lead.id}`, { status, notes });
+      await api.patch(`/leads/${lead.id}`, { status, notes });
       toast.success('Lead updated');
       onSaved();
       onClose();

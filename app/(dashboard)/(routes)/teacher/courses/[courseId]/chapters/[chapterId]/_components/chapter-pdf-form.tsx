@@ -1,6 +1,6 @@
 'use client';
 
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import { FileText, Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
@@ -27,7 +27,7 @@ export const ChapterPdfForm = ({ initialData, courseId, chapterId }: ChapterPdfF
   const onUpload = async (url?: string) => {
     if (!url) return;
     try {
-      await axios.patch(`/api/courses/${courseId}/chapters/${chapterId}`, {
+      await api.patch(`/courses/${courseId}/chapters/${chapterId}`, {
         pdfUrl: url
       });
       toast.success('PDF uploaded');
@@ -40,7 +40,7 @@ export const ChapterPdfForm = ({ initialData, courseId, chapterId }: ChapterPdfF
 
   const onRemove = async () => {
     try {
-      await axios.patch(`/api/courses/${courseId}/chapters/${chapterId}`, {
+      await api.patch(`/courses/${courseId}/chapters/${chapterId}`, {
         pdfUrl: null
       });
       toast.success('PDF removed');

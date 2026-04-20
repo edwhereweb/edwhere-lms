@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Trash } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import toast from 'react-hot-toast';
 
 import { Button } from '@/components/ui/button';
@@ -20,7 +20,7 @@ export const DeleteCategoryButton = ({ categoryId }: DeleteCategoryButtonProps) 
   const onDelete = async () => {
     try {
       setIsLoading(true);
-      await axios.delete(`/api/categories/${categoryId}`);
+      await api.delete(`/categories/${categoryId}`);
       toast.success('Category deleted');
       router.refresh();
     } catch {

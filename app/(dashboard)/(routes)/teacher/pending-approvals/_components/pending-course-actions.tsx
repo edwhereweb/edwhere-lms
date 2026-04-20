@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { CheckCircle, XCircle } from 'lucide-react';
@@ -15,7 +15,7 @@ export const PendingCourseActions = ({ courseId }: { courseId: string }) => {
   const onApprove = async () => {
     try {
       setIsLoading(true);
-      await axios.patch(`/api/courses/${courseId}/approve`);
+      await api.patch(`/courses/${courseId}/approve`);
       toast.success('Course approved and published!');
       router.refresh();
     } catch {
@@ -28,7 +28,7 @@ export const PendingCourseActions = ({ courseId }: { courseId: string }) => {
   const onReject = async () => {
     try {
       setIsLoading(true);
-      await axios.patch(`/api/courses/${courseId}/reject`);
+      await api.patch(`/courses/${courseId}/reject`);
       toast.success('Course rejected');
       router.refresh();
     } catch {

@@ -1,7 +1,7 @@
 'use client';
 
 import * as z from 'zod';
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
@@ -39,7 +39,7 @@ const BlogCreatePage = () => {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      const response = await axios.post('/api/blogs', values);
+      const response = await api.post('/blogs', values);
       router.push(`/teacher/blogs/${response.data.id}`);
       toast.success('Blog post created');
     } catch {
