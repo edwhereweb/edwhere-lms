@@ -1,6 +1,7 @@
 import { Sidebar } from './_components/sidebar';
 import { Navbar } from './_components/navbar';
 import { auth } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
 import getSafeProfile from '@/actions/get-safe-profile';
 
 export const dynamic = 'force-dynamic';
@@ -17,7 +18,10 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
   const safeProfile = await getSafeProfile();
 
   if (!safeProfile) {
-    throw new Error('Unable to load profile. Please check your database connection.');
+    // Profile couldn't be loaded (DB error, new user race-condition, etc.).
+    // Redirect rather than throwing so production renders a recoverable screen
+    // instead of a hard Application Error page.
+    redirect('/sign-in');
   }
 
   return (

@@ -13,10 +13,17 @@ export default async function getSafeProfile() {
       return redirect('/sign-in');
     }
 
-    const headersList = headers();
-    const forwardedFor = headersList.get('x-forwarded-for');
-    const realIp = headersList.get('x-real-ip');
-    const clientIp = forwardedFor ? forwardedFor.split(',')[0].trim() : realIp || 'Unknown IP';
+    // IP tracking is non-critical — wrap separately so a headers() failure
+    // in some Vercel/edge request contexts doesn't abort the whole profile load.
+    let clientIp = 'Unknown IP';
+    try {
+      const headersList = await headers();
+      const forwardedFor = headersList.get('x-forwarded-for');
+      const realIp = headersList.get('x-real-ip');
+      clientIp = forwardedFor ? forwardedFor.split(',')[0].trim() : realIp || 'Unknown IP';
+    } catch {
+      // headers() unavailable in this context — skip IP tracking
+    }
 
     let currentProfile = await db.profile.findUnique({
       where: {
