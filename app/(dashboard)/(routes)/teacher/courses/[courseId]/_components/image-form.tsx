@@ -1,7 +1,7 @@
 'use client';
 
 import * as z from 'zod';
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import { Pencil, PlusCircle, ImageIcon } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
@@ -38,7 +38,7 @@ export const ImageForm = ({ initialData, courseId }: ImageFormProps) => {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       setIsSubmitting(true);
-      await axios.patch(`/api/courses/${courseId}`, values);
+      await api.patch(`/courses/${courseId}`, values);
       toast.success('Course updated');
       toggleEdit();
       router.refresh();
@@ -52,7 +52,7 @@ export const ImageForm = ({ initialData, courseId }: ImageFormProps) => {
   const onAltSave = async () => {
     try {
       setIsSubmitting(true);
-      await axios.patch(`/api/courses/${courseId}`, { imageAlt });
+      await api.patch(`/courses/${courseId}`, { imageAlt });
       toast.success('Alt text updated');
       toggleEdit();
       router.refresh();

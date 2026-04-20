@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Search, MoreVertical, Pencil, ExternalLink, Power, PowerOff } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 
@@ -64,7 +64,7 @@ export const BlogFilterGrid = ({
   const onTogglePublish = async (id: string, isPublished: boolean) => {
     try {
       setIsLoading(id);
-      await axios.patch(`/api/blogs/${id}`, { isPublished: !isPublished });
+      await api.patch(`/blogs/${id}`, { isPublished: !isPublished });
       toast.success(isPublished ? 'Blog unpublished' : 'Blog published');
       router.refresh();
     } catch {

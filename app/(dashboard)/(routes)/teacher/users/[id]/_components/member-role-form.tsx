@@ -1,7 +1,7 @@
 'use client';
 
 import * as z from 'zod';
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { Pencil } from 'lucide-react';
@@ -50,7 +50,7 @@ export const MemberRoleForm = ({ initialData, id, isAdmin }: MemberRoleFormProps
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await axios.patch(`/api/profile/${id}`, values);
+      await api.patch(`/profile/${id}`, values);
       toast.success('Profile updated');
       toggleEdit();
       router.refresh();

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
+import { api, ApiError } from '@/lib/api-client';
 import toast from 'react-hot-toast';
 import { Loader2, Upload, UserPlus, CheckCircle2, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -145,7 +145,7 @@ export const EnrolmentForm = ({ courses }: EnrolmentFormProps) => {
       setIsLoading(true);
       setResults(null);
 
-      const response = await axios.post(`/api/admin/courses/${selectedCourse}/enrol`, {
+      const response = await api.post(`/admin/courses/${selectedCourse}/enrol`, {
         students: studentsToProcess,
         ...(mode === 'SINGLE' ? { onboardingSource } : {})
       });
@@ -159,8 +159,8 @@ export const EnrolmentForm = ({ courses }: EnrolmentFormProps) => {
         setSingleEmail('');
       }
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response) {
-        toast.error(error.response.data || 'Something went wrong');
+      if (error instanceof ApiError) {
+        toast.error(error.message);
       } else {
         toast.error('Something went wrong');
       }

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import toast from 'react-hot-toast';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -29,10 +29,10 @@ export const SubmissionReviewActions = ({
   const review = async (status: 'APPROVED' | 'REJECTED') => {
     setLoading(status);
     try {
-      await axios.patch(
-        `/api/teacher/project-submissions/${courseId}/${chapterId}/${submissionId}`,
-        { status, reviewNote: reviewNote.trim() || undefined }
-      );
+      await api.patch(`/teacher/project-submissions/${courseId}/${chapterId}/${submissionId}`, {
+        status,
+        reviewNote: reviewNote.trim() || undefined
+      });
       toast.success(status === 'APPROVED' ? 'Submission approved!' : 'Submission rejected.');
       router.refresh();
     } catch {

@@ -1,7 +1,7 @@
 'use client';
 
 import * as z from 'zod';
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { Pencil } from 'lucide-react';
@@ -52,7 +52,7 @@ export const SEOForm = ({ initialData, blogId }: SEOFormProps) => {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await axios.patch(`/api/blogs/${blogId}`, values);
+      await api.patch(`/blogs/${blogId}`, values);
       toast.success('SEO settings updated');
       toggleEdit();
       router.refresh();

@@ -1,7 +1,7 @@
 'use client';
 
 import * as z from 'zod';
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { Pencil } from 'lucide-react';
@@ -46,7 +46,7 @@ export const CategoryForm = ({ initialData, courseId, options }: CategoryFormPro
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await axios.patch(`/api/courses/${courseId}`, values);
+      await api.patch(`/courses/${courseId}`, values);
       toast.success('Course updated');
       toggleEdit();
       router.refresh();

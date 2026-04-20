@@ -2,10 +2,12 @@ import { NextResponse } from 'next/server';
 import { ZodSchema, ZodError } from 'zod';
 import { logError } from '@/lib/debug';
 
+/** @deprecated Use `apiErr` from `@/lib/api-response` instead. */
 export function apiError(message: string, status: number) {
   return NextResponse.json({ error: message }, { status });
 }
 
+/** @deprecated Use `validateRequest` from `@/lib/api-response` instead. */
 export function validateBody<T>(
   schema: ZodSchema<T>,
   data: unknown
@@ -40,6 +42,7 @@ export function validateBody<T>(
   }
 }
 
+/** @deprecated Use `handleRouteError` from `@/lib/api-response` instead. */
 export function handleApiError(tag: string, error: unknown) {
   logError(tag, error);
   return apiError('Internal Server Error', 500);

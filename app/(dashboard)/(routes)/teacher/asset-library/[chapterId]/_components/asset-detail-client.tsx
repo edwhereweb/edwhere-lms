@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import toast from 'react-hot-toast';
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import {
   Video,
   Youtube,
@@ -205,10 +205,7 @@ function AssetEditForm({
         htmlContent: values.htmlContent || null,
         pdfUrl: values.pdfUrl || null
       };
-      const { data } = await axios.patch<Chapter>(
-        `/api/admin/asset-library/${chapter.id}`,
-        payload
-      );
+      const { data } = await api.patch<Chapter>(`/admin/asset-library/${chapter.id}`, payload);
       toast.success('Asset updated successfully');
       onSaved({ ...chapter, ...data });
     } catch {
@@ -358,7 +355,7 @@ export function AssetDetailClient({ chapter: initial }: { chapter: Chapter }) {
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
-      await axios.delete(`/api/admin/asset-library/${chapter.id}`);
+      await api.delete(`/admin/asset-library/${chapter.id}`);
       toast.success('Asset deleted');
       router.push('/teacher/asset-library');
       router.refresh();

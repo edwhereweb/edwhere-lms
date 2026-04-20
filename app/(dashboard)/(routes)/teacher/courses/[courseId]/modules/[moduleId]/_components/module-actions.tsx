@@ -1,6 +1,6 @@
 'use client';
 
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import { Trash } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
@@ -28,7 +28,7 @@ export const ModuleActions = ({
   const onPublish = async () => {
     try {
       setIsLoading(true);
-      await axios.patch(`/api/courses/${courseId}/modules/${moduleId}/publish`);
+      await api.patch(`/courses/${courseId}/modules/${moduleId}/publish`);
       toast.success('Module published');
       router.refresh();
     } catch {
@@ -41,7 +41,7 @@ export const ModuleActions = ({
   const onUnpublish = async () => {
     try {
       setIsLoading(true);
-      await axios.patch(`/api/courses/${courseId}/modules/${moduleId}/unpublish`);
+      await api.patch(`/courses/${courseId}/modules/${moduleId}/unpublish`);
       toast.success('Module unpublished');
       router.refresh();
     } catch {
@@ -55,7 +55,7 @@ export const ModuleActions = ({
     try {
       setIsLoading(true);
 
-      await axios.delete(`/api/courses/${courseId}/modules/${moduleId}`);
+      await api.delete(`/courses/${courseId}/modules/${moduleId}`);
 
       toast.success('Module deleted');
       router.refresh();

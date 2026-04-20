@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import toast from 'react-hot-toast';
 import {
   Upload,
@@ -119,7 +119,7 @@ export const BulkVideoUploader = ({ courses }: BulkVideoUploaderProps) => {
       // Fire-and-forget cleanup for any uploads that didn't finish successfully
       videos.forEach((v) => {
         if (v.chapterId && v.status !== 'ready') {
-          axios.delete(`/api/courses/${selectedCourseId}/chapters/${v.chapterId}`).catch(() => {});
+          api.delete(`/courses/${selectedCourseId}/chapters/${v.chapterId}`).catch(() => {});
         }
       });
 
@@ -229,8 +229,9 @@ export const BulkVideoUploader = ({ courses }: BulkVideoUploaderProps) => {
     for (let i = 0; i < MAX_POLLS; i++) {
       await new Promise((r) => setTimeout(r, 3000));
       try {
-        const res = await fetch(`/api/admin/asset-library/mux-upload/${uploadId}`);
-        const data = await res.json();
+        const res = await fetch(`/api/v1/admin/asset-library/mux-upload/${uploadId}`);
+        const json = (await res.json()) as { data: { status: string } };
+        const data = json.data;
         if (data.status === 'asset_created') {
           setVideos((prev) => prev.map((v) => (v.file === file ? { ...v, status: 'ready' } : v)));
           return;
@@ -252,7 +253,7 @@ export const BulkVideoUploader = ({ courses }: BulkVideoUploaderProps) => {
 
     try {
       // Create all uploads in one API call
-      const { data } = await axios.post('/api/admin/asset-library/mux-upload', {
+      const { data } = await api.post('/admin/asset-library/mux-upload', {
         courseId: selectedCourseId,
         videos: videos.map((v) => ({ title: v.title }))
       });

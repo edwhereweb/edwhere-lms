@@ -1,7 +1,7 @@
 'use client';
 
 import * as z from 'zod';
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { Loader2, PlusCircle } from 'lucide-react';
@@ -48,7 +48,7 @@ export const ModulesForm = ({ initialData, courseId }: ModulesFormProps) => {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await axios.post(`/api/courses/${courseId}/modules`, values);
+      await api.post(`/courses/${courseId}/modules`, values);
       toast.success('Module created');
       toggleCreating();
       form.reset();
@@ -62,7 +62,7 @@ export const ModulesForm = ({ initialData, courseId }: ModulesFormProps) => {
     try {
       setIsUpdating(true);
 
-      await axios.put(`/api/courses/${courseId}/modules/reorder`, {
+      await api.put(`/courses/${courseId}/modules/reorder`, {
         list: updateData
       });
       toast.success('Modules reordered');

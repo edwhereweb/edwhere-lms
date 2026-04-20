@@ -1,7 +1,7 @@
 'use client';
 
 import * as z from 'zod';
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, Controller } from 'react-hook-form';
 import { Code2, Pencil, Eye } from 'lucide-react';
@@ -47,7 +47,7 @@ export const ChapterHtmlForm = ({ initialData, courseId, chapterId }: ChapterHtm
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await axios.patch(`/api/courses/${courseId}/chapters/${chapterId}`, values);
+      await api.patch(`/courses/${courseId}/chapters/${chapterId}`, values);
       toast.success('HTML content updated');
       setIsEditing(false);
       router.refresh();

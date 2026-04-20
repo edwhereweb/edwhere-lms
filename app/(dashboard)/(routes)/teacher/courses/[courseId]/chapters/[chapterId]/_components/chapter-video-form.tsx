@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import { Video, Upload, CheckCircle2, AlertCircle, Loader2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { type Chapter, type MuxData } from '@prisma/client';
@@ -79,8 +79,9 @@ export const ChapterVideoForm = ({ initialData, courseId, chapterId }: ChapterVi
     for (let i = 0; i < MAX_POLLS; i++) {
       await new Promise((r) => setTimeout(r, 3000));
       try {
-        const res = await fetch(`/api/admin/asset-library/mux-upload/${uploadId}`);
-        const data = await res.json();
+        const res = await fetch(`/api/v1/admin/asset-library/mux-upload/${uploadId}`);
+        const json = await res.json();
+        const data = json.data as { status: string };
         if (data.status === 'asset_created') {
           setUploadState({ phase: 'done' });
           router.refresh();
@@ -100,9 +101,7 @@ export const ChapterVideoForm = ({ initialData, courseId, chapterId }: ChapterVi
 
     try {
       // 1. Get a Mux Direct Upload URL for this chapter
-      const { data } = await axios.post(
-        `/api/courses/${courseId}/chapters/${chapterId}/mux-upload`
-      );
+      const { data } = await api.post(`/courses/${courseId}/chapters/${chapterId}/mux-upload`);
       const { uploadUrl, uploadId } = data as { uploadUrl: string; uploadId: string };
 
       // 2. PUT the file directly to Mux

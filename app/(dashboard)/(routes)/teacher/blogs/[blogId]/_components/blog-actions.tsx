@@ -1,6 +1,6 @@
 'use client';
 
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import { Trash, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -26,10 +26,10 @@ export const BlogActions = ({ disabled, blogId, isPublished, slug }: BlogActions
       setIsLoading(true);
 
       if (isPublished) {
-        await axios.patch(`/api/blogs/${blogId}`, { isPublished: false });
+        await api.patch(`/blogs/${blogId}`, { isPublished: false });
         toast.success('Blog post unpublished');
       } else {
-        await axios.patch(`/api/blogs/${blogId}`, { isPublished: true });
+        await api.patch(`/blogs/${blogId}`, { isPublished: true });
         toast.success('Blog post published');
       }
 
@@ -45,7 +45,7 @@ export const BlogActions = ({ disabled, blogId, isPublished, slug }: BlogActions
     try {
       setIsLoading(true);
 
-      await axios.delete(`/api/blogs/${blogId}`);
+      await api.delete(`/blogs/${blogId}`);
 
       toast.success('Blog post deleted');
       router.push(`/teacher/blogs`);

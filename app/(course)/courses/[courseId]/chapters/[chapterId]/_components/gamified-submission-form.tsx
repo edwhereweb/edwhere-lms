@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import axios, { AxiosError } from 'axios';
+import { ApiError, api } from '@/lib/api-client';
 import { toast } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { Flag, Loader2 } from 'lucide-react';
@@ -50,7 +50,7 @@ export const GamifiedSubmissionForm = ({
 
     try {
       setIsSubmitting(true);
-      await axios.post(`/api/courses/${courseId}/chapters/${chapterId}/submit-flag`, {
+      await api.post(`/courses/${courseId}/chapters/${chapterId}/submit-flag`, {
         flag
       });
 
@@ -63,8 +63,8 @@ export const GamifiedSubmissionForm = ({
         }, 1500);
       }
     } catch (error) {
-      if (error instanceof AxiosError && error.response?.data?.error) {
-        toast.error(error.response.data.error);
+      if (error instanceof ApiError) {
+        toast.error(error.message);
       } else {
         toast.error('Something went wrong. Please try again.');
       }
@@ -80,9 +80,10 @@ export const GamifiedSubmissionForm = ({
         Submit your flag
       </h3>
       <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-        Find the secret flag in the interactive content above and submit it here to complete the lesson.
+        Find the secret flag in the interactive content above and submit it here to complete the
+        lesson.
       </p>
-      
+
       <form onSubmit={onSubmit} className="flex flex-col sm:flex-row gap-3">
         <Input
           disabled={isSubmitting}
@@ -92,8 +93,8 @@ export const GamifiedSubmissionForm = ({
           className="flex-1 bg-white dark:bg-slate-950"
           required
         />
-        <Button 
-          type="submit" 
+        <Button
+          type="submit"
           disabled={isSubmitting || !flag.trim()}
           className="bg-[#6715FF] hover:bg-[#5210CC] text-white min-w-[120px]"
         >

@@ -1,7 +1,7 @@
 'use client';
 
 import * as z from 'zod';
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { Pencil } from 'lucide-react';
@@ -41,7 +41,7 @@ export const WebVisibilityForm = ({ initialData, courseId }: WebVisibilityFormPr
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await axios.patch(`/api/courses/${courseId}`, values);
+      await api.patch(`/courses/${courseId}`, values);
       toast.success('Course updated');
       toggleEdit();
       router.refresh();
@@ -68,7 +68,9 @@ export const WebVisibilityForm = ({ initialData, courseId }: WebVisibilityFormPr
       {!isEditing && (
         <p className="text-sm mt-2">
           {(initialData as unknown as { isWebVisible: boolean }).isWebVisible ? (
-            <span className="text-emerald-700 dark:text-emerald-400 font-medium">Visible on public web directory</span>
+            <span className="text-emerald-700 dark:text-emerald-400 font-medium">
+              Visible on public web directory
+            </span>
           ) : (
             <span className="text-slate-500 italic">Hidden from public web directory</span>
           )}
@@ -83,14 +85,12 @@ export const WebVisibilityForm = ({ initialData, courseId }: WebVisibilityFormPr
               render={({ field }) => (
                 <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
                   <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
+                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
                   <div className="space-y-1 leading-none">
                     <FormDescription className="text-sm text-slate-700 dark:text-slate-300">
-                      If checked, this course will appear in the public course directory. Uncheck it to hide the course so only enrolled students can access it.
+                      If checked, this course will appear in the public course directory. Uncheck it
+                      to hide the course so only enrolled students can access it.
                     </FormDescription>
                   </div>
                 </FormItem>

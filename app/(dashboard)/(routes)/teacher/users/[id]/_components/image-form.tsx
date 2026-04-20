@@ -1,7 +1,7 @@
 'use client';
 
 import * as z from 'zod';
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import { Pencil, PlusCircle, ImageIcon } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
@@ -33,7 +33,7 @@ export const ImageForm = ({ initialData, id }: ImageFormProps) => {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await axios.patch(`/api/profile/${id}`, values);
+      await api.patch(`/profile/${id}`, values);
       toast.success('Profile updated');
       toggleEdit();
       router.refresh();

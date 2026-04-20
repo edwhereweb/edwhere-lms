@@ -3,6 +3,7 @@
 import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import axios from 'axios';
+import { api, ApiError } from '@/lib/api-client';
 import toast from 'react-hot-toast';
 import { Upload, Loader2, FileIcon } from 'lucide-react';
 import { type UploadType, MAX_FILE_SIZES } from '@/lib/validations';
@@ -45,17 +46,14 @@ export const FileUpload = ({
       setProgress(0);
 
       try {
-        const presignRes = await axios.post<{ uploadUrl: string; key: string }>(
-          '/api/upload/presign',
-          {
-            type: endpoint,
-            filename: file.name,
-            contentType: file.type || undefined,
-            courseId,
-            chapterId,
-            blogId
-          }
-        );
+        const presignRes = await api.post<{ uploadUrl: string; key: string }>('/upload/presign', {
+          type: endpoint,
+          filename: file.name,
+          contentType: file.type || undefined,
+          courseId,
+          chapterId,
+          blogId
+        });
 
         const { uploadUrl, key } = presignRes.data;
 
@@ -71,8 +69,8 @@ export const FileUpload = ({
         const fileUrl = `/api/files/${key}`;
         onChange(fileUrl, file.name);
       } catch (error) {
-        if (axios.isAxiosError(error) && error.response?.data?.error) {
-          toast.error(error.response.data.error);
+        if (error instanceof ApiError) {
+          toast.error(error.message);
         } else {
           toast.error('Upload failed');
         }

@@ -19,6 +19,7 @@ import { Node, mergeAttributes } from '@tiptap/core';
 import { lowlight } from '@/lib/editor-utils';
 import { useState } from 'react';
 import axios from 'axios';
+import { api } from '@/lib/api-client';
 import { TerminalBlock } from './terminal-block';
 import {
   Bold,
@@ -97,7 +98,7 @@ const Toolbar = ({ editor, blogId }: { editor: TiptapEditor | null; blogId?: str
 
     try {
       setIsUploading(true);
-      const { data } = await axios.post('/api/upload/presign', {
+      const { data } = await api.post<{ uploadUrl: string; key: string }>('/upload/presign', {
         type: 'blogPostImage',
         filename: file.name,
         contentType: file.type,

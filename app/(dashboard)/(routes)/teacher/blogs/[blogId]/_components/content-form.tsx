@@ -1,6 +1,6 @@
 'use client';
 
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 import toast from 'react-hot-toast';
 import { useState, useMemo } from 'react';
 import { Pencil } from 'lucide-react';
@@ -39,7 +39,7 @@ export const ContentForm = ({ initialData, blogId }: ContentFormProps) => {
       debounce(async (content: string) => {
         try {
           setIsUpdating(true);
-          await axios.patch(`/api/blogs/${blogId}`, { content });
+          await api.patch(`/blogs/${blogId}`, { content });
           // No toast here to avoid spamming the user during typing
         } catch {
           toast.error('Auto-save failed');
