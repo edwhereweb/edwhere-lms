@@ -14,7 +14,9 @@ import {
   Library,
   UserPlus,
   Newspaper,
-  UserCircle
+  UserCircle,
+  BookMarked,
+  CalendarClock
 } from 'lucide-react';
 import SidebarItem from './sidebar-item';
 import { usePathname } from 'next/navigation';
@@ -35,6 +37,8 @@ const teacherRoutes = [
   { icon: ClipboardList, label: 'Student Submissions', href: '/teacher/project-submissions' },
   { icon: Library, label: 'Asset Library', href: '/teacher/asset-library' },
   { icon: Newspaper, label: 'Blogs', href: '/teacher/blogs' },
+  { icon: BookMarked, label: 'Offline Batches', href: '/teacher/offline-batches' },
+  { icon: CalendarClock, label: 'Offline Sessions', href: '/teacher/offline-sessions' },
   { icon: UserCircle, label: 'My Profile', href: '/teacher/profile' },
   { icon: MessageCircle, label: 'Mentor Connect', href: '/teacher/mentor-connect' }
 ];
@@ -52,9 +56,10 @@ const bloggerRoutes = [
 
 interface SidebarRoutesProps {
   currentProfile?: SafeProfile | null;
+  hasBatchEnrollment?: boolean;
 }
 
-export const SidebarRoutes = ({ currentProfile }: SidebarRoutesProps) => {
+export const SidebarRoutes = ({ currentProfile, hasBatchEnrollment }: SidebarRoutesProps) => {
   const pathname = usePathname();
 
   const isTeacherPage = pathname?.startsWith('/teacher');
@@ -80,6 +85,11 @@ export const SidebarRoutes = ({ currentProfile }: SidebarRoutesProps) => {
           route.label
         )
     );
+  }
+
+  // For students: inject the Offline Batches item only when they have an enrollment
+  if (!isTeacherPage && !isMarketerPage && !isBloggerPage && hasBatchEnrollment) {
+    routes = [...routes, { icon: BookMarked, label: 'Offline Batches', href: '/offline-batches' }];
   }
 
   return (

@@ -20,6 +20,7 @@ enum PurchaseOnboardingSource {
   MANUAL
   PAID
   PAID_MANUAL
+  BATCH_ENROLLMENT
 }
 
 model Profile {
@@ -53,6 +54,9 @@ model Course {
   metaTitle       String?
   metaDescription String?
 
+  // Admin-only toggle: permits offline sessions to be scheduled on the same day
+  allowSameDayOfflineSession Boolean @default(false)
+
   categoryId  String?    @db.ObjectId
   category    Category?  @relation(fields: [categoryId], references: [id])
   attachments Attachment[]
@@ -62,6 +66,7 @@ model Course {
   instructors CourseInstructor[]
   messages    CourseMessage[]
   blogTagMappings BlogTagMapping[]
+  batches     BatchCourse[]
 
   blogPostIds     String[]   @db.ObjectId
   blogPosts       BlogPost[] @relation(fields: [blogPostIds], references: [id])
@@ -445,4 +450,283 @@ model BlogTagMapping {
   updatedAt DateTime @updatedAt
 
   @@index([courseId])
+}
+
+// ── Offline Batches ──────────────────────────────────────────────────────
+
+model Batch {
+  id          String        @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String?
+  startDate   DateTime?
+  endDate     DateTime?
+
+  // Clerk userId of the admin/teacher who created this batch
+  createdBy   String
+
+  courses     BatchCourse[]
+  enrollments BatchEnrollment[]
+  modules     BatchModule[]
+
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([createdBy])
+}
+
+model BatchCourse {
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  batchId  String  @db.ObjectId
+  batch    Batch   @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  courseId String  @db.ObjectId
+  course   Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([batchId, courseId])
+  @@index([batchId])
+  @@index([courseId])
+}
+
+model BatchEnrollment {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+
+  batchId    String   @db.ObjectId
+  batch      Batch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  // Clerk userId of the enrolled student
+  userId     String
+
+  // Clerk userId of the admin/instructor who performed the enrollment
+  enrolledBy String
+
+  createdAt  DateTime @default(now())
+
+  @@unique([batchId, userId])
+  @@index([batchId])
+  @@index([userId])
+}
+
+// ── Batch Content Structure ───────────────────────────────────────────────
+
+enum BatchItemType {
+  OFFLINE_SESSION
+  PDF
+  RESOURCE_LINK
+  TASK
+}
+
+enum BatchSubmissionType {
+  OFFLINE
+  ONLINE
+}
+
+model BatchModule {
+  id        String      @id @default(auto()) @map("_id") @db.ObjectId
+  batchId   String      @db.ObjectId
+  batch     Batch       @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  title     String
+  position  Int         @default(0)
+  items     BatchItem[]
+
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([batchId])
+}
+
+model BatchItem {
+  id          String        @id @default(auto()) @map("_id") @db.ObjectId
+  moduleId    String        @db.ObjectId
+  module      BatchModule   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  type        BatchItemType
+  title       String
+  position    Int           @default(0)
+
+  // PDF content
+  pdfUrl      String?
+
+  // Resource link content
+  resourceUrl String?
+
+  // Task content (1-to-1 relation)
+  task        BatchTask?
+
+  // Offline session content (1-to-1 relation)
+  session     OfflineSession?
+
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([moduleId])
+}
+
+model BatchTask {
+  id             String               @id @default(auto()) @map("_id") @db.ObjectId
+  itemId         String               @unique @db.ObjectId
+  item           BatchItem            @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  description    String
+  maxMarks       Float
+  submissionType BatchSubmissionType
+
+  submissions    BatchTaskSubmission[]
+
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+}
+
+model BatchTaskSubmission {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  taskId    String    @db.ObjectId
+  task      BatchTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  // Clerk userId of the student
+  userId    String
+
+  // Populated by student for ONLINE tasks
+  driveLink String?
+
+  // Populated by instructor for both types
+  marks     Float?
+  gradedBy  String?
+  gradedAt  DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([taskId, userId])
+  @@index([taskId])
+  @@index([userId])
+}
+
+// ── Offline Session ─────────────────────────────────────────────────────
+
+model OfflineSession {
+  id              String               @id @default(auto()) @map("_id") @db.ObjectId
+  itemId          String               @unique @db.ObjectId
+  item            BatchItem            @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  scheduledAt     DateTime
+  durationMinutes Int                  @default(60)
+  location        String?
+  meetLink        String?
+
+  // Clerk userId of the primary instructor
+  instructorId    String
+
+  // Set by instructor when the session ends; starts the 30-min MCQ window
+  completedAt     DateTime?
+
+  coInstructors   SessionCoInstructor[]
+  uploads         SessionUpload[]
+  mcq             SessionMcq?
+
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  @@index([instructorId])
+}
+
+model SessionCoInstructor {
+  id        String         @id @default(auto()) @map("_id") @db.ObjectId
+  sessionId String         @db.ObjectId
+  session   OfflineSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  // Clerk userId of the co-instructor
+  userId    String
+  createdAt DateTime       @default(now())
+
+  @@unique([sessionId, userId])
+  @@index([sessionId])
+}
+
+enum SessionUploadStatus {
+  APPROVED
+  PENDING
+  REJECTED
+}
+
+model SessionUpload {
+  id         String              @id @default(auto()) @map("_id") @db.ObjectId
+  sessionId  String              @db.ObjectId
+  session    OfflineSession      @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  // "slides" or "notes"
+  type       String
+  fileUrl    String
+  filename   String
+  status     SessionUploadStatus @default(APPROVED)
+
+  uploadedBy String
+  approvedBy String?
+  approvedAt DateTime?
+
+  logs       SessionUploadLog[]
+
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+
+  @@index([sessionId])
+  @@index([status])
+}
+
+// One record per upload attempt. Used to count and log late upload events.
+model SessionUploadLog {
+  id         String        @id @default(auto()) @map("_id") @db.ObjectId
+  uploadId   String        @db.ObjectId
+  upload     SessionUpload @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+  isLate     Boolean
+  uploadedAt DateTime      @default(now())
+  uploadedBy String
+
+  @@index([uploadId])
+}
+
+model SessionMcq {
+  id          String               @id @default(auto()) @map("_id") @db.ObjectId
+  sessionId   String               @unique @db.ObjectId
+  session     OfflineSession       @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  title       String               @default("Session MCQ")
+  questions   SessionMcqQuestion[]
+  submissions SessionMcqSubmission[]
+
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+}
+
+model SessionMcqQuestion {
+  id            String     @id @default(auto()) @map("_id") @db.ObjectId
+  mcqId         String     @db.ObjectId
+  mcq           SessionMcq @relation(fields: [mcqId], references: [id], onDelete: Cascade)
+  body          String
+  options       String[]
+  correctOption Int
+  position      Int        @default(0)
+
+  createdAt     DateTime   @default(now())
+
+  @@index([mcqId])
+}
+
+model SessionMcqSubmission {
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  mcqId       String     @db.ObjectId
+  mcq         SessionMcq @relation(fields: [mcqId], references: [id], onDelete: Cascade)
+
+  // Clerk userId of the student
+  userId      String
+
+  // Answers in shuffled display order (parallel to shuffleMap stored in submission)
+  answers     Int[]
+
+  // Indices mapping displayPosition → originalPosition (stored so scores can be re-verified)
+  shuffleMap  Int[]
+
+  score       Int
+  total       Int
+
+  submittedAt DateTime   @default(now())
+
+  @@unique([mcqId, userId])
+  @@index([mcqId])
+  @@index([userId])
 }

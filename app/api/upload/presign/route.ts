@@ -18,7 +18,7 @@ function buildKey(
   type: UploadType,
   userId: string,
   filename: string,
-  ids: { courseId?: string; chapterId?: string; blogId?: string }
+  ids: { courseId?: string; chapterId?: string; blogId?: string; sessionId?: string }
 ): string {
   const uuid = crypto.randomUUID();
   const ext = path.extname(filename).toLowerCase() || '.bin';
@@ -41,6 +41,10 @@ function buildKey(
       return `public/blog-images/${ids.blogId || 'general'}/${uuid}${ext}`;
     case 'blogPostCover':
       return `public/blog-covers/${ids.blogId || 'general'}/${uuid}${ext}`;
+    case 'sessionSlides':
+      return `private/session-uploads/${ids.sessionId}/${uuid}-slides${ext}`;
+    case 'sessionNotes':
+      return `private/session-uploads/${ids.sessionId}/${uuid}-notes${ext}`;
   }
 }
 
@@ -81,7 +85,8 @@ export async function POST(req: Request) {
       contentType: explicitContentType,
       courseId,
       chapterId,
-      blogId
+      blogId,
+      sessionId
     } = validation.data;
 
     const isBlogUpload = BLOG_UPLOAD_TYPES.includes(type);
@@ -97,6 +102,9 @@ export async function POST(req: Request) {
     if (type === 'chapterPdf' && !chapterId) {
       return apiError('chapterId is required for this upload type', 400);
     }
+    if ((type === 'sessionSlides' || type === 'sessionNotes') && !sessionId) {
+      return apiError('sessionId is required for session uploads', 400);
+    }
 
     const contentType = resolveContentType(type, filename, explicitContentType);
     const allowed = ALLOWED_CONTENT_TYPES[type];
@@ -104,7 +112,7 @@ export async function POST(req: Request) {
       return apiError(`Content type "${contentType}" is not allowed for ${type}`, 400);
     }
 
-    const key = buildKey(type, userId, filename, { courseId, chapterId, blogId });
+    const key = buildKey(type, userId, filename, { courseId, chapterId, blogId, sessionId });
     const uploadUrl = await createPresignedPutUrl(key, contentType);
 
     return NextResponse.json({ uploadUrl, key });

@@ -19,6 +19,7 @@ export const updateCourseSchema = z.object({
   price: z.number().min(0).optional(),
   categoryId: z.string().optional(),
   isWebVisible: z.boolean().optional(),
+  allowSameDayOfflineSession: z.boolean().optional(),
   slug: z
     .string()
     .min(1)
@@ -221,7 +222,9 @@ const UPLOAD_TYPE = z.enum([
   'questionImage',
   'blogAuthorImage',
   'blogPostImage',
-  'blogPostCover'
+  'blogPostCover',
+  'sessionSlides',
+  'sessionNotes'
 ]);
 export type UploadType = z.infer<typeof UPLOAD_TYPE>;
 
@@ -252,7 +255,9 @@ export const ALLOWED_CONTENT_TYPES: Record<UploadType, readonly string[]> = {
   questionImage: IMAGE_CONTENT_TYPES,
   blogAuthorImage: IMAGE_CONTENT_TYPES,
   blogPostImage: IMAGE_CONTENT_TYPES,
-  blogPostCover: IMAGE_CONTENT_TYPES
+  blogPostCover: IMAGE_CONTENT_TYPES,
+  sessionSlides: ['application/pdf'],
+  sessionNotes: ['application/pdf']
 };
 
 export const MAX_FILE_SIZES: Record<UploadType, number> = {
@@ -263,7 +268,9 @@ export const MAX_FILE_SIZES: Record<UploadType, number> = {
   questionImage: 250 * 1024,
   blogAuthorImage: 4 * 1024 * 1024,
   blogPostImage: 8 * 1024 * 1024,
-  blogPostCover: 8 * 1024 * 1024
+  blogPostCover: 8 * 1024 * 1024,
+  sessionSlides: 32 * 1024 * 1024,
+  sessionNotes: 16 * 1024 * 1024
 };
 
 export const presignSchema = z.object({
@@ -272,7 +279,8 @@ export const presignSchema = z.object({
   contentType: z.string().min(1).optional(),
   courseId: z.string().optional(),
   chapterId: z.string().optional(),
-  blogId: z.string().optional()
+  blogId: z.string().optional(),
+  sessionId: z.string().optional()
 });
 
 // ── Blog schemas ────────────────────────────────────────────────────────
@@ -325,4 +333,128 @@ export const updateBlogPostSchema = z.object({
 export const upsertBlogTagMappingSchema = z.object({
   tagName: z.string().min(1, 'Tag name is required').max(100),
   courseId: z.string().min(1, 'Course ID is required')
+});
+
+// ── Offline Batch schemas ───────────────────────────────────────────
+
+export const createBatchSchema = z.object({
+  title: z.string().min(1, 'Title is required').max(200),
+  description: z.string().max(5000).optional(),
+  startDate: z.string().datetime({ offset: true }).optional(),
+  endDate: z.string().datetime({ offset: true }).optional()
+});
+
+export const updateBatchSchema = z.object({
+  title: z.string().min(1).max(200).optional(),
+  description: z.string().max(5000).optional(),
+  startDate: z.string().datetime({ offset: true }).nullable().optional(),
+  endDate: z.string().datetime({ offset: true }).nullable().optional()
+});
+
+export const batchCourseSchema = z.object({
+  courseId: z.string().min(1, 'courseId is required')
+});
+
+export const batchEnrollSchema = z.object({
+  userId: z.string().min(1, 'userId is required')
+});
+
+// ── Batch content schemas ───────────────────────────────────────────
+
+export const createBatchModuleSchema = z.object({
+  title: z.string().min(1, 'Title is required').max(200)
+});
+
+export const updateBatchModuleSchema = z.object({
+  title: z.string().min(1).max(200).optional(),
+  position: z.number().int().min(0).optional()
+});
+
+export const createBatchItemSchema = z.object({
+  type: z.enum(['OFFLINE_SESSION', 'PDF', 'RESOURCE_LINK', 'TASK']),
+  title: z.string().min(1, 'Title is required').max(200),
+  pdfUrl: z.string().url('Must be a valid URL').optional(),
+  resourceUrl: z.string().url('Must be a valid URL').optional(),
+  // Task fields — required when type === 'TASK'
+  description: z.string().max(10000).optional(),
+  maxMarks: z.number().positive().optional(),
+  submissionType: z.enum(['OFFLINE', 'ONLINE']).optional()
+});
+
+export const updateBatchItemSchema = z.object({
+  title: z.string().min(1).max(200).optional(),
+  position: z.number().int().min(0).optional(),
+  pdfUrl: z.string().url().nullable().optional(),
+  resourceUrl: z.string().url().nullable().optional(),
+  description: z.string().max(10000).optional(),
+  maxMarks: z.number().positive().optional(),
+  submissionType: z.enum(['OFFLINE', 'ONLINE']).optional()
+});
+
+export const gradeBatchTaskSchema = z.object({
+  userId: z.string().min(1, 'userId is required'),
+  marks: z.number().min(0, 'Marks cannot be negative')
+});
+
+export const submitBatchTaskSchema = z.object({
+  driveLink: z
+    .string()
+    .url('Must be a valid URL')
+    .refine(
+      (url) => /^https:\/\/(drive|docs|sheets|slides|forms|sites)\.google\.com\/.+/.test(url),
+      'Only Google Drive or Docs links are accepted'
+    )
+});
+
+// ── Offline Session schemas ─────────────────────────────────────────
+
+export const createOfflineSessionSchema = z.object({
+  title: z.string().min(1, 'Title is required').max(200),
+  scheduledAt: z.string().datetime({ offset: true }),
+  durationMinutes: z.number().int().min(15).max(480).optional(),
+  location: z.string().max(300).optional(),
+  meetLink: z.string().url('Must be a valid URL').optional()
+});
+
+export const updateOfflineSessionSchema = z.object({
+  title: z.string().min(1).max(200).optional(),
+  scheduledAt: z.string().datetime({ offset: true }).optional(),
+  durationMinutes: z.number().int().min(15).max(480).optional(),
+  location: z.string().max(300).nullable().optional(),
+  meetLink: z.string().url().nullable().optional()
+});
+
+export const completeSessionSchema = z.object({
+  completedAt: z.string().datetime({ offset: true }).optional()
+});
+
+export const addCoInstructorSchema = z.object({
+  userId: z.string().min(1, 'userId is required')
+});
+
+export const registerSessionUploadSchema = z.object({
+  fileUrl: z.string().min(1, 'fileUrl is required'),
+  filename: z.string().min(1).max(255),
+  type: z.enum(['slides', 'notes'])
+});
+
+export const approveUploadSchema = z.object({
+  action: z.enum(['APPROVE', 'REJECT'])
+});
+
+export const createMcqSchema = z.object({
+  title: z.string().min(1).max(200).optional()
+});
+
+export const createMcqQuestionSchema = z.object({
+  body: z.string().min(1, 'Question text is required').max(5000),
+  options: z
+    .array(z.string().min(1, 'Option cannot be empty'))
+    .length(4, 'Exactly 4 options required'),
+  correctOption: z.number().int().min(0).max(3)
+});
+
+export const submitMcqSchema = z.object({
+  answers: z.array(z.number().int().min(0).max(3)),
+  shuffleMap: z.array(z.number().int().min(0))
 });

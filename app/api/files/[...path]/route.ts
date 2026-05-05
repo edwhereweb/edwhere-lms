@@ -44,6 +44,25 @@ async function authorizePrivateAccess(
     return null;
   }
 
+  if (category === 'session-uploads') {
+    // resourceId = sessionId (3rd path segment)
+    const session = await db.offlineSession.findUnique({
+      where: { id: resourceId },
+      include: { item: { include: { module: { select: { batchId: true } } } } }
+    });
+    if (!session) return apiError('Not found', 404);
+
+    const batchId = session.item.module.batchId;
+    const profile = await db.profile.findUnique({ where: { userId }, select: { role: true } });
+    if (profile?.role === 'ADMIN' || profile?.role === 'TEACHER') return null;
+
+    const enrollment = await db.batchEnrollment.findUnique({
+      where: { batchId_userId: { batchId, userId } }
+    });
+    if (!enrollment) return apiError('Forbidden', 403);
+    return null;
+  }
+
   return apiError('Invalid path', 400);
 }
 
