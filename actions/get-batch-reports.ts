@@ -95,6 +95,16 @@ export async function getBatchReportsList(): Promise<BatchReportSummary[]> {
   }
 }
 
+export interface StudentSessionFeedbackData {
+  instructorRating: number;
+  materialRating: number;
+  activityRating: number;
+  overallRating: number;
+  paceRating: number;
+  likedMost: string | null;
+  improvement: string | null;
+}
+
 export type SessionReportDetail = {
   id: string; // itemId
   title: string;
@@ -104,7 +114,7 @@ export type SessionReportDetail = {
   attendancePercent: number | null;
   ieScore: number | null;
   feedback: SessionFeedback | null;
-  studentFeedback: unknown[]; // Avoid complex type for now, it's just the StudentSessionFeedback model
+  studentFeedback: StudentSessionFeedbackData[];
 };
 
 export interface BatchReportDetail {
