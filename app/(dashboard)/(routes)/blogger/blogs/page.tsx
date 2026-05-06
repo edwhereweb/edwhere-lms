@@ -3,6 +3,8 @@ import { auth } from '@clerk/nextjs/server';
 import { PlusCircle } from 'lucide-react';
 import Link from 'next/link';
 
+export const dynamic = 'force-dynamic';
+
 import { db } from '@/lib/db';
 import { Button } from '@/components/ui/button';
 import { canManageBlogs } from '@/lib/blog-auth';
@@ -22,11 +24,13 @@ const BloggerBlogsPage = async () => {
   // Bloggers only manage their own posts — find their BlogAuthor record first
   const author = await db.blogAuthor.findUnique({ where: { userId: profile.userId } });
 
-  const blogs = await db.blogPost.findMany({
-    where: author ? { authorId: author.id } : { id: 'none' },
-    include: { author: true, category: true },
-    orderBy: { createdAt: 'desc' }
-  });
+  const blogs = author
+    ? await db.blogPost.findMany({
+        where: { authorId: author.id },
+        include: { author: true, category: true },
+        orderBy: { createdAt: 'desc' }
+      })
+    : [];
 
   const categories = await db.blogCategory.findMany({ orderBy: { name: 'asc' } });
 

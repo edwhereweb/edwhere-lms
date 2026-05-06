@@ -4,6 +4,8 @@ import { isBlogger } from '@/lib/blogger';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export default async function BloggerLayout({ children }: { children: React.ReactNode }) {
   const { userId } = await auth();
   if (!userId) redirect('/sign-in');
