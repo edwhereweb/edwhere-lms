@@ -17,7 +17,8 @@ import {
   UserCircle,
   BookMarked,
   CalendarClock,
-  LineChart
+  LineChart,
+  LayoutTemplate
 } from 'lucide-react';
 import SidebarItem from './sidebar-item';
 import { usePathname } from 'next/navigation';
@@ -40,6 +41,7 @@ const teacherRoutes = [
   { icon: Newspaper, label: 'Blogs', href: '/teacher/blogs' },
   { icon: BookMarked, label: 'Offline Batches', href: '/teacher/offline-batches' },
   { icon: LineChart, label: 'Batch Reports', href: '/admin/reports/offline-batches' },
+  { icon: LayoutTemplate, label: 'Landing Pages', href: '/admin/landing-pages' },
   { icon: CalendarClock, label: 'Offline Sessions', href: '/teacher/offline-sessions' },
   { icon: UserCircle, label: 'My Profile', href: '/teacher/profile' },
   { icon: MessageCircle, label: 'Mentor Connect', href: '/teacher/mentor-connect' }
@@ -48,11 +50,13 @@ const teacherRoutes = [
 const marketerRoutes = [
   { icon: Megaphone, label: 'Leads', href: '/marketer' },
   { icon: Newspaper, label: 'Blogs', href: '/marketer/blogs' },
+  { icon: LayoutTemplate, label: 'Landing Pages', href: '/marketer/landing-pages' },
   { icon: UserCircle, label: 'My Profile', href: '/marketer/profile' }
 ];
 
 const bloggerRoutes = [
   { icon: Newspaper, label: 'Blogs', href: '/blogger/blogs' },
+  { icon: LayoutTemplate, label: 'Landing Pages', href: '/blogger/landing-pages' },
   { icon: UserCircle, label: 'My Profile', href: '/blogger/profile' }
 ];
 
@@ -89,7 +93,8 @@ export const SidebarRoutes = ({ currentProfile, hasBatchEnrollment }: SidebarRou
           'Manual Enrolment',
           'Categories',
           'Pending Approvals',
-          'Batch Reports'
+          'Batch Reports',
+          'Landing Pages'
         ].includes(route.label)
     );
   }

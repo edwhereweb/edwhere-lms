@@ -790,3 +790,23 @@ model SessionFeedback {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+// ── Landing Pages ──────────────────────────────────────────────────────────
+
+model LandingPage {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  title           String
+  slug            String   @unique
+  htmlContent     String   // The full HTML for the page
+  isPublished     Boolean  @default(false)
+  isApproved      Boolean  @default(false)
+  
+  createdBy       String   // Clerk userId
+  approvedBy      String?  // Clerk userId of admin who approved
+  approvedAt      DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([createdBy])
+  @@index([isApproved])
+}

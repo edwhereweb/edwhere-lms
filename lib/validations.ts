@@ -502,3 +502,13 @@ export const submitFeedbackSchema = z.object({
   memory: metricScore,
   goalCompletion: metricScore
 });
+
+export const landingPageSchema = z.object({
+  title: z.string().min(1, 'Title is required').max(300),
+  slug: z
+    .string()
+    .min(1, 'Slug is required')
+    .max(300)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug must be lowercase letters, numbers, and hyphens'),
+  htmlContent: z.string().min(1, 'HTML content is required').max(1000000) // Up to 1MB of HTML
+});
