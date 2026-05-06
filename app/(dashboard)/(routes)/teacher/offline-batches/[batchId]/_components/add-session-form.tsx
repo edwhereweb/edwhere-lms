@@ -25,8 +25,15 @@ interface AddSessionFormProps {
 
 export function AddSessionForm({ batchId, moduleId, onCreated }: AddSessionFormProps) {
   const [open, setOpen] = useState(false);
+  const getNextHourStr = () => {
+    const d = new Date();
+    d.setHours(d.getHours() + 1, 0, 0, 0);
+    const tzOffset = d.getTimezoneOffset() * 60000;
+    return new Date(d.getTime() - tzOffset).toISOString().slice(0, 16);
+  };
+
   const [title, setTitle] = useState('');
-  const [scheduledAt, setScheduledAt] = useState('');
+  const [scheduledAt, setScheduledAt] = useState(getNextHourStr());
   const [durationMinutes, setDurationMinutes] = useState('60');
   const [location, setLocation] = useState('');
   const [meetLink, setMeetLink] = useState('');
@@ -35,7 +42,7 @@ export function AddSessionForm({ batchId, moduleId, onCreated }: AddSessionFormP
   const reset = () => {
     setOpen(false);
     setTitle('');
-    setScheduledAt('');
+    setScheduledAt(getNextHourStr());
     setDurationMinutes('60');
     setLocation('');
     setMeetLink('');

@@ -28,7 +28,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ batchI
     const validation = validateBody(updateBatchSchema, body);
     if (!validation.success) return validation.response;
 
-    const { title, description, startDate, endDate } = validation.data;
+    const { title, description, startDate, endDate, allowSameDayOfflineSession } = validation.data;
 
     const updated = await db.batch.update({
       where: { id: batchId },
@@ -36,7 +36,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ batchI
         ...(title !== undefined && { title }),
         ...(description !== undefined && { description }),
         ...(startDate !== undefined && { startDate: startDate ? new Date(startDate) : null }),
-        ...(endDate !== undefined && { endDate: endDate ? new Date(endDate) : null })
+        ...(endDate !== undefined && { endDate: endDate ? new Date(endDate) : null }),
+        ...(allowSameDayOfflineSession !== undefined && { allowSameDayOfflineSession })
       }
     });
 

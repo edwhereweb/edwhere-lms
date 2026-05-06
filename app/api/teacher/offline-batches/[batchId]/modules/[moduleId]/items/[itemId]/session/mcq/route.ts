@@ -3,7 +3,6 @@ import { NextResponse } from 'next/server';
 import { validateBody, apiError, handleApiError } from '@/lib/api-utils';
 import { createMcqSchema, createMcqQuestionSchema } from '@/lib/validations';
 import { canManageBatch } from '@/lib/batch-auth';
-import { generateShuffleMap } from '@/lib/session-upload';
 import { db } from '@/lib/db';
 
 type Params = { params: Promise<{ itemId: string }> };
@@ -133,6 +132,3 @@ export async function DELETE(req: Request, { params }: Params) {
     return handleApiError('DELETE_MCQ_QUESTION', error);
   }
 }
-
-// Exported helper: get shuffled question list for a student
-export { generateShuffleMap };

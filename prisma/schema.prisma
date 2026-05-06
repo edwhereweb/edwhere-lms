@@ -464,6 +464,9 @@ model Batch {
   // Clerk userId of the admin/teacher who created this batch
   createdBy   String
 
+  // Admin-only toggle: permits offline sessions to be scheduled on the same day for this batch
+  allowSameDayOfflineSession Boolean @default(false)
+
   courses     BatchCourse[]
   enrollments BatchEnrollment[]
   modules     BatchModule[]
@@ -617,9 +620,14 @@ model OfflineSession {
   // Set by instructor when the session ends; starts the 30-min MCQ window
   completedAt     DateTime?
 
+  // Set when attendance is manually submitted or auto-submitted at +15m
+  attendanceSubmittedAt DateTime?
+
   coInstructors   SessionCoInstructor[]
   uploads         SessionUpload[]
   mcq             SessionMcq?
+  attendances     SessionAttendance[]
+  feedback        SessionFeedback?
 
   createdAt       DateTime             @default(now())
   updatedAt       DateTime             @updatedAt
@@ -637,6 +645,26 @@ model SessionCoInstructor {
 
   @@unique([sessionId, userId])
   @@index([sessionId])
+}
+
+enum SessionAttendanceStatus {
+  PRESENT
+  LATE
+  ABSENT
+}
+
+model SessionAttendance {
+  id          String                  @id @default(auto()) @map("_id") @db.ObjectId
+  sessionId   String                  @db.ObjectId
+  session     OfflineSession          @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId      String
+  status      SessionAttendanceStatus
+  remarks     String?
+  markedAt    DateTime                @default(now())
+
+  @@unique([sessionId, userId])
+  @@index([sessionId])
+  @@index([userId])
 }
 
 enum SessionUploadStatus {
@@ -729,4 +757,36 @@ model SessionMcqSubmission {
   @@unique([mcqId, userId])
   @@index([mcqId])
   @@index([userId])
+}
+
+// ── Post-Session Instructor Feedback & IE Score ──────────────────────────
+
+model SessionFeedback {
+  id          String         @id @default(auto()) @map("_id") @db.ObjectId
+  sessionId   String         @unique @db.ObjectId
+  session     OfflineSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  // Qualitative — exactly 3 entries each
+  wentWell    String[]
+  wentWrong   String[]
+
+  // Quantitative metrics (0–10 each)
+  askingQuestions    Float
+  answeringQuickly   Float
+  groupTalk          Float
+  classPace          Float
+  understandingIdeas Float
+  doingTheWork       Float
+  fixingMistakes     Float
+  memory             Float
+  goalCompletion     Float
+
+  // Derived IE Score (0–100)
+  ieScore     Float
+
+  // Clerk userId of the instructor who submitted the form
+  submittedBy String
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

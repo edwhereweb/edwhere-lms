@@ -16,13 +16,18 @@ import {
   Trash2,
   AlertTriangle,
   FileText,
-  Check
+  Check,
+  Download,
+  BarChart2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { AttendanceQueue } from './attendance-queue';
+import { McqAnalytics } from './mcq-analytics';
+import { FeedbackForm } from './feedback-form';
 
 interface Session {
   id: string;
@@ -32,6 +37,7 @@ interface Session {
   meetLink: string | null;
   instructorId: string;
   completedAt: string | null;
+  attendanceSubmittedAt: string | null;
   coInstructors: { id: string; userId: string }[];
   uploads: {
     id: string;
@@ -45,6 +51,10 @@ interface Session {
     id: string;
     title: string;
     questions: { id: string; body: string; options: string[]; correctOption: number }[];
+  } | null;
+  feedback: {
+    id: string;
+    ieScore: number;
   } | null;
 }
 
@@ -324,10 +334,27 @@ export function SessionDetail({ batchId, moduleId, itemId }: SessionDetailProps)
         )}
         <div className="flex items-center gap-2">
           {session.completedAt ? (
-            <span className="flex items-center gap-1.5 text-emerald-600 text-xs font-medium">
-              <CheckCircle2 className="h-4 w-4" />
-              Completed {formatDateTime(session.completedAt)}
-            </span>
+            <>
+              <span className="flex items-center gap-1.5 text-emerald-600 text-xs font-medium">
+                <CheckCircle2 className="h-4 w-4" />
+                Completed {formatDateTime(session.completedAt)}
+              </span>
+              {session.feedback && (
+                <Badge
+                  className={cn(
+                    'ml-2 font-mono',
+                    session.feedback.ieScore >= 60
+                      ? 'bg-emerald-100 text-emerald-800'
+                      : 'bg-red-100 text-red-800'
+                  )}
+                >
+                  {session.feedback.ieScore < 60 && (
+                    <AlertTriangle className="h-3 w-3 mr-1 inline" />
+                  )}
+                  IE Score: {session.feedback.ieScore}
+                </Badge>
+              )}
+            </>
           ) : (
             <Button
               size="sm"
@@ -342,246 +369,296 @@ export function SessionDetail({ batchId, moduleId, itemId }: SessionDetailProps)
         </div>
       </div>
 
-      {/* Co-instructors */}
-      <div className="space-y-2">
-        <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-          <Users className="h-3.5 w-3.5" />
-          Co-instructors
-        </h4>
-        <div className="flex flex-wrap gap-2">
-          {session.coInstructors.map((c) => (
-            <span
-              key={c.id}
-              className="flex items-center gap-1.5 text-xs bg-muted rounded px-2 py-1"
-            >
-              {c.userId}
-              <button
-                onClick={() => handleRemoveCo(c.userId)}
-                className="text-muted-foreground hover:text-destructive"
-              >
-                <Trash2 className="h-3 w-3" />
-              </button>
-            </span>
-          ))}
-        </div>
-        <div className="flex gap-2">
-          <Input
-            value={coUserId}
-            onChange={(e) => setCoUserId(e.target.value)}
-            placeholder="Clerk User ID of co-instructor"
-            className="h-8 text-sm max-w-xs"
-          />
-          <Button
-            size="sm"
-            className="h-8"
-            onClick={handleAddCo}
-            disabled={addingCo || !coUserId.trim()}
-          >
-            {addingCo ? (
-              <Loader2 className="h-3 w-3 animate-spin" />
-            ) : (
-              <>
-                <PlusCircle className="h-3.5 w-3.5 mr-1" />
-                Add
-              </>
-            )}
-          </Button>
-        </div>
-      </div>
-
-      {/* Uploads */}
-      <div className="space-y-2">
-        <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-          <Upload className="h-3.5 w-3.5" />
-          Slides &amp; Notes
-        </h4>
-        {session.uploads.length > 0 && (
-          <div className="divide-y border rounded-lg">
-            {session.uploads.map((u) => (
-              <div key={u.id} className="flex items-center gap-3 px-3 py-2">
-                <FileText className="h-4 w-4 text-rose-500 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm truncate">{u.filename}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <Badge className={cn('text-xs capitalize', STATUS_COLORS[u.status])}>
-                      {u.status}
-                    </Badge>
-                    {u.status === 'PENDING' && (
-                      <span className="flex items-center gap-1 text-xs text-amber-600">
-                        <AlertTriangle className="h-3 w-3" />
-                        Awaiting admin approval
-                      </span>
-                    )}
-                    <span className="text-xs text-muted-foreground capitalize">{u.type}</span>
-                    {u.logs.some((l) => l.isLate) && (
-                      <span className="text-xs text-orange-500">Late upload</span>
-                    )}
-                  </div>
-                </div>
-                <button
-                  onClick={() => handleDeleteUpload(u.id)}
-                  className="text-muted-foreground hover:text-destructive shrink-0"
+      {/* If completed but no feedback, show feedback form and hide the rest */}
+      {session.completedAt && !session.feedback ? (
+        <FeedbackForm
+          batchId={batchId}
+          moduleId={moduleId}
+          itemId={itemId}
+          onSuccess={(feedback) => setSession((s) => (s ? { ...s, feedback } : s))}
+        />
+      ) : (
+        <>
+          {/* Co-instructors */}
+          <div className="space-y-2">
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+              <Users className="h-3.5 w-3.5" />
+              Co-instructors
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              {session.coInstructors.map((c) => (
+                <span
+                  key={c.id}
+                  className="flex items-center gap-1.5 text-xs bg-muted rounded px-2 py-1"
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-        <div className="flex items-center gap-2 flex-wrap">
-          <input
-            id="session-file-input"
-            type="file"
-            accept="application/pdf"
-            className="hidden"
-            onChange={(e) => setUploadFile(e.target.files?.[0] ?? null)}
-          />
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-8 text-xs"
-            onClick={() => document.getElementById('session-file-input')?.click()}
-          >
-            {uploadFile ? uploadFile.name : 'Choose PDF…'}
-          </Button>
-          <select
-            value={uploadType}
-            onChange={(e) => setUploadType(e.target.value as 'slides' | 'notes')}
-            className="h-8 text-xs border rounded bg-background px-2"
-          >
-            <option value="slides">Slides</option>
-            <option value="notes">Notes</option>
-          </select>
-          <Button
-            size="sm"
-            className="h-8 text-xs"
-            onClick={handleUpload}
-            disabled={!uploadFile || uploading}
-          >
-            {uploading ? (
-              <Loader2 className="h-3 w-3 animate-spin" />
-            ) : (
-              <>
-                <Upload className="h-3 w-3 mr-1" />
-                Upload
-              </>
-            )}
-          </Button>
-        </div>
-      </div>
-
-      {/* MCQ */}
-      <div className="space-y-3">
-        <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-          <ClipboardList className="h-3.5 w-3.5" />
-          MCQ
-        </h4>
-        {!session.mcq ? (
-          <div className="flex items-center gap-2">
-            <Input
-              value={mcqTitle}
-              onChange={(e) => setMcqTitle(e.target.value)}
-              placeholder="MCQ title"
-              className="h-8 text-sm max-w-xs"
-            />
-            <Button size="sm" className="h-8" onClick={handleCreateMcq} disabled={creatingMcq}>
-              {creatingMcq ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Create MCQ'}
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <p className="text-sm font-medium">
-              {session.mcq.title}{' '}
-              <span className="text-xs text-muted-foreground">
-                ({session.mcq.questions.length} questions)
-              </span>
-            </p>
-
-            {/* Question list */}
-            {session.mcq.questions.length > 0 && (
-              <div className="space-y-2">
-                {session.mcq.questions.map((q, idx) => (
-                  <div key={q.id} className="border rounded p-3 text-sm space-y-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <span className="font-medium">
-                        Q{idx + 1}. {q.body}
-                      </span>
-                      <button
-                        onClick={() => handleDeleteQuestion(q.id)}
-                        className="text-muted-foreground hover:text-destructive shrink-0"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                    <ul className="space-y-0.5 pl-4">
-                      {q.options.map((opt, i) => (
-                        <li
-                          key={i}
-                          className={cn(
-                            'text-xs',
-                            i === q.correctOption &&
-                              'text-emerald-600 font-medium flex items-center gap-1'
-                          )}
-                        >
-                          {i === q.correctOption && <Check className="h-3 w-3" />}
-                          {String.fromCharCode(65 + i)}. {opt}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Add question form */}
-            <div className="border rounded p-3 space-y-2 bg-muted/30">
-              <p className="text-xs font-medium">Add Question</p>
-              <Textarea
-                value={questionBody}
-                onChange={(e) => setQuestionBody(e.target.value)}
-                placeholder="Question text…"
-                rows={2}
-                className="text-sm"
+                  {c.userId}
+                  <button
+                    onClick={() => handleRemoveCo(c.userId)}
+                    className="text-muted-foreground hover:text-destructive"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <Input
+                value={coUserId}
+                onChange={(e) => setCoUserId(e.target.value)}
+                placeholder="Clerk User ID of co-instructor"
+                className="h-8 text-sm max-w-xs"
               />
-              <div className="grid grid-cols-2 gap-2">
-                {questionOptions.map((opt, i) => (
-                  <div key={i} className="flex items-center gap-1.5">
-                    <input
-                      type="radio"
-                      name="correct"
-                      checked={correctOption === i}
-                      onChange={() => setCorrectOption(i)}
-                      className="h-3.5 w-3.5 accent-emerald-500"
-                      id={`opt-radio-${i}`}
-                    />
-                    <Input
-                      value={opt}
-                      onChange={(e) => {
-                        const o = [...questionOptions];
-                        o[i] = e.target.value;
-                        setQuestionOptions(o);
-                      }}
-                      placeholder={`Option ${String.fromCharCode(65 + i)}`}
-                      className="h-7 text-xs flex-1"
-                    />
-                  </div>
-                ))}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Select the radio button next to the correct answer.
-              </p>
               <Button
                 size="sm"
                 className="h-8"
-                onClick={handleAddQuestion}
-                disabled={addingQuestion}
+                onClick={handleAddCo}
+                disabled={addingCo || !coUserId.trim()}
               >
-                {addingQuestion ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Add Question'}
+                {addingCo ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <>
+                    <PlusCircle className="h-3.5 w-3.5 mr-1" />
+                    Add
+                  </>
+                )}
               </Button>
             </div>
           </div>
-        )}
-      </div>
+
+          {/* Uploads */}
+          <div className="space-y-2">
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+              <Upload className="h-3.5 w-3.5" />
+              Slides &amp; Notes
+            </h4>
+            {session.uploads.length > 0 && (
+              <div className="divide-y border rounded-lg">
+                {session.uploads.map((u) => (
+                  <div key={u.id} className="flex items-center gap-3 px-3 py-2">
+                    <FileText className="h-4 w-4 text-rose-500 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm truncate">{u.filename}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <Badge className={cn('text-xs capitalize', STATUS_COLORS[u.status])}>
+                          {u.status}
+                        </Badge>
+                        {u.status === 'PENDING' && (
+                          <span className="flex items-center gap-1 text-xs text-amber-600">
+                            <AlertTriangle className="h-3 w-3" />
+                            Awaiting admin approval
+                          </span>
+                        )}
+                        <span className="text-xs text-muted-foreground capitalize">{u.type}</span>
+                        {u.logs.some((l) => l.isLate) && (
+                          <span className="text-xs text-orange-500">Late upload</span>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteUpload(u.id)}
+                      className="text-muted-foreground hover:text-destructive shrink-0"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex items-center gap-2 flex-wrap">
+              <input
+                id="session-file-input"
+                type="file"
+                accept="application/pdf"
+                className="hidden"
+                onChange={(e) => setUploadFile(e.target.files?.[0] ?? null)}
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 text-xs"
+                onClick={() => document.getElementById('session-file-input')?.click()}
+              >
+                {uploadFile ? uploadFile.name : 'Choose PDF…'}
+              </Button>
+              <select
+                value={uploadType}
+                onChange={(e) => setUploadType(e.target.value as 'slides' | 'notes')}
+                className="h-8 text-xs border rounded bg-background px-2"
+              >
+                <option value="slides">Slides</option>
+                <option value="notes">Notes</option>
+              </select>
+              <Button
+                size="sm"
+                className="h-8 text-xs"
+                onClick={handleUpload}
+                disabled={!uploadFile || uploading}
+              >
+                {uploading ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <>
+                    <Upload className="h-3 w-3 mr-1" />
+                    Upload
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+
+          {/* MCQ */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+              <ClipboardList className="h-3.5 w-3.5" />
+              MCQ
+            </h4>
+            {!session.mcq ? (
+              <div className="flex items-center gap-2">
+                <Input
+                  value={mcqTitle}
+                  onChange={(e) => setMcqTitle(e.target.value)}
+                  placeholder="MCQ title"
+                  className="h-8 text-sm max-w-xs"
+                />
+                <Button size="sm" className="h-8" onClick={handleCreateMcq} disabled={creatingMcq}>
+                  {creatingMcq ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Create MCQ'}
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm font-medium">
+                  {session.mcq.title}{' '}
+                  <span className="text-xs text-muted-foreground">
+                    ({session.mcq.questions.length} questions)
+                  </span>
+                </p>
+
+                {/* Question list */}
+                {session.mcq.questions.length > 0 && (
+                  <div className="space-y-2">
+                    {session.mcq.questions.map((q, idx) => (
+                      <div key={q.id} className="border rounded p-3 text-sm space-y-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="font-medium">
+                            Q{idx + 1}. {q.body}
+                          </span>
+                          <button
+                            onClick={() => handleDeleteQuestion(q.id)}
+                            className="text-muted-foreground hover:text-destructive shrink-0"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                        <ul className="space-y-0.5 pl-4">
+                          {q.options.map((opt, i) => (
+                            <li
+                              key={i}
+                              className={cn(
+                                'text-xs',
+                                i === q.correctOption &&
+                                  'text-emerald-600 font-medium flex items-center gap-1'
+                              )}
+                            >
+                              {i === q.correctOption && <Check className="h-3 w-3" />}
+                              {String.fromCharCode(65 + i)}. {opt}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Add question form */}
+                <div className="border rounded p-3 space-y-2 bg-muted/30">
+                  <p className="text-xs font-medium">Add Question</p>
+                  <Textarea
+                    value={questionBody}
+                    onChange={(e) => setQuestionBody(e.target.value)}
+                    placeholder="Question text…"
+                    rows={2}
+                    className="text-sm"
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    {questionOptions.map((opt, i) => (
+                      <div key={i} className="flex items-center gap-1.5">
+                        <input
+                          type="radio"
+                          name="correct"
+                          checked={correctOption === i}
+                          onChange={() => setCorrectOption(i)}
+                          className="h-3.5 w-3.5 accent-emerald-500"
+                          id={`opt-radio-${i}`}
+                        />
+                        <Input
+                          value={opt}
+                          onChange={(e) => {
+                            const o = [...questionOptions];
+                            o[i] = e.target.value;
+                            setQuestionOptions(o);
+                          }}
+                          placeholder={`Option ${String.fromCharCode(65 + i)}`}
+                          className="h-7 text-xs flex-1"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Select the radio button next to the correct answer.
+                  </p>
+                  <Button
+                    size="sm"
+                    className="h-8"
+                    onClick={handleAddQuestion}
+                    disabled={addingQuestion}
+                  >
+                    {addingQuestion ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Add Question'}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Attendance System */}
+          <div className="space-y-3 pt-2 border-t">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                <Users className="h-3.5 w-3.5" />
+                Attendance
+              </h4>
+              {session.attendanceSubmittedAt && (
+                <a
+                  href={`/api/teacher/offline-batches/${batchId}/modules/${moduleId}/items/${itemId}/session/attendance/export`}
+                  download
+                  className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded text-xs font-medium border bg-background hover:bg-muted transition-colors"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Export .xlsx
+                </a>
+              )}
+            </div>
+            <AttendanceQueue
+              batchId={batchId}
+              moduleId={moduleId}
+              itemId={itemId}
+              scheduledAt={session.scheduledAt}
+              initialSubmittedAt={session.attendanceSubmittedAt}
+            />
+          </div>
+
+          {/* MCQ Analytics */}
+          {session.mcq && (
+            <div className="space-y-3 pt-2 border-t">
+              <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                <BarChart2 className="h-3.5 w-3.5" />
+                MCQ Analytics
+              </h4>
+              <McqAnalytics batchId={batchId} moduleId={moduleId} itemId={itemId} />
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

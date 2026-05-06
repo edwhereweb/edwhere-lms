@@ -99,6 +99,7 @@ export async function getBatchDetail(batchId: string, userId: string, role: stri
       status: classifyBatch(batch.startDate, batch.endDate),
       startDate: batch.startDate ? batch.startDate.toISOString() : null,
       endDate: batch.endDate ? batch.endDate.toISOString() : null,
+      allowSameDayOfflineSession: batch.allowSameDayOfflineSession,
       createdAt: batch.createdAt.toISOString(),
       updatedAt: batch.updatedAt.toISOString()
     };
@@ -199,6 +200,14 @@ export interface BatchContentItem {
     location: string | null;
     meetLink: string | null;
     completedAt: string | null;
+    attendanceStatus: string | null;
+    uploads: {
+      id: string;
+      type: string;
+      filename: string;
+      fileUrl: string;
+      status: string;
+    }[];
   } | null;
 }
 
@@ -248,7 +257,12 @@ export async function getBatchContent(
                 submissions: role === 'STUDENT' ? { where: { userId: viewerUserId } } : true
               }
             },
-            session: true
+            session: {
+              include: {
+                attendances: role === 'STUDENT' ? { where: { userId: viewerUserId } } : true,
+                uploads: role === 'STUDENT' ? { where: { status: 'APPROVED' } } : true
+              }
+            }
           }
         }
       }
@@ -289,7 +303,26 @@ export async function getBatchContent(
               durationMinutes: i.session.durationMinutes,
               location: i.session.location,
               meetLink: i.session.meetLink,
-              completedAt: i.session.completedAt ? i.session.completedAt.toISOString() : null
+              completedAt: i.session.completedAt ? i.session.completedAt.toISOString() : null,
+              attendanceStatus:
+                role === 'STUDENT' && i.session.attendances?.length > 0
+                  ? i.session.attendances[0].status
+                  : null,
+              uploads: i.session.uploads.map(
+                (u: {
+                  id: string;
+                  type: string;
+                  filename: string;
+                  fileUrl: string;
+                  status: string;
+                }) => ({
+                  id: u.id,
+                  type: u.type,
+                  filename: u.filename,
+                  fileUrl: u.fileUrl,
+                  status: u.status
+                })
+              )
             }
           : null
       }))

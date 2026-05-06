@@ -81,7 +81,6 @@ export async function generateMetadata({
   const course = await getCourseBySlug(params.courseId);
   if (!course || !(course as unknown as { isWebVisible: boolean }).isWebVisible) return {};
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://learn.edwhere.com';
   const pageTitle = course.metaTitle || course.title;
   const pageDescription =
     course.metaDescription || course.description || 'Learn with Edwhere Education';

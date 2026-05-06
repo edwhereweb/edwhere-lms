@@ -34,7 +34,7 @@ export async function POST(req: Request) {
     const validation = validateBody(createBatchSchema, body);
     if (!validation.success) return validation.response;
 
-    const { title, description, startDate, endDate } = validation.data;
+    const { title, description, startDate, endDate, allowSameDayOfflineSession } = validation.data;
 
     const batch = await db.batch.create({
       data: {
@@ -42,6 +42,7 @@ export async function POST(req: Request) {
         description,
         startDate: startDate ? new Date(startDate) : null,
         endDate: endDate ? new Date(endDate) : null,
+        allowSameDayOfflineSession: allowSameDayOfflineSession ?? false,
         createdBy: userId
       }
     });

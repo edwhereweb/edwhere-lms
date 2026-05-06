@@ -20,6 +20,7 @@ const McqPage = async ({ params }: Params) => {
     where: { itemId },
     include: {
       item: { select: { title: true } },
+      attendances: { where: { userId } },
       mcq: {
         include: {
           questions: { orderBy: { position: 'asc' } },
@@ -49,6 +50,27 @@ const McqPage = async ({ params }: Params) => {
           <p className="text-sm text-amber-600">
             The assessment is only available during the session or up to 30 minutes after it
             finishes.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const attendance = session.attendances[0];
+  if (attendance?.status === 'ABSENT') {
+    return (
+      <div className="p-6 max-w-3xl mx-auto space-y-6">
+        <Link
+          href={`/offline-batches/${batchId}`}
+          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground w-fit"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Batch
+        </Link>
+        <div className="border rounded-lg p-8 text-center bg-red-500/10 border-red-500/20">
+          <h2 className="text-lg font-semibold text-red-700 mb-2">Assessment Locked</h2>
+          <p className="text-sm text-red-600">
+            You were marked absent for this session. The MCQ assessment is not available.
           </p>
         </div>
       </div>

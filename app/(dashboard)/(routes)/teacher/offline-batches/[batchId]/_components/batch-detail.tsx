@@ -15,11 +15,21 @@ import {
   Users,
   BookOpen,
   LayoutList,
-  Eye
+  Eye,
+  Upload
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { BatchContentEditor } from './batch-content-editor';
@@ -58,6 +68,7 @@ interface BatchDetailProps {
   isAdmin: boolean;
   allCourses: { id: string; title: string }[];
   modules: BatchContentModule[];
+  allowSameDayOfflineSession: boolean;
 }
 
 function formatDate(iso: string | null) {
@@ -67,6 +78,17 @@ function formatDate(iso: string | null) {
     month: 'short',
     year: 'numeric'
   });
+}
+
+function toDatetimeLocal(iso: string | null) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  const hh = String(d.getHours()).padStart(2, '0');
+  const min = String(d.getMinutes()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
 }
 
 const STATUS_BADGE: Record<string, string> = {
@@ -86,18 +108,27 @@ export function BatchDetail({
   enrollments: initialEnrollments,
   isAdmin,
   allCourses,
-  modules
+  modules,
+  allowSameDayOfflineSession
 }: BatchDetailProps) {
   const router = useRouter();
   const [courses, setCourses] = useState(initialCourses);
   const [enrollments, setEnrollments] = useState(initialEnrollments);
 
   const [addCourseId, setAddCourseId] = useState('');
-  const [enrollUserId, setEnrollUserId] = useState('');
+  const [enrollInput, setEnrollInput] = useState('');
   const [loadingCourse, setLoadingCourse] = useState(false);
   const [loadingEnroll, setLoadingEnroll] = useState(false);
   const [removingCourse, setRemovingCourse] = useState<string | null>(null);
   const [removingEnroll, setRemovingEnroll] = useState<string | null>(null);
+
+  const [isConfigOpen, setIsConfigOpen] = useState(false);
+  const [configTitle, setConfigTitle] = useState(title);
+  const [configDesc, setConfigDesc] = useState(description || '');
+  const [configStart, setConfigStart] = useState(toDatetimeLocal(startDate));
+  const [configEnd, setConfigEnd] = useState(toDatetimeLocal(endDate));
+  const [configAllowSameDay, setConfigAllowSameDay] = useState(allowSameDayOfflineSession);
+  const [savingConfig, setSavingConfig] = useState(false);
 
   const availableCourses = allCourses.filter((c) => !courses.some((bc) => bc.courseId === c.id));
 
@@ -121,6 +152,22 @@ export function BatchDetail({
     }
   };
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      if (text) {
+        setEnrollInput((prev) => (prev ? prev + '\n' + text : text));
+        toast.success('File loaded');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
   const handleRemoveCourse = async (courseId: string) => {
     try {
       setRemovingCourse(courseId);
@@ -137,17 +184,33 @@ export function BatchDetail({
   };
 
   const handleEnroll = async () => {
-    if (!enrollUserId.trim()) {
-      toast.error('Enter a student user ID');
+    if (!enrollInput.trim()) {
+      toast.error('Enter at least one email address');
       return;
     }
+    const emails = enrollInput
+      .split(/[\n,]+/)
+      .map((e) => e.trim())
+      .filter(Boolean);
+
+    if (emails.length === 0) {
+      toast.error('No valid emails found');
+      return;
+    }
+
     try {
       setLoadingEnroll(true);
-      await axios.post(`/api/teacher/offline-batches/${batchId}/enroll`, {
-        userId: enrollUserId.trim()
+      const { data } = await axios.post(`/api/teacher/offline-batches/${batchId}/enroll/bulk`, {
+        emails
       });
-      toast.success('Student enrolled');
-      setEnrollUserId('');
+      if (data.failed?.length > 0) {
+        toast.error(`Enrolled ${data.enrolled.length}. Not found: ${data.failed.join(', ')}`, {
+          duration: 6000
+        });
+      } else {
+        toast.success(`Successfully enrolled ${data.enrolled.length} students`);
+      }
+      setEnrollInput('');
       router.refresh();
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
@@ -157,6 +220,26 @@ export function BatchDetail({
       }
     } finally {
       setLoadingEnroll(false);
+    }
+  };
+
+  const handleSaveConfig = async () => {
+    try {
+      setSavingConfig(true);
+      await axios.patch(`/api/teacher/offline-batches/${batchId}`, {
+        title: configTitle,
+        description: configDesc,
+        startDate: configStart ? new Date(configStart).toISOString() : null,
+        endDate: configEnd ? new Date(configEnd).toISOString() : null,
+        allowSameDayOfflineSession: configAllowSameDay
+      });
+      toast.success('Batch updated');
+      setIsConfigOpen(false);
+      router.refresh();
+    } catch {
+      toast.error('Failed to update batch');
+    } finally {
+      setSavingConfig(false);
     }
   };
 
@@ -204,18 +287,85 @@ export function BatchDetail({
             </span>
           </div>
         </div>
-        {isAdmin && (
-          <Button id="delete-batch-btn" variant="destructive" size="sm" onClick={handleDeleteBatch}>
-            <Trash2 className="h-4 w-4 mr-1.5" />
-            Delete Batch
-          </Button>
-        )}
-        <Link href={`/teacher/offline-batches/${batchId}/preview`}>
-          <Button id="preview-batch-btn" variant="outline" size="sm">
-            <Eye className="h-4 w-4 mr-1.5" />
-            Preview
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          {isAdmin && (
+            <Button
+              id="delete-batch-btn"
+              variant="destructive"
+              size="sm"
+              onClick={handleDeleteBatch}
+            >
+              <Trash2 className="h-4 w-4 mr-1.5" />
+              Delete Batch
+            </Button>
+          )}
+          <Dialog open={isConfigOpen} onOpenChange={setIsConfigOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                Edit Settings
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Edit Batch Settings</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Title</label>
+                  <Input value={configTitle} onChange={(e) => setConfigTitle(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Description</label>
+                  <Textarea value={configDesc} onChange={(e) => setConfigDesc(e.target.value)} />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Start Date</label>
+                    <Input
+                      type="datetime-local"
+                      value={configStart}
+                      onChange={(e) => setConfigStart(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">End Date</label>
+                    <Input
+                      type="datetime-local"
+                      value={configEnd}
+                      onChange={(e) => setConfigEnd(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                  <Checkbox
+                    id="edit-batch-allow-same-day"
+                    checked={configAllowSameDay}
+                    onCheckedChange={(checked) => setConfigAllowSameDay(!!checked)}
+                  />
+                  <div className="space-y-1 leading-none">
+                    <label htmlFor="edit-batch-allow-same-day" className="text-sm font-medium">
+                      Allow same-day session scheduling
+                    </label>
+                    <p className="text-sm text-muted-foreground">
+                      If checked, instructors will be permitted to schedule offline sessions on the
+                      exact same day. By default, 24h notice is required.
+                    </p>
+                  </div>
+                </div>
+                <Button className="w-full" onClick={handleSaveConfig} disabled={savingConfig}>
+                  {savingConfig ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  Save Changes
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+          <Link href={`/teacher/offline-batches/${batchId}/preview`}>
+            <Button id="preview-batch-btn" variant="outline" size="sm">
+              <Eye className="h-4 w-4 mr-1.5" />
+              Preview
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -338,28 +488,46 @@ export function BatchDetail({
         {/* ── Students tab ── */}
         <TabsContent value="students" className="mt-6 space-y-4">
           {/* Enroll student */}
-          <div className="flex gap-2 items-center">
-            <Input
-              id="enroll-user-input"
-              placeholder="Student Clerk userId…"
-              value={enrollUserId}
-              onChange={(e) => setEnrollUserId(e.target.value)}
-              className="flex-1 max-w-sm"
-            />
+          <div className="flex gap-2 items-start">
+            <div className="flex-1 flex flex-col gap-2 max-w-lg">
+              <Textarea
+                id="enroll-email-input"
+                placeholder="Enter student emails, separated by commas or new lines..."
+                value={enrollInput}
+                onChange={(e) => setEnrollInput(e.target.value)}
+                className="min-h-[100px]"
+              />
+              <div className="flex items-center gap-2">
+                <input
+                  type="file"
+                  id="csv-upload"
+                  accept=".csv,.txt"
+                  className="hidden"
+                  onChange={handleFileUpload}
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => document.getElementById('csv-upload')?.click()}
+                  className="text-xs"
+                >
+                  <Upload className="h-3.5 w-3.5 mr-1.5" />
+                  Upload CSV/TXT
+                </Button>
+                <span className="text-xs text-muted-foreground">Appends to the list above</span>
+              </div>
+            </div>
             <Button
               id="enroll-student-btn"
-              size="sm"
               onClick={handleEnroll}
-              disabled={loadingEnroll || !enrollUserId.trim()}
+              disabled={loadingEnroll || !enrollInput.trim()}
             >
               {loadingEnroll ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin mr-1.5" />
               ) : (
-                <>
-                  <UserPlus className="h-4 w-4 mr-1.5" />
-                  Enroll
-                </>
+                <UserPlus className="h-4 w-4 mr-1.5" />
               )}
+              Bulk Enroll
             </Button>
           </div>
 

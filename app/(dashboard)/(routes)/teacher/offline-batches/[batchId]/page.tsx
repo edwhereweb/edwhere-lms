@@ -58,6 +58,7 @@ const BatchDetailPage = async ({ params }: { params: Promise<{ batchId: string }
         isAdmin={profile.role === 'ADMIN'}
         allCourses={allCourses}
         modules={modules ?? []}
+        allowSameDayOfflineSession={batch.allowSameDayOfflineSession}
       />
     </div>
   );

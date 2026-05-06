@@ -16,7 +16,8 @@ import {
   Newspaper,
   UserCircle,
   BookMarked,
-  CalendarClock
+  CalendarClock,
+  LineChart
 } from 'lucide-react';
 import SidebarItem from './sidebar-item';
 import { usePathname } from 'next/navigation';
@@ -38,6 +39,7 @@ const teacherRoutes = [
   { icon: Library, label: 'Asset Library', href: '/teacher/asset-library' },
   { icon: Newspaper, label: 'Blogs', href: '/teacher/blogs' },
   { icon: BookMarked, label: 'Offline Batches', href: '/teacher/offline-batches' },
+  { icon: LineChart, label: 'Batch Reports', href: '/admin/reports/offline-batches' },
   { icon: CalendarClock, label: 'Offline Sessions', href: '/teacher/offline-sessions' },
   { icon: UserCircle, label: 'My Profile', href: '/teacher/profile' },
   { icon: MessageCircle, label: 'Mentor Connect', href: '/teacher/mentor-connect' }
@@ -63,6 +65,7 @@ export const SidebarRoutes = ({ currentProfile, hasBatchEnrollment }: SidebarRou
   const pathname = usePathname();
 
   const isTeacherPage = pathname?.startsWith('/teacher');
+  const isAdminPage = pathname?.startsWith('/admin');
   const isMarketerPage = pathname?.startsWith('/marketer');
   const isBloggerPage = pathname?.startsWith('/blogger');
 
@@ -73,22 +76,26 @@ export const SidebarRoutes = ({ currentProfile, hasBatchEnrollment }: SidebarRou
     ? bloggerRoutes
     : isMarketerPage
       ? marketerRoutes
-      : isTeacherPage
+      : isTeacherPage || isAdminPage
         ? teacherRoutes
         : STUDENTRoutes;
 
   // Restrict admin-only teacher routes
-  if (isTeacherPage && currentProfile?.role !== 'ADMIN') {
+  if ((isTeacherPage || isAdminPage) && currentProfile?.role !== 'ADMIN') {
     routes = routes.filter(
       (route) =>
-        !['Manage Users', 'Manual Enrolment', 'Categories', 'Pending Approvals'].includes(
-          route.label
-        )
+        ![
+          'Manage Users',
+          'Manual Enrolment',
+          'Categories',
+          'Pending Approvals',
+          'Batch Reports'
+        ].includes(route.label)
     );
   }
 
   // For students: inject the Offline Batches item only when they have an enrollment
-  if (!isTeacherPage && !isMarketerPage && !isBloggerPage && hasBatchEnrollment) {
+  if (!isTeacherPage && !isAdminPage && !isMarketerPage && !isBloggerPage && hasBatchEnrollment) {
     routes = [...routes, { icon: BookMarked, label: 'Offline Batches', href: '/offline-batches' }];
   }
 

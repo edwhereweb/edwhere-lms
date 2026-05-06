@@ -283,7 +283,42 @@ export function StudentBatchContent({
                                 )}
                               </div>
                               <div className="pt-2">
-                                {mcqData[item.id] ? (
+                                {item.session.uploads?.length > 0 ? (
+                                  <div className="mb-4 space-y-2">
+                                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                      Materials
+                                    </p>
+                                    {item.session.uploads.map((u) => (
+                                      <a
+                                        key={u.id}
+                                        href={u.fileUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-2 p-2 border rounded hover:bg-muted/50 transition-colors"
+                                      >
+                                        <FileText className="h-4 w-4 text-rose-500 shrink-0" />
+                                        <div className="flex-1 min-w-0">
+                                          <p className="text-sm font-medium truncate">
+                                            {u.filename}
+                                          </p>
+                                          <p className="text-xs text-muted-foreground capitalize">
+                                            {u.type}
+                                          </p>
+                                        </div>
+                                      </a>
+                                    ))}
+                                  </div>
+                                ) : item.session.completedAt ? (
+                                  <p className="text-xs text-amber-600 bg-amber-500/10 p-2 rounded border border-amber-500/20 mb-4">
+                                    Notes pending upload/approval.
+                                  </p>
+                                ) : null}
+
+                                {item.session.attendanceStatus === 'ABSENT' ? (
+                                  <p className="text-xs text-red-600 bg-red-500/10 p-2 rounded border border-red-500/20">
+                                    MCQ unavailable: Marked absent for this session.
+                                  </p>
+                                ) : mcqData[item.id] ? (
                                   <div className="mt-2">
                                     {/* We dynamically import the MCQ component to avoid circular deps or complex passing, or we just render it if we have the data */}
                                     {mcqData[item.id].windowOpen ? (

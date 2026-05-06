@@ -341,14 +341,16 @@ export const createBatchSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200),
   description: z.string().max(5000).optional(),
   startDate: z.string().datetime({ offset: true }).optional(),
-  endDate: z.string().datetime({ offset: true }).optional()
+  endDate: z.string().datetime({ offset: true }).nullable().optional(),
+  allowSameDayOfflineSession: z.boolean().optional()
 });
 
 export const updateBatchSchema = z.object({
-  title: z.string().min(1).max(200).optional(),
+  title: z.string().min(1, 'Title is required').max(200).optional(),
   description: z.string().max(5000).optional(),
   startDate: z.string().datetime({ offset: true }).nullable().optional(),
-  endDate: z.string().datetime({ offset: true }).nullable().optional()
+  endDate: z.string().datetime({ offset: true }).nullable().optional(),
+  allowSameDayOfflineSession: z.boolean().optional()
 });
 
 export const batchCourseSchema = z.object({
@@ -357,6 +359,12 @@ export const batchCourseSchema = z.object({
 
 export const batchEnrollSchema = z.object({
   userId: z.string().min(1, 'userId is required')
+});
+
+export const batchBulkEnrollSchema = z.object({
+  emails: z
+    .array(z.string().email('Invalid email address'))
+    .min(1, 'At least one email is required')
 });
 
 // ── Batch content schemas ───────────────────────────────────────────
@@ -457,4 +465,40 @@ export const createMcqQuestionSchema = z.object({
 export const submitMcqSchema = z.object({
   answers: z.array(z.number().int().min(0).max(3)),
   shuffleMap: z.array(z.number().int().min(0))
+});
+
+export const markAttendanceSchema = z.object({
+  markedStudents: z.array(
+    z.object({
+      userId: z.string(),
+      status: z.enum(['PRESENT', 'LATE']),
+      remarks: z.string().optional()
+    })
+  ),
+  isAutoSubmit: z.boolean().optional()
+});
+
+export const updateLateAttendanceSchema = z.object({
+  userId: z.string(),
+  remarks: z.string().min(1, 'Reason for being late is required')
+});
+
+const metricScore = z.number().min(0, 'Score must be at least 0').max(10, 'Score cannot exceed 10');
+
+export const submitFeedbackSchema = z.object({
+  wentWell: z
+    .array(z.string().min(1, 'Point cannot be empty').max(1000))
+    .length(3, 'Exactly 3 "What Went Well" points are required'),
+  wentWrong: z
+    .array(z.string().min(1, 'Point cannot be empty').max(1000))
+    .length(3, 'Exactly 3 "What Went Wrong" points are required'),
+  askingQuestions: metricScore,
+  answeringQuickly: metricScore,
+  groupTalk: metricScore,
+  classPace: metricScore,
+  understandingIdeas: metricScore,
+  doingTheWork: metricScore,
+  fixingMistakes: metricScore,
+  memory: metricScore,
+  goalCompletion: metricScore
 });

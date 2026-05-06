@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export function CreateBatchForm() {
   const router = useRouter();
@@ -17,6 +18,7 @@ export function CreateBatchForm() {
   const [description, setDescription] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [allowSameDay, setAllowSameDay] = useState(false);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,10 +28,11 @@ export function CreateBatchForm() {
     }
     try {
       setIsLoading(true);
-      const payload: Record<string, string> = { title: title.trim() };
+      const payload: Record<string, string | boolean> = { title: title.trim() };
       if (description) payload.description = description;
       if (startDate) payload.startDate = new Date(startDate).toISOString();
       if (endDate) payload.endDate = new Date(endDate).toISOString();
+      if (allowSameDay) payload.allowSameDayOfflineSession = true;
 
       const { data } = await axios.post('/api/teacher/offline-batches', payload);
       toast.success('Batch created');
@@ -87,6 +90,21 @@ export function CreateBatchForm() {
             onChange={(e) => setEndDate(e.target.value)}
             disabled={isLoading}
           />
+        </div>
+      </div>
+
+      <div className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+        <Checkbox
+          id="batch-allow-same-day"
+          checked={allowSameDay}
+          onCheckedChange={(checked) => setAllowSameDay(!!checked)}
+        />
+        <div className="space-y-1 leading-none">
+          <Label htmlFor="batch-allow-same-day">Allow same-day session scheduling</Label>
+          <p className="text-sm text-muted-foreground">
+            If checked, instructors will be permitted to schedule offline sessions on the exact same
+            day. By default, 24h notice is required.
+          </p>
         </div>
       </div>
 

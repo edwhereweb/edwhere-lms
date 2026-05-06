@@ -21,6 +21,7 @@ export async function GET(_req: Request, { params }: Params) {
     const session = await db.offlineSession.findUnique({
       where: { itemId },
       include: {
+        attendances: { where: { userId } },
         mcq: {
           include: {
             questions: { orderBy: { position: 'asc' } },
@@ -31,6 +32,12 @@ export async function GET(_req: Request, { params }: Params) {
     });
 
     if (!session?.mcq) return apiError('MCQ not found', 404);
+
+    // Absentee penalty
+    const attendance = session.attendances[0];
+    if (attendance?.status === 'ABSENT') {
+      return apiError('You were marked absent and cannot access this assessment.', 403);
+    }
 
     const open = isMcqWindowOpen(session.scheduledAt, session.completedAt ?? null);
 
@@ -87,6 +94,7 @@ export async function POST(req: Request, { params }: Params) {
     const session = await db.offlineSession.findUnique({
       where: { itemId },
       include: {
+        attendances: { where: { userId } },
         mcq: {
           include: {
             questions: { orderBy: { position: 'asc' } },
@@ -97,6 +105,12 @@ export async function POST(req: Request, { params }: Params) {
     });
 
     if (!session?.mcq) return apiError('MCQ not found', 404);
+
+    // Absentee penalty
+    const attendance = session.attendances[0];
+    if (attendance?.status === 'ABSENT') {
+      return apiError('You were marked absent and cannot access this assessment.', 403);
+    }
 
     // Check for existing submission (no re-attempts)
     if (session.mcq.submissions.length > 0) {

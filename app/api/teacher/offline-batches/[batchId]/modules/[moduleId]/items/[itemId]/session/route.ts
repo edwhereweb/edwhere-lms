@@ -28,7 +28,8 @@ export async function GET(_req: Request, { params }: Params) {
       include: {
         coInstructors: true,
         uploads: { include: { logs: { orderBy: { uploadedAt: 'desc' } } } },
-        mcq: { include: { questions: { orderBy: { position: 'asc' } } } }
+        mcq: { include: { questions: { orderBy: { position: 'asc' } } } },
+        feedback: true
       }
     });
 
@@ -62,7 +63,7 @@ export async function POST(req: Request, { params }: Params) {
 
     const { title, scheduledAt, durationMinutes, location, meetLink } = validation.data;
 
-    // Same-day check: load the batch's courses and their allowSameDayOfflineSession flags
+    // Same-day check: load the batch and its allowSameDayOfflineSession flag
     const scheduledDate = new Date(scheduledAt);
     const todayUtc = new Date();
     todayUtc.setUTCHours(0, 0, 0, 0);
@@ -70,16 +71,12 @@ export async function POST(req: Request, { params }: Params) {
     schedDay.setUTCHours(0, 0, 0, 0);
 
     if (schedDay.getTime() === todayUtc.getTime()) {
-      const batchCourses = await db.batchCourse.findMany({
-        where: { batchId },
-        include: { course: { select: { allowSameDayOfflineSession: true } } }
+      const batch = await db.batch.findUnique({
+        where: { id: batchId },
+        select: { allowSameDayOfflineSession: true }
       });
-      const allAllow = batchCourses.every((bc) => bc.course.allowSameDayOfflineSession);
-      if (!allAllow) {
-        return apiError(
-          'Same-day session scheduling is not allowed for one or more courses in this batch',
-          400
-        );
+      if (!batch?.allowSameDayOfflineSession) {
+        return apiError('Same-day session scheduling is not enabled for this batch', 400);
       }
     }
 
