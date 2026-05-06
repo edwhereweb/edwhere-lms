@@ -5,9 +5,12 @@ import { ArrowLeft, CalendarDays } from 'lucide-react';
 import {
   getStudentBatches,
   getBatchContent,
-  isStudentEnrolledInBatch
+  isStudentEnrolledInBatch,
+  getStudentBatchGamification
 } from '@/actions/get-batches';
 import { StudentBatchContentWrapper } from './_components/student-batch-content';
+import { BatchGamificationStats } from './_components/batch-gamification-stats';
+import { BatchLeaderboard } from './_components/batch-leaderboard';
 
 function formatDate(iso: string | null) {
   if (!iso) return '—';
@@ -27,16 +30,17 @@ const StudentBatchDetailPage = async ({ params }: { params: Promise<{ batchId: s
   const enrolled = await isStudentEnrolledInBatch(batchId, userId);
   if (!enrolled) return redirect('/offline-batches');
 
-  const [batches, modules] = await Promise.all([
+  const [batches, modules, stats] = await Promise.all([
     getStudentBatches(userId),
-    getBatchContent(batchId, userId, 'STUDENT')
+    getBatchContent(batchId, userId, 'STUDENT'),
+    getStudentBatchGamification(batchId, userId)
   ]);
 
   const batch = batches.find((b) => b.id === batchId);
   if (!batch) return redirect('/offline-batches');
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
+    <div className="p-6 max-w-6xl mx-auto">
       <Link
         href="/offline-batches"
         className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6 w-fit"
@@ -54,7 +58,23 @@ const StudentBatchDetailPage = async ({ params }: { params: Promise<{ batchId: s
         {formatDate(batch.startDate)} → {formatDate(batch.endDate)}
       </div>
 
-      <StudentBatchContentWrapper batchId={batchId} modules={modules ?? []} />
+      {stats && (
+        <BatchGamificationStats
+          streak={stats.attendanceStreak}
+          rank={stats.rank}
+          score={stats.totalMcqScore}
+          possible={stats.totalMcqPossible}
+        />
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2">
+          <StudentBatchContentWrapper batchId={batchId} modules={modules ?? []} />
+        </div>
+        <div className="space-y-6">
+          <BatchLeaderboard batchId={batchId} currentUserId={userId} />
+        </div>
+      </div>
     </div>
   );
 };

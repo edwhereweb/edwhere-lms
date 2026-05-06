@@ -29,7 +29,8 @@ export async function GET(_req: Request, { params }: Params) {
         coInstructors: true,
         uploads: { include: { logs: { orderBy: { uploadedAt: 'desc' } } } },
         mcq: { include: { questions: { orderBy: { position: 'asc' } } } },
-        feedback: true
+        feedback: true,
+        studentFeedback: true
       }
     });
 

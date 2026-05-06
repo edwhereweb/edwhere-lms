@@ -6,6 +6,8 @@ import toast from 'react-hot-toast';
 import { Loader2, CheckCircle2, ClipboardList } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { StudentFeedbackForm } from './student-feedback-form';
+import { useRouter } from 'next/navigation';
 
 interface McqQuestion {
   id: string;
@@ -23,6 +25,7 @@ interface StudentMcqProps {
   alreadySubmitted: boolean;
   previousScore?: number;
   total: number;
+  hasFeedback: boolean;
 }
 
 export function StudentMcq({
@@ -34,13 +37,16 @@ export function StudentMcq({
   shuffleMap,
   alreadySubmitted,
   previousScore,
-  total
+  total,
+  hasFeedback: initialHasFeedback
 }: StudentMcqProps) {
   const [selected, setSelected] = useState<Record<number, number>>({});
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{ score: number; total: number } | null>(
     alreadySubmitted && previousScore !== undefined ? { score: previousScore, total } : null
   );
+  const [hasFeedback, setHasFeedback] = useState(initialHasFeedback);
+  const router = useRouter();
 
   const allAnswered = questions.length > 0 && Object.keys(selected).length === questions.length;
 
@@ -57,6 +63,8 @@ export function StudentMcq({
         { answers, shuffleMap }
       );
       setResult({ score: data.score, total: data.total });
+      // Refresh to update leaderboard and gamification stats
+      router.refresh();
       toast.success('MCQ submitted!');
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
@@ -70,6 +78,26 @@ export function StudentMcq({
   };
 
   if (result) {
+    if (!hasFeedback) {
+      return (
+        <div className="space-y-6">
+          <div className="border rounded-lg p-4 bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900 flex items-center gap-2">
+            <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+            <span className="font-semibold text-sm">MCQ Submitted! One last step...</span>
+          </div>
+          <StudentFeedbackForm
+            batchId={batchId}
+            itemId={itemId}
+            onSuccess={() => {
+              setHasFeedback(true);
+              // Refresh to pull updated leaderboard after feedback
+              router.refresh();
+            }}
+          />
+        </div>
+      );
+    }
+
     const pct = Math.round((result.score / result.total) * 100);
     return (
       <div className="border rounded-lg p-4 space-y-2 bg-muted/30">

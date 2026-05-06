@@ -26,7 +26,8 @@ const McqPage = async ({ params }: Params) => {
           questions: { orderBy: { position: 'asc' } },
           submissions: { where: { userId } }
         }
-      }
+      },
+      studentFeedback: { where: { userId } }
     }
   });
 
@@ -118,6 +119,7 @@ const McqPage = async ({ params }: Params) => {
         alreadySubmitted={!!existing}
         previousScore={existing?.score}
         total={session.mcq.questions.length}
+        hasFeedback={session.studentFeedback.length > 0}
       />
     </div>
   );

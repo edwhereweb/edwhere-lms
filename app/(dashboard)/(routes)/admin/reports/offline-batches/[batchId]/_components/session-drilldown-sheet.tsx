@@ -143,6 +143,91 @@ export const SessionDrilldownSheet = ({
                 </ul>
               </div>
             </div>
+
+            {/* Student Feedback (Aggregated) */}
+            <div className="space-y-4">
+              <h4 className="text-lg font-semibold border-b pb-2">
+                Student Feedback ({session.studentFeedback.length})
+              </h4>
+
+              {session.studentFeedback.length > 0 ? (
+                <>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div className="p-3 border rounded-lg bg-card text-center">
+                      <p className="text-xs text-muted-foreground uppercase">Instructor</p>
+                      <p className="text-xl font-bold">
+                        {(
+                          session.studentFeedback.reduce((acc, f) => acc + f.instructorRating, 0) /
+                          session.studentFeedback.length
+                        ).toFixed(1)}{' '}
+                        / 5
+                      </p>
+                    </div>
+                    <div className="p-3 border rounded-lg bg-card text-center">
+                      <p className="text-xs text-muted-foreground uppercase">Materials</p>
+                      <p className="text-xl font-bold">
+                        {(
+                          session.studentFeedback.reduce((acc, f) => acc + f.materialRating, 0) /
+                          session.studentFeedback.length
+                        ).toFixed(1)}{' '}
+                        / 5
+                      </p>
+                    </div>
+                    <div className="p-3 border rounded-lg bg-card text-center">
+                      <p className="text-xs text-muted-foreground uppercase">Activities</p>
+                      <p className="text-xl font-bold">
+                        {(
+                          session.studentFeedback.reduce((acc, f) => acc + f.activityRating, 0) /
+                          session.studentFeedback.length
+                        ).toFixed(1)}{' '}
+                        / 5
+                      </p>
+                    </div>
+                    <div className="p-3 border rounded-lg bg-card text-center">
+                      <p className="text-xs text-muted-foreground uppercase">Overall</p>
+                      <p className="text-xl font-bold">
+                        {(
+                          session.studentFeedback.reduce((acc, f) => acc + f.overallRating, 0) /
+                          session.studentFeedback.length
+                        ).toFixed(1)}{' '}
+                        / 5
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 pt-2">
+                    <h5 className="text-sm font-medium">Comments (Anonymized)</h5>
+                    <div className="space-y-3">
+                      {session.studentFeedback
+                        .filter((f) => f.likedMost || f.improvement)
+                        .map((f, idx) => (
+                          <div
+                            key={idx}
+                            className="p-4 border rounded-xl bg-muted/20 text-sm space-y-2"
+                          >
+                            {f.likedMost && (
+                              <p>
+                                <span className="font-semibold text-emerald-700">Liked:</span>{' '}
+                                {f.likedMost}
+                              </p>
+                            )}
+                            {f.improvement && (
+                              <p>
+                                <span className="font-semibold text-rose-700">Improvement:</span>{' '}
+                                {f.improvement}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="py-8 text-center text-muted-foreground bg-muted/10 rounded-xl border border-dashed">
+                  <p>No student feedback received yet.</p>
+                </div>
+              )}
+            </div>
           </div>
         ) : (
           <div className="py-12 text-center text-muted-foreground bg-muted/30 rounded-xl border border-dashed">

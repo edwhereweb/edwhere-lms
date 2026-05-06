@@ -58,6 +58,15 @@ export async function GET(_req: Request, { params }: Params) {
         data: { attendanceSubmittedAt: now }
       });
 
+      // Gamification: Reset streaks for absentees
+      await db.batchEnrollment.updateMany({
+        where: {
+          batchId,
+          userId: { in: missingIds }
+        },
+        data: { attendanceStreak: 0 }
+      });
+
       // Refetch after lazy eval
       const updatedAttendances = await db.sessionAttendance.findMany({
         where: { sessionId: session.id }
@@ -138,13 +147,34 @@ export async function POST(req: Request, { params }: Params) {
       };
     });
 
+    // Get current streaks to handle null/missing fields safely in MongoDB
+    const currentEnrollments = await db.batchEnrollment.findMany({
+      where: { batchId, userId: { in: enrolledIds } },
+      select: { userId: true, attendanceStreak: true }
+    });
+    const streakMap = new Map(currentEnrollments.map((e) => [e.userId, e.attendanceStreak ?? 0]));
+
     await db.$transaction([
       db.sessionAttendance.deleteMany({ where: { sessionId: session.id } }),
       db.sessionAttendance.createMany({ data: attendanceData }),
       db.offlineSession.update({
         where: { id: session.id },
         data: { attendanceSubmittedAt: now }
-      })
+      }),
+      // Gamification: Update Streaks
+      ...attendanceData.map((a) =>
+        db.batchEnrollment.update({
+          where: {
+            batchId_userId: {
+              batchId,
+              userId: a.userId
+            }
+          },
+          data: {
+            attendanceStreak: a.status === 'ABSENT' ? 0 : (streakMap.get(a.userId) ?? 0) + 1
+          }
+        })
+      )
     ]);
 
     return NextResponse.json({ success: true, submittedAt: now });
@@ -161,7 +191,7 @@ export async function PATCH(req: Request, { params }: Params) {
     const allowed = await canManageBatch(userId);
     if (!allowed) return apiError('Forbidden', 403);
 
-    const { itemId } = await params;
+    const { batchId, itemId } = await params;
     const session = await db.offlineSession.findUnique({ where: { itemId } });
     if (!session) return apiError('Session not found', 404);
 
@@ -192,6 +222,24 @@ export async function PATCH(req: Request, { params }: Params) {
     const updated = await db.sessionAttendance.update({
       where: { id: existing.id },
       data: { status: 'LATE', remarks }
+    });
+
+    // Gamification: Increment streak robustly
+    const enrollment = await db.batchEnrollment.findUnique({
+      where: { batchId_userId: { batchId, userId: studentId } },
+      select: { attendanceStreak: true }
+    });
+
+    await db.batchEnrollment.update({
+      where: {
+        batchId_userId: {
+          batchId,
+          userId: studentId
+        }
+      },
+      data: {
+        attendanceStreak: (enrollment?.attendanceStreak ?? 0) + 1
+      }
     });
 
     return NextResponse.json(updated);

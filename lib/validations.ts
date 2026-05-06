@@ -512,3 +512,13 @@ export const landingPageSchema = z.object({
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug must be lowercase letters, numbers, and hyphens'),
   htmlContent: z.string().min(1, 'HTML content is required').max(1000000) // Up to 1MB of HTML
 });
+
+export const studentSessionFeedbackSchema = z.object({
+  instructorRating: z.number().int().min(1).max(5),
+  materialRating: z.number().int().min(1).max(5),
+  activityRating: z.number().int().min(1).max(5),
+  overallRating: z.number().int().min(1).max(5),
+  paceRating: z.number().int().min(1).max(5),
+  likedMost: z.string().max(2000).optional(),
+  improvement: z.string().max(2000).optional()
+});

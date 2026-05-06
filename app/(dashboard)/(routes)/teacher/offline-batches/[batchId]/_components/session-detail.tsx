@@ -18,7 +18,8 @@ import {
   FileText,
   Check,
   Download,
-  BarChart2
+  BarChart2,
+  MessageSquare
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -56,6 +57,15 @@ interface Session {
     id: string;
     ieScore: number;
   } | null;
+  studentFeedback?: {
+    instructorRating: number;
+    materialRating: number;
+    activityRating: number;
+    overallRating: number;
+    paceRating: number;
+    likedMost: string | null;
+    improvement: string | null;
+  }[];
 }
 
 interface SessionDetailProps {
@@ -657,8 +667,102 @@ export function SessionDetail({ batchId, moduleId, itemId }: SessionDetailProps)
               <McqAnalytics batchId={batchId} moduleId={moduleId} itemId={itemId} />
             </div>
           )}
+
+          {/* Student Feedback Analytics */}
+          <div className="space-y-4 pt-4 border-t">
+            <h4 className="text-sm font-semibold flex items-center gap-2">
+              <MessageSquare className="h-4 w-4 text-indigo-500" />
+              Student Feedback ({session.studentFeedback?.length || 0})
+            </h4>
+
+            {session.studentFeedback && session.studentFeedback.length > 0 ? (
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <FeedbackMetric
+                    label="Instructor"
+                    value={
+                      session.studentFeedback.reduce((acc, f) => acc + f.instructorRating, 0) /
+                      session.studentFeedback.length
+                    }
+                  />
+                  <FeedbackMetric
+                    label="Materials"
+                    value={
+                      session.studentFeedback.reduce((acc, f) => acc + f.materialRating, 0) /
+                      session.studentFeedback.length
+                    }
+                  />
+                  <FeedbackMetric
+                    label="Activities"
+                    value={
+                      session.studentFeedback.reduce((acc, f) => acc + f.activityRating, 0) /
+                      session.studentFeedback.length
+                    }
+                  />
+                  <FeedbackMetric
+                    label="Overall"
+                    value={
+                      session.studentFeedback.reduce((acc, f) => acc + f.overallRating, 0) /
+                      session.studentFeedback.length
+                    }
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <h5 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Anonymous Comments
+                  </h5>
+                  <div className="grid gap-3">
+                    {session.studentFeedback
+                      .filter((f) => f.likedMost || f.improvement)
+                      .map((f, idx) => (
+                        <div
+                          key={idx}
+                          className="text-sm border rounded-lg p-3 bg-muted/20 space-y-2"
+                        >
+                          {f.likedMost && (
+                            <p>
+                              <span className="font-medium text-indigo-600 dark:text-indigo-400">
+                                Liked:
+                              </span>{' '}
+                              {f.likedMost}
+                            </p>
+                          )}
+                          {f.improvement && (
+                            <p>
+                              <span className="font-medium text-amber-600 dark:text-amber-400">
+                                Improvement:
+                              </span>{' '}
+                              {f.improvement}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground italic bg-muted/10 p-4 rounded-lg border border-dashed text-center">
+                No student feedback received yet.
+              </p>
+            )}
+          </div>
         </>
       )}
+    </div>
+  );
+}
+
+function FeedbackMetric({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="p-3 border rounded-xl bg-background shadow-sm text-center">
+      <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1 tracking-tighter">
+        {label}
+      </p>
+      <div className="flex items-center justify-center gap-1">
+        <span className="text-lg font-bold">{value.toFixed(1)}</span>
+        <span className="text-xs text-muted-foreground">/ 5</span>
+      </div>
     </div>
   );
 }

@@ -49,12 +49,17 @@ const BatchDetailPage = async ({ params }: { params: Promise<{ batchId: string }
           courseId: bc.courseId,
           course: bc.course
         }))}
-        enrollments={batch.enrollments.map((e) => ({
-          id: e.id,
-          userId: e.userId,
-          enrolledBy: e.enrolledBy,
-          createdAt: e.createdAt.toISOString()
-        }))}
+        enrollments={batch.enrollments.map((e) => {
+          const enrollment = e as typeof e & { name: string; email: string };
+          return {
+            id: enrollment.id,
+            userId: enrollment.userId,
+            name: enrollment.name,
+            email: enrollment.email,
+            enrolledBy: enrollment.enrolledBy,
+            createdAt: enrollment.createdAt.toISOString()
+          };
+        })}
         isAdmin={profile.role === 'ADMIN'}
         allCourses={allCourses}
         modules={modules ?? []}

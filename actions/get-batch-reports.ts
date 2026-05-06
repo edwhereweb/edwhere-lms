@@ -104,6 +104,7 @@ export type SessionReportDetail = {
   attendancePercent: number | null;
   ieScore: number | null;
   feedback: SessionFeedback | null;
+  studentFeedback: unknown[]; // Avoid complex type for now, it's just the StudentSessionFeedback model
 };
 
 export interface BatchReportDetail {
@@ -126,7 +127,8 @@ export async function getBatchReportDetail(batchId: string): Promise<BatchReport
                 session: {
                   include: {
                     feedback: true,
-                    attendances: true
+                    attendances: true,
+                    studentFeedback: true
                   }
                 }
               }
@@ -159,7 +161,8 @@ export async function getBatchReportDetail(batchId: string): Promise<BatchReport
             completedAt: i.session.completedAt,
             attendancePercent,
             ieScore: i.session.feedback?.ieScore ?? null,
-            feedback: i.session.feedback
+            feedback: i.session.feedback,
+            studentFeedback: i.session.studentFeedback || []
           });
         }
       });

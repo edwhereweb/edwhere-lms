@@ -502,6 +502,11 @@ model BatchEnrollment {
 
   // Clerk userId of the admin/instructor who performed the enrollment
   enrolledBy String
+  
+  // Gamification Stats
+  attendanceStreak Int    @default(0)
+  totalMcqScore    Int    @default(0)
+  totalMcqPossible Int    @default(0)
 
   createdAt  DateTime @default(now())
 
@@ -628,6 +633,7 @@ model OfflineSession {
   mcq             SessionMcq?
   attendances     SessionAttendance[]
   feedback        SessionFeedback?
+  studentFeedback StudentSessionFeedback[]
 
   createdAt       DateTime             @default(now())
   updatedAt       DateTime             @updatedAt
@@ -809,4 +815,32 @@ model LandingPage {
 
   @@index([createdBy])
   @@index([isApproved])
+}
+
+// ── Post-Session Student Feedback ──────────────────────────
+
+model StudentSessionFeedback {
+  id              String         @id @default(auto()) @map("_id") @db.ObjectId
+  sessionId       String         @db.ObjectId
+  session         OfflineSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId          String         // Clerk Student ID (stored for validation, but not shown to teachers)
+  
+  // Star Ratings (1-5)
+  instructorRating Int
+  materialRating   Int
+  activityRating   Int
+  overallRating    Int
+  
+  // Pace Rating (1: Too Slow, 3: Perfect, 5: Too Fast)
+  paceRating       Int
+
+  // Qualitative
+  likedMost        String?
+  improvement      String?
+  
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@unique([sessionId, userId])
+  @@index([sessionId])
 }

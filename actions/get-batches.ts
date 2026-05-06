@@ -94,8 +94,23 @@ export async function getBatchDetail(batchId: string, userId: string, role: stri
     if (!batch) return null;
     if (role !== 'ADMIN' && batch.createdBy !== userId) return null;
 
+    // Fetch profiles for all enrolled users to get names and emails
+    const enrolledUserIds = batch.enrollments.map((e) => e.userId);
+    const profiles = await db.profile.findMany({
+      where: { userId: { in: enrolledUserIds } },
+      select: { userId: true, name: true, email: true }
+    });
+    const profileMap = new Map(profiles.map((p) => [p.userId, p]));
+
+    const enrichedEnrollments = batch.enrollments.map((e) => ({
+      ...e,
+      name: profileMap.get(e.userId)?.name || 'Anonymous Student',
+      email: profileMap.get(e.userId)?.email || 'No Email'
+    }));
+
     return {
       ...batch,
+      enrollments: enrichedEnrollments,
       status: classifyBatch(batch.startDate, batch.endDate),
       startDate: batch.startDate ? batch.startDate.toISOString() : null,
       endDate: batch.endDate ? batch.endDate.toISOString() : null,
@@ -329,6 +344,75 @@ export async function getBatchContent(
     }));
   } catch (error) {
     logError('GET_BATCH_CONTENT', error);
+    return null;
+  }
+}
+
+export async function getBatchLeaderboard(batchId: string) {
+  try {
+    const enrollments = await db.batchEnrollment.findMany({
+      where: { batchId },
+      select: {
+        userId: true,
+        totalMcqScore: true,
+        totalMcqPossible: true,
+        attendanceStreak: true
+      },
+      orderBy: [{ totalMcqScore: 'desc' }, { attendanceStreak: 'desc' }],
+      take: 10
+    });
+
+    const userIds = enrollments.map((e) => e.userId);
+    const profiles = await db.profile.findMany({
+      where: { userId: { in: userIds } },
+      select: { userId: true, name: true, imageUrl: true }
+    });
+
+    const profileMap = new Map(profiles.map((p) => [p.userId, p]));
+
+    return enrollments.map((e) => ({
+      userId: e.userId,
+      name: profileMap.get(e.userId)?.name || 'Anonymous Student',
+      imageUrl: profileMap.get(e.userId)?.imageUrl,
+      score: e.totalMcqScore ?? 0,
+      possible: e.totalMcqPossible ?? 0,
+      streak: e.attendanceStreak ?? 0
+    }));
+  } catch (error) {
+    logError('GET_BATCH_LEADERBOARD', error);
+    return [];
+  }
+}
+
+export async function getStudentBatchGamification(batchId: string, userId: string) {
+  try {
+    const enrollment = await db.batchEnrollment.findUnique({
+      where: { batchId_userId: { batchId, userId } },
+      select: {
+        attendanceStreak: true,
+        totalMcqScore: true,
+        totalMcqPossible: true
+      }
+    });
+
+    if (!enrollment) return null;
+
+    // Calculate rank
+    const rank = await db.batchEnrollment.count({
+      where: {
+        batchId,
+        totalMcqScore: { gt: enrollment.totalMcqScore }
+      }
+    });
+
+    return {
+      attendanceStreak: enrollment.attendanceStreak ?? 0,
+      totalMcqScore: enrollment.totalMcqScore ?? 0,
+      totalMcqPossible: enrollment.totalMcqPossible ?? 0,
+      rank: rank + 1
+    };
+  } catch (error) {
+    logError('GET_STUDENT_GAMIFICATION', error);
     return null;
   }
 }

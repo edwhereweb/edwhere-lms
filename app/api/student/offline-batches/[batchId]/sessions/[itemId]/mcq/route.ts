@@ -148,6 +148,9 @@ export async function POST(req: Request, { params }: Params) {
 
     const score = scoreAnswers(questions, answers, shuffleMap);
 
+    const { debug } = await import('@/lib/debug');
+    debug('MCQ_SUBMIT', { userId, batchId, score, possible: questions.length });
+
     const submission = await db.sessionMcqSubmission.create({
       data: {
         mcqId: session.mcq.id,
@@ -157,6 +160,30 @@ export async function POST(req: Request, { params }: Params) {
         score,
         total: questions.length
       }
+    });
+
+    // Update Gamification Stats
+    const currentEnrollment = await db.batchEnrollment.findUnique({
+      where: { batchId_userId: { batchId, userId } }
+    });
+
+    const updatedEnrollment = await db.batchEnrollment.update({
+      where: {
+        batchId_userId: {
+          batchId,
+          userId
+        }
+      },
+      data: {
+        totalMcqScore: (currentEnrollment?.totalMcqScore ?? 0) + score,
+        totalMcqPossible: (currentEnrollment?.totalMcqPossible ?? 0) + questions.length
+      }
+    });
+
+    debug('GAMIFICATION_UPDATE', {
+      userId,
+      score: updatedEnrollment.totalMcqScore,
+      possible: updatedEnrollment.totalMcqPossible
     });
 
     return NextResponse.json({ score, total: questions.length, submission });

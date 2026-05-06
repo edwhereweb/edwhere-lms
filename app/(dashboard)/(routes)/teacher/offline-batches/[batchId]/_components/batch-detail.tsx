@@ -52,6 +52,8 @@ interface BatchCourseRow {
 interface Enrollment {
   id: string;
   userId: string;
+  name?: string;
+  email?: string;
   enrolledBy: string;
   createdAt: string;
 }
@@ -129,6 +131,9 @@ export function BatchDetail({
   const [configEnd, setConfigEnd] = useState(toDatetimeLocal(endDate));
   const [configAllowSameDay, setConfigAllowSameDay] = useState(allowSameDayOfflineSession);
   const [savingConfig, setSavingConfig] = useState(false);
+  const [studentSearch, setStudentSearch] = useState('');
+  const [studentPage, setStudentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const availableCourses = allCourses.filter((c) => !courses.some((bc) => bc.courseId === c.id));
 
@@ -270,6 +275,21 @@ export function BatchDetail({
     }
   };
 
+  const filteredEnrollments = enrollments.filter((e) => {
+    const searchLower = studentSearch.toLowerCase();
+    return (
+      e.userId.toLowerCase().includes(searchLower) ||
+      e.name?.toLowerCase().includes(searchLower) ||
+      e.email?.toLowerCase().includes(searchLower)
+    );
+  });
+
+  const totalStudentPages = Math.ceil(filteredEnrollments.length / itemsPerPage);
+  const paginatedEnrollments = filteredEnrollments.slice(
+    (studentPage - 1) * itemsPerPage,
+    studentPage * itemsPerPage
+  );
+
   return (
     <div className="space-y-6">
       {/* Batch header */}
@@ -405,7 +425,7 @@ export function BatchDetail({
                     task={i.task!}
                     enrolledStudents={enrollments.map((e) => ({
                       userId: e.userId,
-                      name: e.userId
+                      name: e.name || e.userId
                     }))}
                   />
                 </div>
@@ -488,7 +508,7 @@ export function BatchDetail({
         {/* ── Students tab ── */}
         <TabsContent value="students" className="mt-6 space-y-4">
           {/* Enroll student */}
-          <div className="flex gap-2 items-start">
+          <div className="flex gap-4 items-start">
             <div className="flex-1 flex flex-col gap-2 max-w-lg">
               <Textarea
                 id="enroll-email-input"
@@ -531,42 +551,97 @@ export function BatchDetail({
             </Button>
           </div>
 
+          <div className="flex items-center justify-between gap-4 pt-4">
+            <h3 className="text-lg font-medium">
+              Enrolled Students ({filteredEnrollments.length})
+            </h3>
+            <div className="flex items-center gap-2 max-w-sm w-full">
+              <Input
+                placeholder="Search students..."
+                value={studentSearch}
+                onChange={(e) => {
+                  setStudentSearch(e.target.value);
+                  setStudentPage(1);
+                }}
+                className="h-9"
+              />
+            </div>
+          </div>
+
           {/* Student list */}
           {enrollments.length === 0 ? (
             <p className="text-sm text-muted-foreground py-8 text-center">
               No students enrolled yet.
             </p>
+          ) : filteredEnrollments.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-8 text-center">
+              No students found matching &quot;{studentSearch}&quot;
+            </p>
           ) : (
-            <div className="divide-y border rounded-lg">
-              {enrollments.map((e) => (
-                <div
-                  key={e.id}
-                  className="flex items-center justify-between px-4 py-3 hover:bg-muted/40"
-                >
-                  <div>
-                    <p className="text-sm font-mono font-medium">{e.userId}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Enrolled by {e.enrolledBy} ·{' '}
-                      {new Date(e.createdAt).toLocaleDateString('en-IN')}
-                    </p>
-                  </div>
-                  <Button
-                    id={`remove-student-${e.userId}`}
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-destructive hover:text-destructive"
-                    onClick={() => handleUnenroll(e.userId)}
-                    disabled={removingEnroll === e.userId}
+            <>
+              <div className="divide-y border rounded-lg">
+                {paginatedEnrollments.map((e) => (
+                  <div
+                    key={e.id}
+                    className="flex items-center justify-between px-4 py-3 hover:bg-muted/40"
                   >
-                    {removingEnroll === e.userId ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <X className="h-3.5 w-3.5" />
-                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                          {e.name || 'Anonymous'}
+                        </p>
+                        <Badge variant="outline" className="text-[10px] font-mono py-0 h-4">
+                          {e.userId}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground truncate">{e.email}</p>
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        Enrolled by {e.enrolledBy} ·{' '}
+                        {new Date(e.createdAt).toLocaleDateString('en-IN')}
+                      </p>
+                    </div>
+                    <Button
+                      id={`remove-student-${e.userId}`}
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-destructive hover:text-destructive ml-4"
+                      onClick={() => handleUnenroll(e.userId)}
+                      disabled={removingEnroll === e.userId}
+                    >
+                      {removingEnroll === e.userId ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <X className="h-3.5 w-3.5" />
+                      )}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+
+              {totalStudentPages > 1 && (
+                <div className="flex items-center justify-center gap-2 mt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setStudentPage((p) => Math.max(1, p - 1))}
+                    disabled={studentPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    Page {studentPage} of {totalStudentPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setStudentPage((p) => Math.min(totalStudentPages, p + 1))}
+                    disabled={studentPage === totalStudentPages}
+                  >
+                    Next
                   </Button>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
         </TabsContent>
       </Tabs>
