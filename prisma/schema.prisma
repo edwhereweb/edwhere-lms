@@ -844,3 +844,20 @@ model StudentSessionFeedback {
   @@unique([sessionId, userId])
   @@index([sessionId])
 }
+
+// ── Certificates ──────────────────────────
+
+model Certificate {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  credentialId      String   @unique
+  recipientName     String
+  courseName        String
+  duration          String
+  deliveryMode      String
+  dateOfAchievement String   // Stored as YYYY-MM-DD for exact matching
+  
+  issuedByUserId    String   // Clerk userId of admin
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}

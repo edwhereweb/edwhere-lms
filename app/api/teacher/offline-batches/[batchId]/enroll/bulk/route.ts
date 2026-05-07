@@ -29,7 +29,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ batchId
     // Find existing profiles matching these emails
     const profiles = await db.profile.findMany({
       where: {
-        email: { in: uniqueEmails }
+        OR: uniqueEmails.map((email) => ({
+          email: { equals: email, mode: 'insensitive' }
+        }))
       },
       select: { email: true, userId: true }
     });

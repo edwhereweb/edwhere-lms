@@ -93,7 +93,7 @@ export async function POST(req: Request, { params }: { params: { courseId: strin
           targetUser = await db.profile.create({
             data: {
               userId: clerkUserId,
-              email: student.email,
+              email: student.email.toLowerCase(),
               name: student.name !== 'N/A' ? student.name : 'Student',
               role: 'STUDENT'
             }

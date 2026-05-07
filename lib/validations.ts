@@ -522,3 +522,18 @@ export const studentSessionFeedbackSchema = z.object({
   likedMost: z.string().max(2000).optional(),
   improvement: z.string().max(2000).optional()
 });
+
+// ── Certificates ──────────────────────────
+
+export const createCertificateSchema = z.object({
+  recipientName: z.string().min(1, 'Recipient name is required').max(150),
+  courseName: z.string().min(1, 'Course name is required').max(200),
+  duration: z.string().min(1, 'Duration is required').max(100),
+  deliveryMode: z.string().min(1, 'Delivery mode is required').max(50),
+  dateOfAchievement: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
+});
+
+export const verifyCertificateSchema = z.object({
+  credentialId: z.string().min(1, 'Credential ID is required').max(100),
+  dateOfAchievement: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
+});

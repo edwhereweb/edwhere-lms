@@ -55,7 +55,7 @@ export default async function getSafeProfile() {
             clerkUser.username ||
             'User',
           imageUrl: clerkUser.imageUrl ?? '',
-          email: clerkUser.emailAddresses[0]?.emailAddress ?? '',
+          email: (clerkUser.emailAddresses[0]?.emailAddress ?? '').toLowerCase(),
           lastLoginAt: new Date(),
           lastLoginIp: clientIp
         },
@@ -79,11 +79,22 @@ export default async function getSafeProfile() {
       const isNewIp = currentProfile.lastLoginIp !== clientIp;
 
       if (isStaleLogin || isNewIp) {
+        // Sync latest name & avatar from Clerk so profile stays fresh after user edits
+        const clerkUser = await currentUser();
+        const freshName = clerkUser
+          ? `${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim() ||
+            clerkUser.username ||
+            currentProfile.name
+          : currentProfile.name;
+        const freshImageUrl = clerkUser?.imageUrl ?? currentProfile.imageUrl;
+
         currentProfile = await db.profile.update({
           where: { id: currentProfile.id },
           data: {
             lastLoginAt: new Date(),
-            lastLoginIp: clientIp
+            lastLoginIp: clientIp,
+            name: freshName,
+            imageUrl: freshImageUrl
           },
           select: {
             id: true,

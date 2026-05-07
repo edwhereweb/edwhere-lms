@@ -43,6 +43,7 @@ const teacherRoutes = [
   { icon: LineChart, label: 'Batch Reports', href: '/admin/reports/offline-batches' },
   { icon: LayoutTemplate, label: 'Landing Pages', href: '/admin/landing-pages' },
   { icon: CalendarClock, label: 'Offline Sessions', href: '/teacher/offline-sessions' },
+  { icon: BookMarked, label: 'Certificates', href: '/admin/certificates' },
   { icon: UserCircle, label: 'My Profile', href: '/teacher/profile' },
   { icon: MessageCircle, label: 'Mentor Connect', href: '/teacher/mentor-connect' }
 ];
@@ -94,7 +95,8 @@ export const SidebarRoutes = ({ currentProfile, hasBatchEnrollment }: SidebarRou
           'Categories',
           'Pending Approvals',
           'Batch Reports',
-          'Landing Pages'
+          'Landing Pages',
+          'Certificates'
         ].includes(route.label)
     );
   }
