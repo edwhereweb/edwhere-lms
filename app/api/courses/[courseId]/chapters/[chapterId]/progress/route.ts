@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { progressSchema } from '@/lib/validations';
 import { validateBody, apiError, handleApiError } from '@/lib/api-utils';
+import { awardXp, XP_REWARDS } from '@/lib/gamification';
 
 export async function PUT(
   req: Request,
@@ -36,6 +37,11 @@ export async function PUT(
       return apiError('Forbidden', 403);
     }
 
+    const wasAlreadyCompleted = await db.userProgress.findUnique({
+      where: { userId_chapterId: { userId, chapterId: params.chapterId } },
+      select: { isCompleted: true }
+    });
+
     const userProgress = await db.userProgress.upsert({
       where: {
         userId_chapterId: { userId, chapterId: params.chapterId }
@@ -48,7 +54,18 @@ export async function PUT(
       }
     });
 
-    return NextResponse.json(userProgress);
+    // Award XP only when newly completing (not un-completing or re-completing)
+    let xpResult = null;
+    if (validation.data.isCompleted && !wasAlreadyCompleted?.isCompleted) {
+      const contentType = chapter.contentType ?? 'VIDEO_MUX';
+      let xpAmount: number = XP_REWARDS.VIDEO_COMPLETE;
+      if (contentType === 'TEXT') xpAmount = XP_REWARDS.TEXT_COMPLETE;
+      else if (contentType === 'PDF_DOCUMENT') xpAmount = XP_REWARDS.PDF_COMPLETE;
+      else if (contentType === 'HTML_EMBED') xpAmount = XP_REWARDS.HTML_EMBED_COMPLETE;
+      xpResult = await awardXp(userId, xpAmount);
+    }
+
+    return NextResponse.json({ ...userProgress, xp: xpResult });
   } catch (error) {
     return handleApiError('CHAPTER_ID_PROGRESS', error);
   }

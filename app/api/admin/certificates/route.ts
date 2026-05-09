@@ -39,7 +39,7 @@ export async function POST(req: Request) {
     const validation = validateBody(createCertificateSchema, body);
     if (!validation.success) return validation.response;
 
-    const { recipientName, courseName, duration, deliveryMode, dateOfAchievement } =
+    const { recipientName, courseName, duration, deliveryMode, dateOfAchievement, score } =
       validation.data;
 
     // Generate a unique 10-character alphanumeric credential ID
@@ -55,6 +55,7 @@ export async function POST(req: Request) {
         duration,
         deliveryMode,
         dateOfAchievement,
+        score,
         issuedByUserId: userId
       }
     });

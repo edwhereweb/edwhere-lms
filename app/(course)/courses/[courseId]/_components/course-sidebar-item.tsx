@@ -1,9 +1,29 @@
 'use client';
 
-import { CheckCircle, Lock, PlayCircle } from 'lucide-react';
+import {
+  CheckCircle,
+  Lock,
+  PlayCircle,
+  BookOpen,
+  FileText,
+  Gamepad2,
+  GraduationCap,
+  FolderKanban
+} from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 
 import { cn } from '@/lib/utils';
+
+// Maps each content type to a distinct icon so students can identify lesson types at a glance.
+const CONTENT_TYPE_ICONS: Record<string, React.ElementType> = {
+  VIDEO_MUX: PlayCircle,
+  VIDEO_YOUTUBE: PlayCircle,
+  TEXT: BookOpen,
+  PDF_DOCUMENT: FileText,
+  HTML_EMBED: Gamepad2,
+  EVALUATION: GraduationCap,
+  HANDS_ON_PROJECT: FolderKanban
+};
 
 interface CourseSidebarItemProps {
   label: string;
@@ -11,6 +31,7 @@ interface CourseSidebarItemProps {
   isCompleted: boolean;
   courseId: string;
   isLocked: boolean;
+  contentType?: string | null;
 }
 
 export const CourseSidebarItem = ({
@@ -18,12 +39,17 @@ export const CourseSidebarItem = ({
   id,
   isCompleted,
   courseId,
-  isLocked
+  isLocked,
+  contentType
 }: CourseSidebarItemProps) => {
   const pathname = usePathname();
   const router = useRouter();
 
-  const Icon = isLocked ? Lock : isCompleted ? CheckCircle : PlayCircle;
+  const ContentIcon = CONTENT_TYPE_ICONS[contentType ?? 'VIDEO_MUX'] ?? PlayCircle;
+
+  // State takes precedence over content type for the icon
+  const Icon = isLocked ? Lock : isCompleted ? CheckCircle : ContentIcon;
+
   const isActive = pathname?.includes(id);
 
   const onClick = () => {

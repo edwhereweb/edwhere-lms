@@ -28,7 +28,8 @@ export function IssueCertificateModal({ isOpen, onClose, onSuccess }: IssueModal
     courseName: '',
     duration: '',
     deliveryMode: 'Online',
-    dateOfAchievement: ''
+    dateOfAchievement: '',
+    score: ''
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -42,7 +43,8 @@ export function IssueCertificateModal({ isOpen, onClose, onSuccess }: IssueModal
         courseName: '',
         duration: '',
         deliveryMode: 'Online',
-        dateOfAchievement: ''
+        dateOfAchievement: '',
+        score: ''
       });
       onSuccess();
       onClose();
@@ -119,16 +121,32 @@ export function IssueCertificateModal({ isOpen, onClose, onSuccess }: IssueModal
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="dateOfAchievement">Date of Achievement</Label>
-            <Input
-              id="dateOfAchievement"
-              name="dateOfAchievement"
-              type="date"
-              required
-              value={formData.dateOfAchievement}
-              onChange={handleChange}
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="dateOfAchievement">Date of Achievement</Label>
+              <Input
+                id="dateOfAchievement"
+                name="dateOfAchievement"
+                type="date"
+                required
+                value={formData.dateOfAchievement}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="score">Score (Optional /100)</Label>
+              <Input
+                id="score"
+                name="score"
+                type="number"
+                min="0"
+                max="100"
+                step="0.1"
+                placeholder="e.g. 85"
+                value={formData.score}
+                onChange={handleChange}
+              />
+            </div>
           </div>
 
           <div className="flex justify-end gap-2 pt-4">

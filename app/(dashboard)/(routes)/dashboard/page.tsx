@@ -4,6 +4,7 @@ import { CheckCircle, Clock } from 'lucide-react';
 
 import { getDashboardCourses } from '@/actions/get-dashboard-courses';
 import { CoursesList } from '@/components/courses-list';
+import { GamificationStatsCard } from '@/components/gamification-stats-card';
 
 import { InfoCard } from '../(root)/_components/info-card';
 
@@ -28,7 +29,14 @@ export default async function Dashboard() {
           variant="success"
         />
       </div>
-      <CoursesList items={[...coursesInProgress, ...completedCourses]} />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2">
+          <CoursesList items={[...coursesInProgress, ...completedCourses]} />
+        </div>
+        <div>
+          <GamificationStatsCard />
+        </div>
+      </div>
     </div>
   );
 }

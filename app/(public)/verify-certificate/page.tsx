@@ -16,6 +16,7 @@ interface CertificateData {
   duration: string;
   deliveryMode: string;
   dateOfAchievement: string;
+  score?: number | null;
   createdAt: string;
 }
 
@@ -191,6 +192,14 @@ export default function VerifyCertificatePage() {
                       {certificate.dateOfAchievement}
                     </p>
                   </div>
+                  {certificate.score !== undefined && certificate.score !== null && (
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-widest text-[#ACB3C2] mb-1">
+                        Score
+                      </p>
+                      <p className="text-sm font-medium text-[#1F1F1F]">{certificate.score}/100</p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="h-px bg-[#E5E5E5]" />

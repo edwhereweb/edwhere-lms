@@ -30,10 +30,11 @@ export function BulkIssueModal({ isOpen, onClose, onSuccess }: BulkModalProps) {
       'courseName',
       'duration',
       'deliveryMode',
-      'dateOfAchievement'
+      'dateOfAchievement',
+      'score'
     ];
     const csvContent =
-      headers.join(',') + '\nJohn Doe,Full Stack Bootcamp,6 Months,Online,2023-05-15';
+      headers.join(',') + '\nJohn Doe,Full Stack Bootcamp,6 Months,Online,2023-05-15,85';
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -99,7 +100,7 @@ export function BulkIssueModal({ isOpen, onClose, onSuccess }: BulkModalProps) {
               <div>
                 <p>Ensure your CSV has these exact headers:</p>
                 <code className="text-xs bg-muted px-1 rounded mt-1 inline-block">
-                  recipientName, courseName, duration, deliveryMode, dateOfAchievement
+                  recipientName, courseName, duration, deliveryMode, dateOfAchievement, score
                 </code>
               </div>
             </div>

@@ -37,7 +37,7 @@ export async function POST(req: Request) {
         continue;
       }
 
-      const { recipientName, courseName, duration, deliveryMode, dateOfAchievement } =
+      const { recipientName, courseName, duration, deliveryMode, dateOfAchievement, score } =
         validation.data;
 
       try {
@@ -53,6 +53,7 @@ export async function POST(req: Request) {
             duration,
             deliveryMode,
             dateOfAchievement,
+            score,
             issuedByUserId: userId
           }
         });

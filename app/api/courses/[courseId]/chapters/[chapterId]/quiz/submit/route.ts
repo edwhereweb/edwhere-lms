@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { z } from 'zod';
 import { handleApiError, apiError, validateBody } from '@/lib/api-utils';
+import { awardXp, XP_REWARDS } from '@/lib/gamification';
 
 const submitQuizSchema = z.object({
   attemptId: z.string().min(1),
@@ -37,7 +38,7 @@ export async function POST(
     }
 
     if (attempt.isCompleted) {
-       return NextResponse.json(attempt);
+      return NextResponse.json(attempt);
     }
 
     // Grade the quiz based on exact numeric matches in correctOptions
@@ -46,16 +47,16 @@ export async function POST(
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     attempt.quiz.questions.forEach((q: any) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const response = attempt.responses.find((r: any) => r.questionId === q.id);
-        if (response) {
-            const sortedResponse = [...response.selectedOptions].sort();
-            const sortedAnswer = [...q.correctOptions].sort();
-            
-            if (JSON.stringify(sortedResponse) === JSON.stringify(sortedAnswer)) {
-                correctCount++;
-            }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const response = attempt.responses.find((r: any) => r.questionId === q.id);
+      if (response) {
+        const sortedResponse = [...response.selectedOptions].sort();
+        const sortedAnswer = [...q.correctOptions].sort();
+
+        if (JSON.stringify(sortedResponse) === JSON.stringify(sortedAnswer)) {
+          correctCount++;
         }
+      }
     });
 
     const scorePercentage = totalQuestions > 0 ? (correctCount / totalQuestions) * 100 : 0;
@@ -93,6 +94,11 @@ export async function POST(
           isCompleted: true
         }
       });
+
+      // Award XP: base for passing + bonus for perfect score
+      let xpAmount = XP_REWARDS.QUIZ_PASS;
+      if (scorePercentage === 100) xpAmount += XP_REWARDS.QUIZ_PERFECT_BONUS;
+      await awardXp(userId, xpAmount);
     }
 
     return NextResponse.json({ ...finalized, passed });

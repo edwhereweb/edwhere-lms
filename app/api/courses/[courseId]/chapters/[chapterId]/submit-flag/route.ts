@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { submitFlagSchema } from '@/lib/validations';
 import { validateBody, apiError, handleApiError } from '@/lib/api-utils';
+import { awardXp, XP_REWARDS } from '@/lib/gamification';
 
 export async function POST(
   req: Request,
@@ -50,6 +51,12 @@ export async function POST(
       return apiError('Incorrect flag. Try again!', 400);
     }
 
+    // Check if already completed to avoid double XP
+    const existing = await db.userProgress.findUnique({
+      where: { userId_chapterId: { userId, chapterId: params.chapterId } },
+      select: { isCompleted: true }
+    });
+
     // Mark as completed
     const userProgress = await db.userProgress.upsert({
       where: {
@@ -63,7 +70,13 @@ export async function POST(
       }
     });
 
-    return NextResponse.json({ success: true, userProgress });
+    // Award XP for solving the CTF challenge (only on first solve)
+    let xpResult = null;
+    if (!existing?.isCompleted) {
+      xpResult = await awardXp(userId, XP_REWARDS.CTF_FLAG_CORRECT);
+    }
+
+    return NextResponse.json({ success: true, userProgress, xp: xpResult });
   } catch (error) {
     return handleApiError('CHAPTER_SUBMIT_FLAG', error);
   }

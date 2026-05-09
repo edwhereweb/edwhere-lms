@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { apiError, handleApiError, validateBody } from '@/lib/api-utils';
 import { canEditCourse } from '@/lib/course-auth';
+import { awardXp, XP_REWARDS } from '@/lib/gamification';
 
 const reviewSchema = z.object({
   status: z.enum(['APPROVED', 'REJECTED']),
@@ -42,6 +43,11 @@ export async function PATCH(
         reviewedBy: userId
       }
     });
+
+    // Award XP to the student when their project is approved
+    if (validation.data.status === 'APPROVED') {
+      await awardXp(submission.userId, XP_REWARDS.PROJECT_APPROVED);
+    }
 
     return NextResponse.json(submission);
   } catch (error) {

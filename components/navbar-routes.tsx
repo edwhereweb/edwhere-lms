@@ -7,6 +7,7 @@ import { LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { SearchInput } from './search-input';
 import { SafeProfile } from '@/types';
+import { GamificationPill } from './gamification-pill';
 
 interface NavbarRoutesProps {
   currentProfile?: SafeProfile | null;
@@ -66,6 +67,9 @@ export const NavbarRoutes: React.FC<NavbarRoutesProps> = ({ currentProfile }) =>
             )}
           </div>
         )}
+
+        {/* Show XP / streak pill for students on dashboard and course pages */}
+        {!isStaffPage && currentProfile?.role === 'STUDENT' && <GamificationPill />}
 
         <UserButton afterSignOutUrl="/" />
       </div>
