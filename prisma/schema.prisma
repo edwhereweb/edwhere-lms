@@ -304,22 +304,83 @@ model Logging {
   createdAt DateTime @default(now())
 }
 
-model Lead {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  name       String
-  phone      String
-  email      String
-  message    String
-  source     String   @default("GENERAL_WEBSITE_ENQUIRY")
-  status     String   @default("DECISION_PENDING")
-  notes      String?
-  assignedTo String?
+enum LeadClosureStatus {
+  WON
+  LOST
+}
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+enum PaymentMode {
+  CASH
+  UPI
+  BANK_TRANSFER
+  RAZORPAY
+  CHEQUE
+  OTHER
+}
+
+enum PaymentEntryStatus {
+  PENDING
+  PAID
+  OVERDUE
+  WAIVED
+  DELETION_REQUESTED
+}
+
+model Lead {
+  id             String             @id @default(auto()) @map("_id") @db.ObjectId
+  name           String
+  phone          String
+  email          String
+  message        String
+  source         String             @default("GENERAL_WEBSITE_ENQUIRY")
+  status         String             @default("DECISION_PENDING")
+  notes          String?
+  assignedTo     String?
+
+  // Closure tracking
+  closureStatus  LeadClosureStatus?
+  closureNote    String?
+  agreedAmount   Float?
+  courseInterest String?
+  closedAt       DateTime?
+  closedBy       String?            // Clerk userId of marketer who closed
+
+  paymentEntries LeadPaymentEntry[]
+
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
 
   @@index([status])
   @@index([source])
+  @@index([closureStatus])
+}
+
+model LeadPaymentEntry {
+  id          String             @id @default(auto()) @map("_id") @db.ObjectId
+  leadId      String             @db.ObjectId
+  lead        Lead               @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  label       String
+  amount      Float
+  mode        PaymentMode        @default(CASH)
+  status      PaymentEntryStatus @default(PENDING)
+
+  dueDate     DateTime?
+  paidAt      DateTime?
+
+  receiptUrl  String?            // R2 key (optional)
+  note        String?
+
+  recordedBy  String             // Clerk userId
+
+  deletionRequestedAt DateTime?
+  deletionReason      String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([leadId])
+  @@index([status])
 }
 
 model CourseMessage {

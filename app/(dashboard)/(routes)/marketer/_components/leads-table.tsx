@@ -16,7 +16,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { format } from 'date-fns';
-import { Phone, Mail, MessageSquare, Calendar, Tag, Search, X } from 'lucide-react';
+import { Phone, Mail, MessageSquare, Calendar, Tag, Search, X, TrophyIcon } from 'lucide-react';
+import { CloseLeadDialog } from './close-lead-dialog';
 
 /* ─── Constants ─── */
 export const STATUS_OPTIONS = [
@@ -59,6 +60,16 @@ export const STATUS_OPTIONS = [
     value: 'FUTURE_OPTIONS',
     label: 'Future Options',
     color: 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300'
+  },
+  {
+    value: 'CLOSED_WON',
+    label: 'Closed — Won',
+    color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'
+  },
+  {
+    value: 'CLOSED_LOST',
+    label: 'Closed — Lost',
+    color: 'bg-neutral-200 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400'
   }
 ] as const;
 
@@ -115,6 +126,9 @@ function LeadDialog({
   const [status, setStatus] = useState<Status>(lead.status as Status);
   const [notes, setNotes] = useState(lead.notes ?? '');
   const [saving, setSaving] = useState(false);
+  const [showClose, setShowClose] = useState(false);
+
+  const isClosed = lead.status === 'CLOSED_WON' || lead.status === 'CLOSED_LOST';
 
   const handleSave = async () => {
     setSaving(true);
@@ -131,85 +145,119 @@ function LeadDialog({
   };
 
   return (
-    <Dialog
-      open
-      onOpenChange={(open) => {
-        if (!open) onClose();
-      }}
-    >
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>{lead.name}</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 py-2">
-          <div className="grid grid-cols-1 gap-2 text-sm">
-            <div className="flex items-center gap-2 text-neutral-600 dark:text-neutral-400">
-              <Phone className="h-3.5 w-3.5" />
-              <a href={`tel:${lead.phone}`} className="hover:underline">
-                {lead.phone}
-              </a>
+    <>
+      {showClose && (
+        <CloseLeadDialog
+          leadId={lead.id}
+          leadName={lead.name}
+          open={showClose}
+          onClose={() => setShowClose(false)}
+        />
+      )}
+      <Dialog
+        open
+        onOpenChange={(open) => {
+          if (!open) onClose();
+        }}
+      >
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{lead.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="grid grid-cols-1 gap-2 text-sm">
+              <div className="flex items-center gap-2 text-neutral-600 dark:text-neutral-400">
+                <Phone className="h-3.5 w-3.5" />
+                <a href={`tel:${lead.phone}`} className="hover:underline">
+                  {lead.phone}
+                </a>
+              </div>
+              <div className="flex items-center gap-2 text-neutral-600 dark:text-neutral-400">
+                <Mail className="h-3.5 w-3.5" />
+                <a href={`mailto:${lead.email}`} className="hover:underline">
+                  {lead.email}
+                </a>
+              </div>
+              <div className="flex items-center gap-2 text-neutral-600 dark:text-neutral-400">
+                <Tag className="h-3.5 w-3.5" />
+                <span>{SOURCE_LABELS[lead.source] ?? lead.source.replace(/_/g, ' ')}</span>
+              </div>
+              <div className="flex items-center gap-2 text-neutral-600 dark:text-neutral-400">
+                <Calendar className="h-3.5 w-3.5" />
+                <span>{format(new Date(lead.createdAt), 'dd MMM yyyy, hh:mm a')}</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2 text-neutral-600 dark:text-neutral-400">
-              <Mail className="h-3.5 w-3.5" />
-              <a href={`mailto:${lead.email}`} className="hover:underline">
-                {lead.email}
-              </a>
-            </div>
-            <div className="flex items-center gap-2 text-neutral-600 dark:text-neutral-400">
-              <Tag className="h-3.5 w-3.5" />
-              <span>{SOURCE_LABELS[lead.source] ?? lead.source.replace(/_/g, ' ')}</span>
-            </div>
-            <div className="flex items-center gap-2 text-neutral-600 dark:text-neutral-400">
-              <Calendar className="h-3.5 w-3.5" />
-              <span>{format(new Date(lead.createdAt), 'dd MMM yyyy, hh:mm a')}</span>
-            </div>
-          </div>
 
-          <div>
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-1.5">
-              <MessageSquare className="h-3.5 w-3.5" /> ENQUIRY
+            <div>
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-1.5">
+                <MessageSquare className="h-3.5 w-3.5" /> ENQUIRY
+              </div>
+              <p className="text-sm bg-neutral-50 dark:bg-neutral-900 rounded-lg p-3 text-neutral-700 dark:text-neutral-300 leading-relaxed">
+                {lead.message}
+              </p>
             </div>
-            <p className="text-sm bg-neutral-50 dark:bg-neutral-900 rounded-lg p-3 text-neutral-700 dark:text-neutral-300 leading-relaxed">
-              {lead.message}
-            </p>
-          </div>
 
-          <div>
-            <label className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 block mb-1.5">
-              STATUS
-            </label>
-            <Select value={status} onValueChange={(v) => setStatus(v as Status)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {STATUS_OPTIONS.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+            {!isClosed ? (
+              <>
+                <div>
+                  <label className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 block mb-1.5">
+                    STATUS
+                  </label>
+                  <Select value={status} onValueChange={(v) => setStatus(v as Status)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {STATUS_OPTIONS.filter(
+                        (o) => o.value !== 'CLOSED_WON' && o.value !== 'CLOSED_LOST'
+                      ).map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-          <div>
-            <label className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 block mb-1.5">
-              NOTES
-            </label>
-            <Textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Add notes about this lead…"
-              rows={4}
-            />
-          </div>
+                <div>
+                  <label className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 block mb-1.5">
+                    NOTES
+                  </label>
+                  <Textarea
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Add notes about this lead…"
+                    rows={4}
+                  />
+                </div>
 
-          <Button onClick={handleSave} disabled={saving} className="w-full">
-            {saving ? 'Saving…' : 'Save Changes'}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+                <div className="flex gap-2">
+                  <Button onClick={handleSave} disabled={saving} className="flex-1">
+                    {saving ? 'Saving…' : 'Save Changes'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowClose(true)}
+                    className="gap-1.5 text-emerald-700 border-emerald-300 hover:bg-emerald-50 dark:text-emerald-400 dark:border-emerald-800 dark:hover:bg-emerald-950/30"
+                  >
+                    <TrophyIcon className="h-3.5 w-3.5" />
+                    Close Lead
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <div className="rounded-lg border bg-neutral-50 dark:bg-neutral-900 p-3 text-sm text-neutral-500 dark:text-neutral-400">
+                This lead has been closed. View payment details in the{' '}
+                <a href="/marketer/payments" className="text-[#F80602] hover:underline font-medium">
+                  Payment Tracker
+                </a>
+                .
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 

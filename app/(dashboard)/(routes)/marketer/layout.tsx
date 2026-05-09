@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server';
 import { isMarketer } from '@/lib/marketer';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import { MarketerNav } from './_components/marketer-nav';
 
 export default async function MarketerLayout({ children }: { children: React.ReactNode }) {
   const { userId } = await auth();
@@ -32,6 +33,9 @@ export default async function MarketerLayout({ children }: { children: React.Rea
           </span>
         </div>
       </header>
+
+      <MarketerNav />
+
       <main className="p-6 max-w-screen-2xl mx-auto">{children}</main>
     </div>
   );

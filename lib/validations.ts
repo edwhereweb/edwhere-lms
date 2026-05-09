@@ -224,7 +224,8 @@ const UPLOAD_TYPE = z.enum([
   'blogPostImage',
   'blogPostCover',
   'sessionSlides',
-  'sessionNotes'
+  'sessionNotes',
+  'paymentReceipt'
 ]);
 export type UploadType = z.infer<typeof UPLOAD_TYPE>;
 
@@ -257,7 +258,8 @@ export const ALLOWED_CONTENT_TYPES: Record<UploadType, readonly string[]> = {
   blogPostImage: IMAGE_CONTENT_TYPES,
   blogPostCover: IMAGE_CONTENT_TYPES,
   sessionSlides: ['application/pdf'],
-  sessionNotes: ['application/pdf']
+  sessionNotes: ['application/pdf'],
+  paymentReceipt: [...IMAGE_CONTENT_TYPES, 'application/pdf']
 };
 
 export const MAX_FILE_SIZES: Record<UploadType, number> = {
@@ -270,7 +272,8 @@ export const MAX_FILE_SIZES: Record<UploadType, number> = {
   blogPostImage: 8 * 1024 * 1024,
   blogPostCover: 8 * 1024 * 1024,
   sessionSlides: 32 * 1024 * 1024,
-  sessionNotes: 16 * 1024 * 1024
+  sessionNotes: 16 * 1024 * 1024,
+  paymentReceipt: 8 * 1024 * 1024
 };
 
 export const presignSchema = z.object({
@@ -280,7 +283,8 @@ export const presignSchema = z.object({
   courseId: z.string().optional(),
   chapterId: z.string().optional(),
   blogId: z.string().optional(),
-  sessionId: z.string().optional()
+  sessionId: z.string().optional(),
+  leadId: z.string().optional()
 });
 
 // ── Blog schemas ────────────────────────────────────────────────────────
@@ -537,4 +541,45 @@ export const createCertificateSchema = z.object({
 export const verifyCertificateSchema = z.object({
   credentialId: z.string().min(1, 'Credential ID is required').max(100),
   dateOfAchievement: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
+});
+
+// ── Payment Tracker schemas ──────────────────────────────────────────────
+
+export const closeLeadSchema = z.object({
+  closureStatus: z.enum(['WON', 'LOST']),
+  closureNote: z.string().max(5000).optional(),
+  agreedAmount: z.number().min(0).optional(),
+  courseInterest: z.string().max(300).optional()
+});
+
+export const createPaymentEntrySchema = z.object({
+  label: z.string().min(1, 'Label is required').max(200),
+  amount: z.number().min(0, 'Amount must be 0 or more'),
+  mode: z.enum(['CASH', 'UPI', 'BANK_TRANSFER', 'RAZORPAY', 'CHEQUE', 'OTHER']).default('CASH'),
+  dueDate: z.string().datetime({ offset: true }).optional(),
+  note: z.string().max(2000).optional()
+});
+
+export const updatePaymentEntrySchema = z.object({
+  label: z.string().min(1).max(200).optional(),
+  mode: z.enum(['CASH', 'UPI', 'BANK_TRANSFER', 'RAZORPAY', 'CHEQUE', 'OTHER']).optional(),
+  dueDate: z.string().datetime({ offset: true }).nullable().optional(),
+  note: z.string().max(2000).nullable().optional(),
+  receiptUrl: z.string().max(1000).nullable().optional(),
+  // amount editable only on PENDING/OVERDUE entries (enforced server-side)
+  amount: z.number().min(0).optional(),
+  status: z.enum(['OVERDUE', 'WAIVED']).optional()
+});
+
+export const markEntryPaidSchema = z.object({
+  paidAt: z.string().datetime({ offset: true }).optional()
+});
+
+export const requestEntryDeletionSchema = z.object({
+  deletionReason: z.string().min(1, 'Reason is required').max(1000)
+});
+
+export const resolveEntryDeletionSchema = z.object({
+  action: z.enum(['APPROVE', 'REJECT']),
+  rejectionNote: z.string().max(1000).optional()
 });

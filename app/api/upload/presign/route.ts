@@ -18,7 +18,13 @@ function buildKey(
   type: UploadType,
   userId: string,
   filename: string,
-  ids: { courseId?: string; chapterId?: string; blogId?: string; sessionId?: string }
+  ids: {
+    courseId?: string;
+    chapterId?: string;
+    blogId?: string;
+    sessionId?: string;
+    leadId?: string;
+  }
 ): string {
   const uuid = crypto.randomUUID();
   const ext = path.extname(filename).toLowerCase() || '.bin';
@@ -45,6 +51,8 @@ function buildKey(
       return `private/session-uploads/${ids.sessionId}/${uuid}-slides${ext}`;
     case 'sessionNotes':
       return `private/session-uploads/${ids.sessionId}/${uuid}-notes${ext}`;
+    case 'paymentReceipt':
+      return `private/payment-receipts/${ids.leadId ?? userId}/${uuid}-receipt${ext}`;
   }
 }
 
@@ -86,11 +94,21 @@ export async function POST(req: Request) {
       courseId,
       chapterId,
       blogId,
-      sessionId
+      sessionId,
+      leadId
     } = validation.data;
 
     const isBlogUpload = BLOG_UPLOAD_TYPES.includes(type);
-    const authorized = isBlogUpload ? await canManageBlogs() : await isTeacher();
+    const isReceiptUpload = type === 'paymentReceipt';
+    let authorized: boolean;
+    if (isBlogUpload) {
+      authorized = await canManageBlogs();
+    } else if (isReceiptUpload) {
+      const { isMarketer } = await import('@/lib/marketer');
+      authorized = await isMarketer();
+    } else {
+      authorized = await isTeacher();
+    }
     if (!authorized) return apiError('Unauthorized', 401);
 
     if (
@@ -112,7 +130,13 @@ export async function POST(req: Request) {
       return apiError(`Content type "${contentType}" is not allowed for ${type}`, 400);
     }
 
-    const key = buildKey(type, userId, filename, { courseId, chapterId, blogId, sessionId });
+    const key = buildKey(type, userId, filename, {
+      courseId,
+      chapterId,
+      blogId,
+      sessionId,
+      leadId
+    });
     const uploadUrl = await createPresignedPutUrl(key, contentType);
 
     return NextResponse.json({ uploadUrl, key });

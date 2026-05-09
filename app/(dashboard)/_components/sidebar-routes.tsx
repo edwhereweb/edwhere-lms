@@ -18,7 +18,8 @@ import {
   BookMarked,
   CalendarClock,
   LineChart,
-  LayoutTemplate
+  LayoutTemplate,
+  Wallet
 } from 'lucide-react';
 import SidebarItem from './sidebar-item';
 import { usePathname } from 'next/navigation';
@@ -44,12 +45,14 @@ const teacherRoutes = [
   { icon: LayoutTemplate, label: 'Landing Pages', href: '/admin/landing-pages' },
   { icon: CalendarClock, label: 'Offline Sessions', href: '/teacher/offline-sessions' },
   { icon: BookMarked, label: 'Certificates', href: '/admin/certificates' },
+  { icon: Wallet, label: 'Payment Deletions', href: '/teacher/payment-deletions' },
   { icon: UserCircle, label: 'My Profile', href: '/teacher/profile' },
   { icon: MessageCircle, label: 'Mentor Connect', href: '/teacher/mentor-connect' }
 ];
 
 const marketerRoutes = [
   { icon: Megaphone, label: 'Leads', href: '/marketer' },
+  { icon: Wallet, label: 'Payment Tracker', href: '/marketer/payments' },
   { icon: Newspaper, label: 'Blogs', href: '/marketer/blogs' },
   { icon: LayoutTemplate, label: 'Landing Pages', href: '/marketer/landing-pages' },
   { icon: UserCircle, label: 'My Profile', href: '/marketer/profile' }
@@ -96,7 +99,8 @@ export const SidebarRoutes = ({ currentProfile, hasBatchEnrollment }: SidebarRou
           'Pending Approvals',
           'Batch Reports',
           'Landing Pages',
-          'Certificates'
+          'Certificates',
+          'Payment Deletions'
         ].includes(route.label)
     );
   }
