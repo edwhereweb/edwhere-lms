@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, PlayCircle } from 'lucide-react';
 
 import { IconBadge } from '@/components/icon-badge';
 import { formatPrice } from '@/lib/format';
@@ -15,6 +15,8 @@ interface CourseCardProps {
   price: number;
   progress: number | null;
   category: string;
+  resumeChapterId?: string | null;
+  resumeChapterTitle?: string | null;
 }
 
 export const CourseCard = ({
@@ -25,10 +27,16 @@ export const CourseCard = ({
   chaptersLength,
   price,
   progress,
-  category
+  category,
+  resumeChapterId,
+  resumeChapterTitle
 }: CourseCardProps) => {
+  const href = resumeChapterId
+    ? `/courses/${id}/chapters/${resumeChapterId}`
+    : `/courses/${id}/start`;
+
   return (
-    <Link href={`/courses/${id}/start`}>
+    <Link href={href}>
       <div className="group hover:shadow-sm transition overflow-hidden border rounded-lg p-3 h-full">
         <div className="relative w-full aspect-video rounded-md overflow-hidden">
           <Image fill className="object-cover" alt={imageAlt || title} src={imageUrl} />
@@ -47,11 +55,20 @@ export const CourseCard = ({
             </div>
           </div>
           {progress !== null ? (
-            <CourseProgress
-              variant={progress === 100 ? 'success' : 'default'}
-              size="sm"
-              value={progress}
-            />
+            <>
+              <CourseProgress
+                variant={progress === 100 ? 'success' : 'default'}
+                size="sm"
+                value={progress}
+              />
+              {/* Continue Learning CTA — only for in-progress courses with a resume point */}
+              {resumeChapterId && resumeChapterTitle && progress < 100 && (
+                <div className="mt-2 flex items-center gap-1.5 text-xs text-[#F80602] dark:text-red-400 font-medium">
+                  <PlayCircle className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">Continue: {resumeChapterTitle}</span>
+                </div>
+              )}
+            </>
           ) : (
             <p className="text-md md:text-sm font-medium text-foreground">{formatPrice(price)}</p>
           )}

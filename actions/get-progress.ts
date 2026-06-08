@@ -30,9 +30,9 @@ export const getProgress = async (userId: string, courseId: string): Promise<num
 export const getProgressBatch = async (
   userId: string,
   courseIds: string[]
-): Promise<Map<string, number>> => {
+): Promise<{ progressMap: Map<string, number>; completedSet: Set<string> }> => {
   try {
-    if (courseIds.length === 0) return new Map();
+    if (courseIds.length === 0) return { progressMap: new Map(), completedSet: new Set() };
 
     const chapters = await db.chapter.findMany({
       where: { courseId: { in: courseIds }, isPublished: true, isLibraryAsset: false },
@@ -69,9 +69,9 @@ export const getProgressBatch = async (
       result.set(courseId, (completed / courseChapters.length) * 100);
     }
 
-    return result;
+    return { progressMap: result, completedSet };
   } catch (error) {
     logError('GET_PROGRESS_BATCH', error);
-    return new Map();
+    return { progressMap: new Map(), completedSet: new Set() };
   }
 };

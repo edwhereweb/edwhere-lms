@@ -16,7 +16,8 @@ import {
   BookOpen,
   LayoutList,
   Eye,
-  Upload
+  Upload,
+  Award
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -33,6 +34,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { BatchContentEditor } from './batch-content-editor';
+import { GradingHub } from './grading-hub';
 import { TaskGrader } from './task-grader';
 import type { BatchContentModule } from '@/actions/get-batches';
 
@@ -293,19 +295,22 @@ export function BatchDetail({
   return (
     <div className="space-y-6">
       {/* Batch header */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex items-start justify-between gap-4 border-b pb-5">
         <div>
-          <div className="flex items-center gap-3 mb-1">
-            <h1 className="text-2xl font-semibold">{title}</h1>
-            <Badge className={cn('capitalize', STATUS_BADGE[status] ?? 'bg-muted')}>{status}</Badge>
+          <div className="flex items-center gap-3 mb-1.5">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+              {title}
+            </h1>
+            <Badge
+              className={cn(
+                'capitalize px-2.5 py-0.5 text-xs font-semibold',
+                STATUS_BADGE[status] ?? 'bg-muted'
+              )}
+            >
+              {status}
+            </Badge>
           </div>
           {description && <p className="text-sm text-muted-foreground">{description}</p>}
-          <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
-            <CalendarDays className="h-4 w-4" />
-            <span>
-              {formatDate(startDate)} → {formatDate(endDate)}
-            </span>
-          </div>
         </div>
         <div className="flex items-center gap-2">
           {isAdmin && (
@@ -388,53 +393,115 @@ export function BatchDetail({
         </div>
       </div>
 
+      {/* Batch Overview Dashboard Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-2">
+        <div className="p-4 border rounded-xl bg-card shadow-sm flex items-center gap-3">
+          <div className="p-3 bg-violet-500/10 rounded-lg text-violet-500">
+            <LayoutList className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground font-medium">Curriculum Structure</p>
+            <h4 className="text-sm font-bold">
+              {modules.length} Module{modules.length !== 1 ? 's' : ''}
+            </h4>
+          </div>
+        </div>
+
+        <div className="p-4 border rounded-xl bg-card shadow-sm flex items-center gap-3">
+          <div className="p-3 bg-blue-500/10 rounded-lg text-blue-500">
+            <BookOpen className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground font-medium">Linked Courses</p>
+            <h4 className="text-sm font-bold">
+              {courses.length} Course{courses.length !== 1 ? 's' : ''}
+            </h4>
+          </div>
+        </div>
+
+        <div className="p-4 border rounded-xl bg-card shadow-sm flex items-center gap-3">
+          <div className="p-3 bg-emerald-500/10 rounded-lg text-emerald-500">
+            <Users className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground font-medium font-bold">Enrolled Students</p>
+            <h4 className="text-sm font-bold">
+              {enrollments.length} Learner{enrollments.length !== 1 ? 's' : ''}
+            </h4>
+          </div>
+        </div>
+
+        <div className="p-4 border rounded-xl bg-card shadow-sm flex items-center gap-3">
+          <div className="p-3 bg-indigo-500/10 rounded-lg text-indigo-500">
+            <CalendarDays className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground font-medium">Batch Timeline</p>
+            <h4
+              className="text-xs font-semibold mt-0.5 truncate max-w-[150px]"
+              title={`${formatDate(startDate)} → ${formatDate(endDate)}`}
+            >
+              {formatDate(startDate)} → {formatDate(endDate)}
+            </h4>
+          </div>
+        </div>
+      </div>
+
       {/* Tabs */}
-      <Tabs defaultValue="content">
-        <TabsList id="batch-detail-tabs">
-          <TabsTrigger value="content" id="tab-content">
+      <Tabs defaultValue="curriculum" className="space-y-6">
+        <TabsList
+          id="batch-detail-tabs"
+          className="bg-muted/60 p-1 rounded-xl w-full sm:w-auto overflow-x-auto flex flex-nowrap sm:flex-wrap"
+        >
+          <TabsTrigger value="curriculum" id="tab-curriculum" className="rounded-lg shrink-0">
             <LayoutList className="h-4 w-4 mr-1.5" />
-            Content
+            Curriculum
           </TabsTrigger>
-          <TabsTrigger value="courses" id="tab-courses">
+          <TabsTrigger value="grades" id="tab-grades" className="rounded-lg shrink-0">
+            <Award className="h-4 w-4 mr-1.5" />
+            Grades / Tasks
+          </TabsTrigger>
+          <TabsTrigger value="courses" id="tab-courses" className="rounded-lg shrink-0">
             <BookOpen className="h-4 w-4 mr-1.5" />
-            Courses ({courses.length})
+            Linked Courses ({courses.length})
           </TabsTrigger>
-          <TabsTrigger value="students" id="tab-students">
+          <TabsTrigger value="students" id="tab-students" className="rounded-lg shrink-0">
             <Users className="h-4 w-4 mr-1.5" />
-            Students ({enrollments.length})
+            Learners Directory ({enrollments.length})
           </TabsTrigger>
         </TabsList>
 
-        {/* ── Content tab ── */}
-        <TabsContent value="content" className="mt-6">
+        {/* ── Curriculum tab ── */}
+        <TabsContent
+          value="curriculum"
+          forceMount
+          className="mt-0 outline-none data-[state=inactive]:hidden"
+        >
           <BatchContentEditor batchId={batchId} initialModules={modules} />
+        </TabsContent>
 
-          {/* Task graders — rendered per TASK item across all modules */}
-          {modules.flatMap((m) =>
-            m.items
-              .filter((i) => i.type === 'TASK' && i.task)
-              .map((i) => (
-                <div key={i.id} className="mt-6 border rounded-lg p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">
-                    {m.title} › {i.title}
-                  </p>
-                  <TaskGrader
-                    batchId={batchId}
-                    moduleId={m.id}
-                    itemId={i.id}
-                    task={i.task!}
-                    enrolledStudents={enrollments.map((e) => ({
-                      userId: e.userId,
-                      name: e.name || e.userId
-                    }))}
-                  />
-                </div>
-              ))
-          )}
+        {/* ── Grades tab ── */}
+        <TabsContent
+          value="grades"
+          forceMount
+          className="mt-0 outline-none data-[state=inactive]:hidden"
+        >
+          <GradingHub
+            batchId={batchId}
+            modules={modules}
+            enrolledStudents={enrollments.map((e) => ({
+              userId: e.userId,
+              name: e.name || e.userId
+            }))}
+          />
         </TabsContent>
 
         {/* ── Courses tab ── */}
-        <TabsContent value="courses" className="mt-6 space-y-4">
+        <TabsContent
+          value="courses"
+          forceMount
+          className="mt-6 space-y-4 data-[state=inactive]:hidden"
+        >
           {/* Add course */}
           <div className="flex gap-2 items-center">
             <select
@@ -506,7 +573,11 @@ export function BatchDetail({
         </TabsContent>
 
         {/* ── Students tab ── */}
-        <TabsContent value="students" className="mt-6 space-y-4">
+        <TabsContent
+          value="students"
+          forceMount
+          className="mt-6 space-y-4 data-[state=inactive]:hidden"
+        >
           {/* Enroll student */}
           <div className="flex gap-4 items-start">
             <div className="flex-1 flex flex-col gap-2 max-w-lg">

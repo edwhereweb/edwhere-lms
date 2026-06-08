@@ -16,7 +16,9 @@ import {
   Paperclip,
   Trash2,
   Pencil,
-  X
+  X,
+  Copy,
+  ClipboardCheck
 } from 'lucide-react';
 import type { LeadWithPayments } from '../page';
 import type { LeadPaymentEntry } from '@prisma/client';
@@ -90,10 +92,11 @@ function EntryStatusBadge({ entry }: { entry: LeadPaymentEntry }) {
 interface AddEntryFormProps {
   leadId: string;
   entryCount: number;
+  maxAmount: number | null;
   onAdded: () => void;
 }
 
-function AddEntryForm({ leadId, entryCount, onAdded }: AddEntryFormProps) {
+function AddEntryForm({ leadId, entryCount, maxAmount, onAdded }: AddEntryFormProps) {
   const [label, setLabel] = useState('');
   const [amount, setAmount] = useState('');
   const [mode, setMode] = useState<PaymentMode>('CASH');
@@ -101,17 +104,24 @@ function AddEntryForm({ leadId, entryCount, onAdded }: AddEntryFormProps) {
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
 
+  const parsedAmt = parseFloat(amount);
+  const exceedsCap =
+    maxAmount !== null && !isNaN(parsedAmt) && parsedAmt > 0 && parsedAmt > maxAmount;
+
   const handleAdd = async () => {
-    const amt = parseFloat(amount);
-    if (!amt || amt <= 0) {
+    if (!parsedAmt || parsedAmt <= 0) {
       toast.error('Enter a valid amount');
+      return;
+    }
+    if (exceedsCap) {
+      toast.error(`Amount exceeds remaining balance of ₹${maxAmount!.toLocaleString('en-IN')}`);
       return;
     }
     setSaving(true);
     try {
       await axios.post(`/api/leads/${leadId}/payments`, {
         label: label.trim() || `Payment #${entryCount + 1}`,
-        amount: amt,
+        amount: parsedAmt,
         mode,
         dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
         note: note || undefined
@@ -123,8 +133,12 @@ function AddEntryForm({ leadId, entryCount, onAdded }: AddEntryFormProps) {
       setDueDate('');
       setNote('');
       onAdded();
-    } catch {
-      toast.error('Something went wrong');
+    } catch (err) {
+      const msg =
+        axios.isAxiosError(err) && err.response?.data?.error
+          ? err.response.data.error
+          : 'Something went wrong';
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
@@ -132,9 +146,22 @@ function AddEntryForm({ leadId, entryCount, onAdded }: AddEntryFormProps) {
 
   return (
     <div className="border rounded-lg p-3 space-y-2 bg-neutral-50 dark:bg-neutral-800/40">
-      <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">
-        New Entry
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">
+          New Entry
+        </p>
+        {maxAmount !== null && (
+          <p
+            className={`text-xs font-medium ${
+              maxAmount <= 0
+                ? 'text-red-500 dark:text-red-400'
+                : 'text-neutral-400 dark:text-neutral-500'
+            }`}
+          >
+            Remaining: ₹{maxAmount.toLocaleString('en-IN')}
+          </p>
+        )}
+      </div>
       <div className="grid grid-cols-2 gap-2">
         <Input
           placeholder="Label (e.g. Registration)"
@@ -142,13 +169,20 @@ function AddEntryForm({ leadId, entryCount, onAdded }: AddEntryFormProps) {
           onChange={(e) => setLabel(e.target.value)}
           className="col-span-2"
         />
-        <Input
-          type="number"
-          min={0}
-          placeholder="Amount (₹)"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-        />
+        <div className="space-y-1">
+          <Input
+            type="number"
+            min={0}
+            max={maxAmount ?? undefined}
+            placeholder="Amount (₹)"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            className={exceedsCap ? 'border-red-500 focus-visible:ring-red-400' : ''}
+          />
+          {exceedsCap && (
+            <p className="text-[11px] text-red-500">Max ₹{maxAmount!.toLocaleString('en-IN')}</p>
+          )}
+        </div>
         <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
       </div>
       <div className="flex flex-wrap gap-1.5">
@@ -173,7 +207,7 @@ function AddEntryForm({ leadId, entryCount, onAdded }: AddEntryFormProps) {
       <Button
         size="sm"
         onClick={handleAdd}
-        disabled={saving}
+        disabled={saving || exceedsCap || maxAmount === 0}
         className="w-full bg-[#F80602] hover:bg-red-700 text-white"
       >
         {saving ? 'Adding…' : 'Add Entry'}
@@ -185,10 +219,11 @@ function AddEntryForm({ leadId, entryCount, onAdded }: AddEntryFormProps) {
 interface EditEntryFormProps {
   entry: LeadPaymentEntry;
   leadId: string;
+  maxAmount: number | null;
   onDone: () => void;
 }
 
-function EditEntryForm({ entry, leadId, onDone }: EditEntryFormProps) {
+function EditEntryForm({ entry, leadId, maxAmount, onDone }: EditEntryFormProps) {
   const isPaid = entry.status === 'PAID';
   const [label, setLabel] = useState(entry.label);
   const [note, setNote] = useState(entry.note ?? '');
@@ -199,7 +234,19 @@ function EditEntryForm({ entry, leadId, onDone }: EditEntryFormProps) {
   );
   const [saving, setSaving] = useState(false);
 
+  const parsedAmt = parseFloat(amount);
+  // maxAmount here is the remaining space for THIS entry (others excluded), so effective cap is entry.amount + maxAmount
+  const effectiveCap = maxAmount !== null ? entry.amount + maxAmount : null;
+  const exceedsCap =
+    !isPaid && effectiveCap !== null && !isNaN(parsedAmt) && parsedAmt > effectiveCap;
+
   const handleSave = async () => {
+    if (exceedsCap) {
+      toast.error(
+        `Amount exceeds remaining balance. Max: ₹${effectiveCap!.toLocaleString('en-IN')}`
+      );
+      return;
+    }
     setSaving(true);
     try {
       await axios.patch(`/api/leads/${leadId}/payments/${entry.id}`, {
@@ -207,12 +254,16 @@ function EditEntryForm({ entry, leadId, onDone }: EditEntryFormProps) {
         note: note || null,
         mode,
         dueDate: !isPaid && dueDate ? new Date(dueDate).toISOString() : undefined,
-        amount: !isPaid ? parseFloat(amount) : undefined
+        amount: !isPaid ? parsedAmt : undefined
       });
       toast.success('Entry updated');
       onDone();
-    } catch {
-      toast.error('Something went wrong');
+    } catch (err) {
+      const msg =
+        axios.isAxiosError(err) && err.response?.data?.error
+          ? err.response.data.error
+          : 'Something went wrong';
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
@@ -229,13 +280,27 @@ function EditEntryForm({ entry, leadId, onDone }: EditEntryFormProps) {
         />
         {!isPaid && (
           <>
-            <Input
-              type="number"
-              min={0}
-              placeholder="Amount (₹)"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-            />
+            <div className="space-y-1">
+              <Input
+                type="number"
+                min={0}
+                max={effectiveCap ?? undefined}
+                placeholder="Amount (₹)"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className={exceedsCap ? 'border-red-500 focus-visible:ring-red-400' : ''}
+              />
+              {exceedsCap && (
+                <p className="text-[11px] text-red-500">
+                  Max ₹{effectiveCap!.toLocaleString('en-IN')}
+                </p>
+              )}
+              {effectiveCap !== null && !exceedsCap && (
+                <p className="text-[11px] text-neutral-400">
+                  Cap: ₹{effectiveCap.toLocaleString('en-IN')}
+                </p>
+              )}
+            </div>
             <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
           </>
         )}
@@ -268,7 +333,7 @@ function EditEntryForm({ entry, leadId, onDone }: EditEntryFormProps) {
         <Button
           size="sm"
           onClick={handleSave}
-          disabled={saving}
+          disabled={saving || exceedsCap}
           className="flex-1 bg-[#F80602] hover:bg-red-700 text-white"
         >
           {saving ? 'Saving…' : 'Save'}
@@ -285,12 +350,84 @@ interface PaymentPlanPanelProps {
   onUpdated: (updated: LeadWithPayments) => void;
 }
 
+function buildScheduleMessage(lead: LeadWithPayments, entries: LeadPaymentEntry[]): string {
+  const fmtAmt = (n: number) =>
+    new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0
+    }).format(n);
+
+  const statusEmoji: Record<string, string> = {
+    PAID: '✅',
+    PENDING: '🔲',
+    OVERDUE: '⚠️',
+    WAIVED: '🔵',
+    DELETION_REQUESTED: '⏳'
+  };
+  const statusLabel: Record<string, string> = {
+    PAID: 'Paid',
+    PENDING: 'Pending',
+    OVERDUE: 'Overdue',
+    WAIVED: 'Waived',
+    DELETION_REQUESTED: 'Review Pending'
+  };
+
+  const header = [
+    `📋 *Payment Schedule*`,
+    ``,
+    `*Student:* ${lead.name}`,
+    lead.courseInterest ? `*Course:* ${lead.courseInterest}` : null,
+    lead.agreedAmount ? `*Total Agreed:* ${fmtAmt(lead.agreedAmount)}` : null
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  const entryLines = entries
+    .filter((e) => e.status !== 'DELETION_REQUESTED')
+    .map((e, i) => {
+      const emoji = statusEmoji[e.status] ?? '🔲';
+      const label = statusLabel[e.status] ?? e.status;
+      let line = `${emoji} *${i + 1}. ${e.label}* — ${fmtAmt(e.amount)} [${label}]`;
+      if (e.dueDate) line += `\n    📅 Due: ${format(new Date(e.dueDate), 'dd MMM yyyy')}`;
+      if (e.paidAt) line += `\n    💳 Paid on: ${format(new Date(e.paidAt), 'dd MMM yyyy')}`;
+      return line;
+    })
+    .join('\n\n');
+
+  const totalPaid = entries.filter((e) => e.status === 'PAID').reduce((s, e) => s + e.amount, 0);
+  const outstanding = Math.max(0, (lead.agreedAmount ?? 0) - totalPaid);
+
+  const footer = [
+    ``,
+    `*Amount Paid:* ${fmtAmt(totalPaid)}`,
+    outstanding > 0 ? `*Outstanding:* ${fmtAmt(outstanding)}` : `*Fully Paid ✅*`,
+    ``,
+    `For any queries, please reach out to us.`
+  ].join('\n');
+
+  return [header, ``, entryLines, footer].join('\n');
+}
+
 export function PaymentPlanPanel({ lead, open, onClose, onUpdated }: PaymentPlanPanelProps) {
   const [entries, setEntries] = useState<LeadPaymentEntry[]>(lead.paymentEntries);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [markPaidEntry, setMarkPaidEntry] = useState<LeadPaymentEntry | null>(null);
   const [deletionEntry, setDeletionEntry] = useState<LeadPaymentEntry | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopySchedule = async () => {
+    const msg = buildScheduleMessage(lead, entries);
+    try {
+      await navigator.clipboard.writeText(msg);
+      setCopied(true);
+      toast.success('Payment schedule copied to clipboard');
+      setTimeout(() => setCopied(false), 2500);
+    } catch {
+      toast.error('Could not copy — please try again');
+    }
+  };
 
   const refresh = async () => {
     try {
@@ -339,8 +476,13 @@ export function PaymentPlanPanel({ lead, open, onClose, onUpdated }: PaymentPlan
   };
 
   const agreed = lead.agreedAmount ?? 0;
+  const activeTotal = entries
+    .filter((e) => e.status !== 'WAIVED' && e.status !== 'DELETION_REQUESTED')
+    .reduce((s, e) => s + e.amount, 0);
   const totalPaid = entries.filter((e) => e.status === 'PAID').reduce((s, e) => s + e.amount, 0);
   const outstanding = Math.max(0, agreed - totalPaid);
+  // How much more can be allocated across all entries (null = no cap set)
+  const remainingCapacity = lead.agreedAmount !== null ? Math.max(0, agreed - activeTotal) : null;
 
   const renderEntry = (entry: LeadPaymentEntry) => (
     <div
@@ -420,6 +562,22 @@ export function PaymentPlanPanel({ lead, open, onClose, onUpdated }: PaymentPlan
         <EditEntryForm
           entry={entry}
           leadId={lead.id}
+          maxAmount={
+            lead.agreedAmount !== null
+              ? Math.max(
+                  0,
+                  agreed -
+                    entries
+                      .filter(
+                        (e) =>
+                          e.id !== entry.id &&
+                          e.status !== 'WAIVED' &&
+                          e.status !== 'DELETION_REQUESTED'
+                      )
+                      .reduce((s, e) => s + e.amount, 0)
+                )
+              : null
+          }
           onDone={async () => {
             setEditingId(null);
             await refresh();
@@ -465,7 +623,29 @@ export function PaymentPlanPanel({ lead, open, onClose, onUpdated }: PaymentPlan
       >
         <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
           <SheetHeader className="pb-4 border-b">
-            <SheetTitle>{lead.name}</SheetTitle>
+            <div className="flex items-start justify-between gap-2">
+              <SheetTitle>{lead.name}</SheetTitle>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleCopySchedule}
+                className={`gap-1.5 text-xs h-8 flex-shrink-0 transition-all ${
+                  copied ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : ''
+                }`}
+              >
+                {copied ? (
+                  <>
+                    <ClipboardCheck className="h-3.5 w-3.5" />
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-3.5 w-3.5" />
+                    Copy Schedule
+                  </>
+                )}
+              </Button>
+            </div>
             {lead.courseInterest && (
               <p className="text-sm text-neutral-500 dark:text-neutral-400">
                 {lead.courseInterest}
@@ -569,6 +749,7 @@ export function PaymentPlanPanel({ lead, open, onClose, onUpdated }: PaymentPlan
               <AddEntryForm
                 leadId={lead.id}
                 entryCount={entries.length}
+                maxAmount={remainingCapacity}
                 onAdded={async () => {
                   setShowAdd(false);
                   await refresh();

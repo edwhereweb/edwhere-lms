@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { BookOpen } from 'lucide-react';
+import { differenceInDays } from 'date-fns';
 
 import { getChapter } from '@/actions/get-chapter';
 import { Banner } from '@/components/banner';
@@ -10,7 +11,10 @@ import { Preview } from '@/components/preview';
 
 import { VideoPlayer } from './_components/video-player';
 import { CourseEnrollButton } from './_components/course-enroll-button';
-import { CourseProgressButton } from './_components/course-progress-button';
+import { ProgressButtonWithPanel } from './_components/progress-button-with-panel';
+import { ResumeTracker } from './_components/resume-tracker';
+import { WelcomeBackBanner } from './_components/welcome-back-banner';
+import { ScrollTrackerWithPanel } from './_components/scroll-tracker-with-panel';
 import { db } from '@/lib/db';
 
 const HtmlEmbedPreview = dynamic(
@@ -31,6 +35,12 @@ const ProjectSubmissionForm = dynamic(
 const QuizPlayer = dynamic(() => import('./_components/quiz-player').then((m) => m.QuizPlayer), {
   ssr: false
 });
+const VideoPlayerWithPanel = dynamic(
+  () => import('./_components/video-player-with-panel').then((m) => m.VideoPlayerWithPanel),
+  { ssr: false }
+);
+
+const WELCOME_BACK_DAYS = 5;
 
 const ChapterIdPage = async ({ params }: { params: { courseId: string; chapterId: string } }) => {
   const { userId } = await auth();
@@ -70,6 +80,26 @@ const ChapterIdPage = async ({ params }: { params: { courseId: string; chapterId
   const isProjectChapter = chapter.contentType === 'HANDS_ON_PROJECT';
   const isEvaluationChapter = chapter.contentType === 'EVALUATION';
 
+  // Welcome back: only for enrolled students with a prior visit
+  let showWelcomeBack = false;
+  let daysSinceLastVisit = 0;
+  let lastChapterTitle = '';
+  if (purchase?.lastVisitedAt) {
+    const days = differenceInDays(new Date(), new Date(purchase.lastVisitedAt));
+    if (days >= WELCOME_BACK_DAYS && purchase.lastVisitedChapterId) {
+      // Fetch the title of the last visited chapter
+      const lastChapter = await db.chapter.findUnique({
+        where: { id: purchase.lastVisitedChapterId },
+        select: { title: true }
+      });
+      if (lastChapter) {
+        showWelcomeBack = true;
+        daysSinceLastVisit = days;
+        lastChapterTitle = lastChapter.title;
+      }
+    }
+  }
+
   let quizConfig = null;
   if (isEvaluationChapter) {
     quizConfig = await db.quiz.findUnique({
@@ -82,21 +112,44 @@ const ChapterIdPage = async ({ params }: { params: { courseId: string; chapterId
     });
   }
 
+  const enrollButton = <CourseEnrollButton courseId={params.courseId} price={course.price!} />;
+
   const progressOrEnrollButton = purchase ? (
-    <CourseProgressButton
+    <ProgressButtonWithPanel
       chapterId={params.chapterId}
       courseId={params.courseId}
       nextChapterId={nextChapter?.id}
+      nextChapterTitle={nextChapter?.title}
       isCompleted={!!userProgress?.isCompleted}
     />
   ) : (
-    <CourseEnrollButton courseId={params.courseId} price={course.price!} />
+    enrollButton
+  );
+
+  // For video and text lessons, enrolled users don't get the progress button
+  const videoOrTextButton = purchase ? null : enrollButton;
+
+  // Shared continuity components (server-rendered, client-side effects inside)
+  const continuityHeader = (
+    <>
+      {purchase && <ResumeTracker courseId={params.courseId} chapterId={params.chapterId} />}
+      {showWelcomeBack && (
+        <div className="px-4 pt-4">
+          <WelcomeBackBanner
+            courseId={params.courseId}
+            daysSinceLastVisit={daysSinceLastVisit}
+            lastChapterTitle={lastChapterTitle}
+          />
+        </div>
+      )}
+    </>
   );
 
   /* ── TEXT chapter layout ───────────────────────────────────────────── */
   if (isTextChapter) {
     return (
       <div>
+        {continuityHeader}
         {userProgress?.isCompleted && (
           <Banner variant="success" label="You already completed this chapter." />
         )}
@@ -123,7 +176,7 @@ const ChapterIdPage = async ({ params }: { params: { courseId: string; chapterId
                 </h1>
               </div>
             </div>
-            <div className="flex-shrink-0">{progressOrEnrollButton}</div>
+            <div className="flex-shrink-0">{videoOrTextButton}</div>
           </div>
 
           <Separator className="mb-8" />
@@ -158,7 +211,21 @@ const ChapterIdPage = async ({ params }: { params: { courseId: string; chapterId
           )}
 
           {/* Bottom complete button for easy access */}
-          {!isLocked && <div className="mt-10 flex justify-end">{progressOrEnrollButton}</div>}
+          {!isLocked && (
+            <div className="mt-10 flex flex-col gap-4">
+              <div className="flex justify-end">{videoOrTextButton}</div>
+              {purchase && (
+                <ScrollTrackerWithPanel
+                  courseId={params.courseId}
+                  chapterId={params.chapterId}
+                  isCompleted={!!userProgress?.isCompleted}
+                  wordCount={chapter.content?.replace(/<[^>]*>?/gm, '').split(/\s+/).length || 0}
+                  nextChapterId={nextChapter?.id}
+                  nextChapterTitle={nextChapter?.title}
+                />
+              )}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -169,6 +236,7 @@ const ChapterIdPage = async ({ params }: { params: { courseId: string; chapterId
     const htmlContent = (chapter as unknown as { htmlContent?: string }).htmlContent ?? '';
     return (
       <div>
+        {continuityHeader}
         {userProgress?.isCompleted && (
           <Banner variant="success" label="You already completed this chapter." />
         )}
@@ -258,6 +326,7 @@ const ChapterIdPage = async ({ params }: { params: { courseId: string; chapterId
   if (isProjectChapter) {
     return (
       <div>
+        {continuityHeader}
         {userProgress?.isCompleted && (
           <Banner variant="success" label="You have already submitted this project!" />
         )}
@@ -307,7 +376,6 @@ const ChapterIdPage = async ({ params }: { params: { courseId: string; chapterId
             </div>
           ) : (
             <>
-              {/* Task statement — HTML or rich text */}
               {(() => {
                 const htmlContent = (chapter as unknown as { htmlContent?: string }).htmlContent;
                 if (htmlContent) {
@@ -370,6 +438,7 @@ const ChapterIdPage = async ({ params }: { params: { courseId: string; chapterId
     const pdfUrl = (chapter as unknown as { pdfUrl?: string }).pdfUrl ?? '';
     return (
       <div>
+        {continuityHeader}
         {userProgress?.isCompleted && (
           <Banner variant="success" label="You already completed this chapter." />
         )}
@@ -418,9 +487,9 @@ const ChapterIdPage = async ({ params }: { params: { courseId: string; chapterId
 
   /* ── EVALUATION chapter layout ─────────────────────────────────────────────── */
   if (isEvaluationChapter) {
-    // Determine if we show the QuizPlayer or a locked message
     return (
       <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950/50">
+        {continuityHeader}
         {userProgress?.isCompleted && (
           <Banner variant="success" label="You already completed this evaluation." />
         )}
@@ -475,7 +544,6 @@ const ChapterIdPage = async ({ params }: { params: { courseId: string; chapterId
             </div>
           ) : (
             <div className="mt-4">
-              {/* Dynamically import the player or just render it directly */}
               <QuizPlayer
                 courseId={params.courseId}
                 chapterId={params.chapterId}
@@ -491,6 +559,7 @@ const ChapterIdPage = async ({ params }: { params: { courseId: string; chapterId
   /* ── Video chapter layout (default) ───────────────────────────────── */
   return (
     <div>
+      {continuityHeader}
       {userProgress?.isCompleted && (
         <Banner variant="success" label="You already completed this chapter." />
       )}
@@ -499,21 +568,35 @@ const ChapterIdPage = async ({ params }: { params: { courseId: string; chapterId
       )}
       <div className="flex flex-col max-w-4xl mx-auto pb-20">
         <div className="p-4">
-          <VideoPlayer
-            chapterId={params.chapterId}
-            title={chapter.title}
-            courseId={params.courseId}
-            nextChapterId={nextChapter?.id}
-            playbackId={muxData?.playbackId}
-            youtubeVideoId={chapter.youtubeVideoId}
-            isLocked={isLocked}
-            completeOnEnd={completeOnEnd}
-          />
+          {purchase ? (
+            <VideoPlayerWithPanel
+              chapterId={params.chapterId}
+              courseId={params.courseId}
+              title={chapter.title}
+              nextChapterId={nextChapter?.id}
+              nextChapterTitle={nextChapter?.title}
+              playbackId={muxData?.playbackId}
+              youtubeVideoId={chapter.youtubeVideoId}
+              isLocked={isLocked}
+              completeOnEnd={completeOnEnd}
+            />
+          ) : (
+            <VideoPlayer
+              chapterId={params.chapterId}
+              courseId={params.courseId}
+              title={chapter.title}
+              nextChapterId={nextChapter?.id}
+              playbackId={muxData?.playbackId}
+              youtubeVideoId={chapter.youtubeVideoId}
+              isLocked={isLocked}
+              completeOnEnd={completeOnEnd}
+            />
+          )}
         </div>
         <div>
           <div className="p-4 flex flex-col md:flex-row items-center justify-between">
             <h2 className="text-2xl font-semibold mb-2">{chapter.title}</h2>
-            {progressOrEnrollButton}
+            {videoOrTextButton}
           </div>
           <Separator />
           <div>

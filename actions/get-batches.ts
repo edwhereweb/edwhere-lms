@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { logError } from '@/lib/debug';
+import { hasBatchAccess } from '@/lib/batch-auth';
 
 export type BatchStatus = 'active' | 'draft' | 'archived';
 
@@ -92,7 +93,8 @@ export async function getBatchDetail(batchId: string, userId: string, role: stri
     });
 
     if (!batch) return null;
-    if (role !== 'ADMIN' && batch.createdBy !== userId) return null;
+    const hasAccess = role === 'ADMIN' || (await hasBatchAccess(batchId, userId));
+    if (!hasAccess) return null;
 
     // Fetch profiles for all enrolled users to get names and emails
     const enrolledUserIds = batch.enrollments.map((e) => e.userId);
@@ -257,8 +259,11 @@ export async function getBatchContent(
   try {
     const batch = await db.batch.findUnique({ where: { id: batchId } });
     if (!batch) return null;
-    // Teachers can only view their own batches
-    if (role !== 'ADMIN' && role !== 'STUDENT' && batch.createdBy !== viewerUserId) return null;
+    // Teachers can view batches they are authorized for
+    if (role !== 'ADMIN' && role !== 'STUDENT') {
+      const hasAccess = await hasBatchAccess(batchId, viewerUserId);
+      if (!hasAccess) return null;
+    }
 
     const modules = await db.batchModule.findMany({
       where: { batchId },

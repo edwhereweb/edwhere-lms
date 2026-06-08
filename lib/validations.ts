@@ -85,6 +85,10 @@ export const progressSchema = z.object({
   isCompleted: z.boolean()
 });
 
+export const resumeSchema = z.object({
+  chapterId: z.string().min(1)
+});
+
 export const submitFlagSchema = z.object({
   flag: z.string().min(1, 'Flag is required')
 });

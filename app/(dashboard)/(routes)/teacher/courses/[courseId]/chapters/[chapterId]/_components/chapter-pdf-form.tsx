@@ -108,6 +108,7 @@ export const ChapterPdfForm = ({ initialData, courseId, chapterId }: ChapterPdfF
         <div className="mt-4">
           <FileUpload
             endpoint="chapterPdf"
+            courseId={courseId}
             chapterId={chapterId}
             onChange={(url) => onUpload(url)}
           />

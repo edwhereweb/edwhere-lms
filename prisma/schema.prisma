@@ -277,6 +277,10 @@ model Purchase {
   courseId    String     @db.ObjectId
   course      Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
+  // Learning continuity: track the last chapter the student visited
+  lastVisitedChapterId String?   @db.ObjectId
+  lastVisitedAt        DateTime?
+
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 

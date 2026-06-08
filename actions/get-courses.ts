@@ -42,7 +42,7 @@ export const getCourses = async ({
 
     const purchasedCourseIds = courses.filter((c) => c.purchases.length > 0).map((c) => c.id);
 
-    const progressMap = await getProgressBatch(userId, purchasedCourseIds);
+    const { progressMap } = await getProgressBatch(userId, purchasedCourseIds);
 
     return courses.map((course) => ({
       ...course,

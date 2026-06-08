@@ -31,6 +31,26 @@ export async function PATCH(req: Request, { params }: Params) {
     // Amount is locked once the entry is marked PAID
     const updateData: Record<string, unknown> = { ...rest };
     if (amount !== undefined && entry.status !== 'PAID') {
+      // Enforce cap: sum of all other active entries + new amount must not exceed agreedAmount
+      const lead = await db.lead.findUnique({
+        where: { id: params.leadId },
+        include: { paymentEntries: true }
+      });
+      if (lead?.agreedAmount !== null && lead?.agreedAmount !== undefined) {
+        const othersTotal = (lead.paymentEntries ?? [])
+          .filter(
+            (e) =>
+              e.id !== params.entryId && e.status !== 'WAIVED' && e.status !== 'DELETION_REQUESTED'
+          )
+          .reduce((s, e) => s + e.amount, 0);
+        if (othersTotal + amount > lead.agreedAmount) {
+          const remaining = lead.agreedAmount - othersTotal;
+          return apiError(
+            `Amount exceeds remaining balance. Maximum allowed: ₹${remaining.toLocaleString('en-IN')}`,
+            400
+          );
+        }
+      }
       updateData.amount = amount;
     }
 

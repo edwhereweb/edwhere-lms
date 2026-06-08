@@ -4,11 +4,13 @@ import { validateBody, apiError, handleApiError } from '@/lib/api-utils';
 import { updateBatchSchema } from '@/lib/validations';
 import { db } from '@/lib/db';
 import getSafeProfile from '@/actions/get-safe-profile';
+import { hasBatchAccess } from '@/lib/batch-auth';
 
 async function resolveBatch(batchId: string, userId: string, role: string) {
   const batch = await db.batch.findUnique({ where: { id: batchId } });
   if (!batch) return null;
-  if (role !== 'ADMIN' && batch.createdBy !== userId) return null;
+  const hasAccess = role === 'ADMIN' || (await hasBatchAccess(batchId, userId));
+  if (!hasAccess) return null;
   return batch;
 }
 

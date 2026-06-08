@@ -6,8 +6,14 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 import { Menu } from 'lucide-react';
 import { Sidebar } from './sidebar';
+import { SafeProfile } from '@/types';
 
-export const MobileSidebar = () => {
+interface MobileSidebarProps {
+  currentProfile?: SafeProfile | null;
+  hasBatchEnrollment?: boolean;
+}
+
+export const MobileSidebar = ({ currentProfile, hasBatchEnrollment }: MobileSidebarProps) => {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -21,7 +27,7 @@ export const MobileSidebar = () => {
         <Menu />
       </SheetTrigger>
       <SheetContent side="left" className="p-0">
-        <Sidebar />
+        <Sidebar currentProfile={currentProfile} hasBatchEnrollment={hasBatchEnrollment} />
       </SheetContent>
     </Sheet>
   );

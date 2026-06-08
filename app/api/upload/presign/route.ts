@@ -4,6 +4,7 @@ import { validateBody, apiError, handleApiError } from '@/lib/api-utils';
 import { presignSchema, ALLOWED_CONTENT_TYPES, type UploadType } from '@/lib/validations';
 import { isTeacher } from '@/lib/teacher';
 import { canManageBlogs } from '@/lib/blog-auth';
+import { checkCourseEdit } from '@/lib/course-auth';
 import { createPresignedPutUrl } from '@/lib/r2';
 import crypto from 'crypto';
 import path from 'path';
@@ -112,14 +113,23 @@ export async function POST(req: Request) {
     if (!authorized) return apiError('Unauthorized', 401);
 
     if (
-      (type === 'courseImage' || type === 'courseAttachment' || type === 'questionImage') &&
-      !courseId
+      type === 'courseImage' ||
+      type === 'courseAttachment' ||
+      type === 'questionImage' ||
+      type === 'chapterPdf'
     ) {
-      return apiError('courseId is required for this upload type', 400);
+      if (!courseId) {
+        return apiError('courseId is required for this upload type', 400);
+      }
+      if (type === 'chapterPdf' && !chapterId) {
+        return apiError('chapterId is required for this upload type', 400);
+      }
+
+      // Security Fix: Prevent IDOR where any teacher could upload files to any course
+      const denied = await checkCourseEdit(userId, courseId);
+      if (denied) return denied;
     }
-    if (type === 'chapterPdf' && !chapterId) {
-      return apiError('chapterId is required for this upload type', 400);
-    }
+
     if ((type === 'sessionSlides' || type === 'sessionNotes') && !sessionId) {
       return apiError('sessionId is required for session uploads', 400);
     }

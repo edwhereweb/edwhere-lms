@@ -195,9 +195,14 @@ export default function VerifyCertificatePage() {
                   {certificate.score !== undefined && certificate.score !== null && (
                     <div>
                       <p className="text-[11px] font-semibold uppercase tracking-widest text-[#ACB3C2] mb-1">
-                        Score
+                        Score (Out of 100)
                       </p>
-                      <p className="text-sm font-medium text-[#1F1F1F]">{certificate.score}/100</p>
+                      <p className="text-sm font-medium text-[#1F1F1F]">
+                        <span className="text-base font-bold text-[#F80602]">
+                          {certificate.score}
+                        </span>
+                        <span className="text-[#ACB3C2] font-normal ml-0.5">/ 100</span>
+                      </p>
                     </div>
                   )}
                 </div>

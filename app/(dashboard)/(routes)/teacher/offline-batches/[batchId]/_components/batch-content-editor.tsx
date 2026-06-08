@@ -25,7 +25,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import type { BatchContentModule, BatchContentItem } from '@/actions/get-batches';
 import { AddSessionForm } from './add-session-form';
-import { SessionDetail } from './session-detail';
+import { SessionDrawer } from './session-drawer';
 
 const ITEM_TYPE_META: Record<string, { icon: React.ElementType; label: string; color: string }> = {
   PDF: { icon: FileText, label: 'PDF', color: 'text-rose-500' },
@@ -287,7 +287,11 @@ export function BatchContentEditor({ batchId, initialModules }: BatchContentEdit
   const [addingModule, setAddingModule] = useState(false);
   const [deletingModule, setDeletingModule] = useState<string | null>(null);
   const [deletingItem, setDeletingItem] = useState<string | null>(null);
-  const [expandedSessionId, setExpandedSessionId] = useState<string | null>(null);
+  const [activeSession, setActiveSession] = useState<{
+    moduleId: string;
+    itemId: string;
+    title: string;
+  } | null>(null);
 
   const handleAddModule = async () => {
     if (!newModuleTitle.trim()) {
@@ -459,11 +463,15 @@ export function BatchContentEditor({ batchId, initialModules }: BatchContentEdit
                       {item.type === 'OFFLINE_SESSION' && (
                         <button
                           onClick={() =>
-                            setExpandedSessionId((p) => (p === item.id ? null : item.id))
+                            setActiveSession({
+                              moduleId: mod.id,
+                              itemId: item.id,
+                              title: item.title
+                            })
                           }
                           className="text-xs text-blue-500 hover:underline mt-0.5 flex items-center gap-1"
                         >
-                          {expandedSessionId === item.id ? 'Close details' : 'Configure session…'}
+                          Configure session…
                         </button>
                       )}
                     </div>
@@ -481,11 +489,6 @@ export function BatchContentEditor({ batchId, initialModules }: BatchContentEdit
                       )}
                     </Button>
                   </div>
-                  {expandedSessionId === item.id && item.type === 'OFFLINE_SESSION' && (
-                    <div className="bg-muted/10 p-4 border-t shadow-inner">
-                      <SessionDetail batchId={batchId} moduleId={mod.id} itemId={item.id} />
-                    </div>
-                  )}
                 </div>
               );
             })}
@@ -536,6 +539,12 @@ export function BatchContentEditor({ batchId, initialModules }: BatchContentEdit
           )}
         </Button>
       </div>
+
+      <SessionDrawer
+        batchId={batchId}
+        session={activeSession}
+        onClose={() => setActiveSession(null)}
+      />
     </div>
   );
 }

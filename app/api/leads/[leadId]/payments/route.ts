@@ -41,7 +41,10 @@ export async function POST(req: Request, { params }: { params: { leadId: string 
     const authorized = await isMarketer();
     if (!authorized) return apiError('Forbidden', 403);
 
-    const lead = await db.lead.findUnique({ where: { id: params.leadId } });
+    const lead = await db.lead.findUnique({
+      where: { id: params.leadId },
+      include: { paymentEntries: true }
+    });
     if (!lead) return apiError('Lead not found', 404);
     if (lead.closureStatus !== 'WON')
       return apiError('Can only add payments to closed-won leads', 400);
@@ -51,6 +54,19 @@ export async function POST(req: Request, { params }: { params: { leadId: string 
     if (!validation.success) return validation.response;
 
     const { label, amount, mode, dueDate, note } = validation.data;
+
+    if (lead.agreedAmount !== null) {
+      const existingTotal = lead.paymentEntries
+        .filter((e) => e.status !== 'WAIVED' && e.status !== 'DELETION_REQUESTED')
+        .reduce((s, e) => s + e.amount, 0);
+      if (existingTotal + amount > lead.agreedAmount) {
+        const remaining = lead.agreedAmount - existingTotal;
+        return apiError(
+          `Entry amount exceeds the remaining balance. Maximum allowed: ₹${remaining.toLocaleString('en-IN')}`,
+          400
+        );
+      }
+    }
 
     const entry = await db.leadPaymentEntry.create({
       data: {

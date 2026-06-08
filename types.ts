@@ -4,6 +4,8 @@ export type CourseWithProgressWithCategory = Course & {
   category: Category | null;
   chapters: { id: string }[];
   progress: number | null;
+  resumeChapterId?: string | null;
+  resumeChapterTitle?: string | null;
 };
 
 export type SafeProfile = Omit<Profile, 'createdAt' | 'updatedAt' | 'lastLoginAt'> & {

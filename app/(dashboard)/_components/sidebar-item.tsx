@@ -8,13 +8,13 @@ interface SidebarItemProps {
   icon: LucideIcon;
   label: string;
   href: string;
+  nested?: boolean;
 }
 
-const SidebarItem = ({ icon: Icon, label, href }: SidebarItemProps) => {
+const SidebarItem = ({ icon: Icon, label, href, nested }: SidebarItemProps) => {
   const pathname = usePathname();
   const router = useRouter();
 
-  // Complicated logic to determine if the current route is active
   const isActive =
     (pathname === '/' && href === '/') || pathname === href || pathname?.startsWith(`${href}/`);
 
@@ -27,12 +27,16 @@ const SidebarItem = ({ icon: Icon, label, href }: SidebarItemProps) => {
       onClick={onClick}
       type="button"
       className={cn(
-        'flex items-center gap-x-2 text-muted-foreground text-sm font-[500] pl-6 transition-all hover:text-foreground hover:bg-accent',
+        'flex items-center gap-x-2 text-muted-foreground text-sm font-[500] transition-all hover:text-foreground hover:bg-accent',
+        nested ? 'pl-10' : 'pl-6',
         isActive && 'text-foreground bg-accent'
       )}
     >
-      <div className="flex items-center gap-x-2 py-4">
-        <Icon size={22} className={cn('text-muted-foreground', isActive && 'text-primary')} />
+      <div className={cn('flex items-center gap-x-2', nested ? 'py-2' : 'py-4')}>
+        <Icon
+          size={nested ? 18 : 22}
+          className={cn('text-muted-foreground', isActive && 'text-primary')}
+        />
         {label}
       </div>
       <div

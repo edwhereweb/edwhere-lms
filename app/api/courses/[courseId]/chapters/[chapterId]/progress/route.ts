@@ -37,6 +37,17 @@ export async function PUT(
       return apiError('Forbidden', 403);
     }
 
+    // Security Fix: Prevent manual completion bypass for assessment chapters
+    if (validation.data.isCompleted) {
+      const nonManualTypes = ['QUIZ', 'CTF_CHALLENGE', 'HANDS_ON_PROJECT', 'OFFLINE_SESSION'];
+      if (chapter.contentType && nonManualTypes.includes(chapter.contentType)) {
+        return apiError(
+          'This chapter type requires assessment submission and cannot be marked complete manually.',
+          400
+        );
+      }
+    }
+
     const wasAlreadyCompleted = await db.userProgress.findUnique({
       where: { userId_chapterId: { userId, chapterId: params.chapterId } },
       select: { isCompleted: true }

@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import {
   CheckCircle,
   Lock,
@@ -44,6 +45,7 @@ export const CourseSidebarItem = ({
 }: CourseSidebarItemProps) => {
   const pathname = usePathname();
   const router = useRouter();
+  const ref = useRef<HTMLButtonElement>(null);
 
   const ContentIcon = CONTENT_TYPE_ICONS[contentType ?? 'VIDEO_MUX'] ?? PlayCircle;
 
@@ -52,12 +54,20 @@ export const CourseSidebarItem = ({
 
   const isActive = pathname?.includes(id);
 
+  // Auto-scroll the active item into view so students always see where they are
+  useEffect(() => {
+    if (isActive && ref.current) {
+      ref.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [isActive]);
+
   const onClick = () => {
     router.push(`/courses/${courseId}/chapters/${id}`);
   };
 
   return (
     <button
+      ref={ref}
       onClick={onClick}
       type="button"
       className={cn(

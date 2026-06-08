@@ -1,6 +1,7 @@
 import { db } from '@/lib/db';
 import { logError } from '@/lib/debug';
 import { type Attachment, type Chapter } from '@prisma/client';
+import { sortChapters } from '@/lib/chapter-utils';
 
 interface GetChapterProps {
   userId: string;
@@ -10,6 +11,7 @@ interface GetChapterProps {
 
 type ChapterNavItem = {
   id: string;
+  title: string;
   position: number;
   moduleId: string | null;
   module: { position: number } | null;
@@ -55,6 +57,7 @@ export const getChapter = async ({ userId, courseId, chapterId }: GetChapterProp
           },
           select: {
             id: true,
+            title: true,
             position: true,
             moduleId: true,
             module: { select: { position: true } }
@@ -64,17 +67,7 @@ export const getChapter = async ({ userId, courseId, chapterId }: GetChapterProp
       muxData = mux;
       attachments = atts;
 
-      const sortedChapters = [...allChapters].sort((a, b) => {
-        if (a.moduleId && b.moduleId) {
-          if (a.moduleId === b.moduleId) return a.position - b.position;
-          const moduleAPos = a.module?.position ?? 0;
-          const moduleBPos = b.module?.position ?? 0;
-          return moduleAPos - moduleBPos;
-        }
-        if (a.moduleId && !b.moduleId) return -1; // Module chapters come first
-        if (!a.moduleId && b.moduleId) return 1;
-        return a.position - b.position;
-      });
+      const sortedChapters = sortChapters(allChapters);
 
       const currentIndex = sortedChapters.findIndex((c) => c.id === chapterId);
       nextChapter =
