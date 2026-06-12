@@ -43,7 +43,9 @@ export async function GET(req: Request, { params }: { params: { slug: string } }
       }
     });
   } catch (error) {
-    console.error('[LANDING_PAGE_GET]', error);
+    const message = error instanceof Error ? error.message : error;
+    const { logError } = await import('@/lib/debug');
+    logError('LANDING_PAGE_GET', message);
     return new Response('Internal Server Error', { status: 500 });
   }
 }

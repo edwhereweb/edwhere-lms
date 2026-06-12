@@ -1,48 +1,39 @@
 import { currentProfile } from '@/lib/current-profile';
 import { db } from '@/lib/db';
 import { NextResponse } from 'next/server';
-import { z } from 'zod';
 import { clerkClient } from '@clerk/nextjs/server';
-
-const enrolSchema = z.object({
-  onboardingSource: z.enum(['MANUAL', 'PAID_MANUAL']).optional(),
-  students: z.array(
-    z.object({
-      name: z.string(),
-      email: z.string().email(),
-      phone: z.string().optional(),
-      onboardingSource: z.enum(['MANUAL', 'PAID_MANUAL']).optional()
-    })
-  )
-});
+import { validateBody, apiError, handleApiError } from '@/lib/api-utils';
+import { adminEnrolSchema } from '@/lib/validations';
+import { isRateLimited } from '@/lib/rate-limit';
 
 export async function POST(req: Request, { params }: { params: { courseId: string } }) {
   try {
     const profile = await currentProfile();
 
     if (!profile || profile.role !== 'ADMIN') {
-      return new NextResponse('Unauthorized', { status: 401 });
+      return apiError('Forbidden', 403);
+    }
+
+    if (isRateLimited(`admin-enrol:${profile.userId}`, { maxRequests: 10, windowMs: 60_000 })) {
+      return apiError('Too many requests', 429);
     }
 
     const { courseId } = params;
 
-    // Ensure course exists
     const course = await db.course.findUnique({
       where: { id: courseId }
     });
 
     if (!course) {
-      return new NextResponse('Course not found', { status: 404 });
+      return apiError('Course not found', 404);
     }
 
     const body = await req.json();
-    const { students, onboardingSource } = enrolSchema.parse(body);
+    const validation = validateBody(adminEnrolSchema, body);
+    if (!validation.success) return validation.response;
 
-    if (!students || students.length === 0) {
-      return new NextResponse('No students provided', { status: 400 });
-    }
+    const { students, onboardingSource } = validation.data;
 
-    // Process enrolments
     const results = {
       successful: [] as string[],
       failed: [] as { email: string; reason: string }[],
@@ -53,7 +44,6 @@ export async function POST(req: Request, { params }: { params: { courseId: strin
       try {
         let targetUserId: string | null = null;
 
-        // 1. Find the user profile by email in our local DB
         let targetUser = await db.profile.findFirst({
           where: { email: { equals: student.email, mode: 'insensitive' } }
         });
@@ -61,7 +51,6 @@ export async function POST(req: Request, { params }: { params: { courseId: strin
         if (targetUser) {
           targetUserId = targetUser.userId;
         } else {
-          // 2. User doesn't exist locally. Check Clerk.
           const currentClerkClient = await clerkClient();
           const clerkUserList = await currentClerkClient.users.getUserList({
             emailAddress: [student.email]
@@ -70,11 +59,8 @@ export async function POST(req: Request, { params }: { params: { courseId: strin
           let clerkUserId: string;
 
           if (clerkUserList.data && clerkUserList.data.length > 0) {
-            // User exists in Clerk but not in our DB
             clerkUserId = clerkUserList.data[0].id;
           } else {
-            // 3. User doesn't exist in Clerk either. Create them.
-            // Split name into first and last for Clerk
             const nameParts = student.name !== 'N/A' ? student.name.split(' ') : [];
             const firstName = nameParts.length > 0 ? nameParts[0] : 'Student';
             const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : undefined;
@@ -83,13 +69,12 @@ export async function POST(req: Request, { params }: { params: { courseId: strin
               emailAddress: [student.email],
               firstName: firstName,
               lastName: lastName,
-              skipPasswordChecks: true, // We don't set a password here, they will use forgot password or magic link
+              skipPasswordChecks: true,
               skipPasswordRequirement: true
             });
             clerkUserId = newClerkUser.id;
           }
 
-          // 4. Create the local Profile
           targetUser = await db.profile.create({
             data: {
               userId: clerkUserId,
@@ -105,12 +90,11 @@ export async function POST(req: Request, { params }: { params: { courseId: strin
         if (!targetUserId) {
           results.failed.push({
             email: student.email,
-            reason: 'Failed to find or create user account.'
+            reason: 'Failed to resolve user account.'
           });
           continue;
         }
 
-        // 5. Check if already enrolled
         const existingPurchase = await db.purchase.findUnique({
           where: {
             userId_courseId: {
@@ -125,7 +109,6 @@ export async function POST(req: Request, { params }: { params: { courseId: strin
           continue;
         }
 
-        // 6. Create new purchase to grant access
         const onboardingData: Record<string, string> = {
           onboardingSource: student.onboardingSource ?? onboardingSource ?? 'MANUAL'
         };
@@ -138,36 +121,19 @@ export async function POST(req: Request, { params }: { params: { courseId: strin
         });
 
         results.successful.push(student.email);
-      } catch (err) {
-        let errorMessage = 'An error occurred during account creation or enrolment.';
+      } catch (studentError) {
+        const { logError } = await import('@/lib/debug');
+        logError('ADMIN_ENROL_STUDENT', studentError);
 
-        if (err instanceof Error) {
-          errorMessage = err.message;
-        } else if (typeof err === 'object' && err !== null && 'errors' in err) {
-          const clerkErr = err as { errors?: Array<{ message?: string }> };
-          if (clerkErr.errors && Array.isArray(clerkErr.errors) && clerkErr.errors[0]?.message) {
-            errorMessage = clerkErr.errors[0].message;
-          }
-        }
-
-        console.error(`Failed processing ${student.email}:`, err);
         results.failed.push({
           email: student.email,
-          reason: errorMessage
+          reason: 'An error occurred during account creation or enrolment.'
         });
       }
     }
 
     return NextResponse.json(results);
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      console.error('[MANUAL_ENROLMENT_POST_VALIDATION_ERROR]', error.errors);
-      return new NextResponse(
-        `Invalid data format: ${error.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ')}`,
-        { status: 400 }
-      );
-    }
-    console.error('[MANUAL_ENROLMENT_POST]', error);
-    return new NextResponse('Internal server error', { status: 500 });
+    return handleApiError('ADMIN_ENROL', error);
   }
 }

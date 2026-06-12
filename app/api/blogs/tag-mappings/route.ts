@@ -29,6 +29,9 @@ export async function POST(req: Request) {
 
 export async function GET() {
   try {
+    const isAuthorized = await canManageBlogs();
+    if (!isAuthorized) return apiError('Unauthorized', 401);
+
     const mappings = await db.blogTagMapping.findMany({
       include: {
         course: {

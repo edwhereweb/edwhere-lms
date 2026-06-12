@@ -76,7 +76,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ uploads: results });
   } catch (error) {
-    console.error('[MUX_UPLOAD_ERROR]', error);
     return handleApiError('ASSET_LIBRARY_MUX_UPLOAD_CREATE', error);
   }
 }

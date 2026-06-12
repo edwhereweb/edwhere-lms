@@ -587,3 +587,20 @@ export const resolveEntryDeletionSchema = z.object({
   action: z.enum(['APPROVE', 'REJECT']),
   rejectionNote: z.string().max(1000).optional()
 });
+
+// ── Admin Enrolment schemas ──────────────────────────────────────────
+
+export const adminEnrolSchema = z.object({
+  onboardingSource: z.enum(['MANUAL', 'PAID_MANUAL']).optional(),
+  students: z
+    .array(
+      z.object({
+        name: z.string().min(1).max(150),
+        email: z.string().email(),
+        phone: z.string().max(20).optional(),
+        onboardingSource: z.enum(['MANUAL', 'PAID_MANUAL']).optional()
+      })
+    )
+    .min(1, 'At least one student is required')
+    .max(100)
+});

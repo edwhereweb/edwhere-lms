@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 
 import { db } from '@/lib/db';
 import { checkCourseEdit } from '@/lib/course-auth';
+import { apiError, handleApiError } from '@/lib/api-utils';
 
 export async function PATCH(
   req: Request,
@@ -29,12 +30,11 @@ export async function PATCH(
     });
 
     if (!courseModule) {
-      return new NextResponse('Not found', { status: 404 });
+      return apiError('Not found', 404);
     }
 
-    // A module ideally shouldn't be published if it has 0 published chapters.
     if (!courseModule.title || courseModule.chapters.length === 0) {
-      return new NextResponse('Missing required fields or no published chapters', { status: 400 });
+      return apiError('Missing required fields or no published chapters', 400);
     }
 
     const publishedModule = await db.module.update({
@@ -49,7 +49,6 @@ export async function PATCH(
 
     return NextResponse.json(publishedModule);
   } catch (error) {
-    console.log('[MODULE_PUBLISH]', error);
-    return new NextResponse('Internal Error', { status: 500 });
+    return handleApiError('MODULE_PUBLISH', error);
   }
 }

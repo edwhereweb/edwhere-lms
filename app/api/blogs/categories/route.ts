@@ -27,6 +27,9 @@ export async function POST(req: Request) {
 
 export async function GET(_req: Request) {
   try {
+    const isAuthorized = await canManageBlogs();
+    if (!isAuthorized) return apiError('Unauthorized', 401);
+
     const categories = await db.blogCategory.findMany({
       orderBy: { name: 'asc' }
     });

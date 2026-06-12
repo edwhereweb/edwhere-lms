@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 
 import { db } from '@/lib/db';
 import { checkCourseEdit } from '@/lib/course-auth';
+import { handleApiError } from '@/lib/api-utils';
 
 export async function PATCH(
   req: Request,
@@ -26,7 +27,6 @@ export async function PATCH(
 
     return NextResponse.json(courseModule);
   } catch (error) {
-    console.log('[MODULE_UNPUBLISH]', error);
-    return new NextResponse('Internal Error', { status: 500 });
+    return handleApiError('MODULE_UNPUBLISH', error);
   }
 }

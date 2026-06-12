@@ -24,7 +24,7 @@ export function validateBody<T>(
   } catch (err) {
     if (err instanceof ZodError) {
       const messages = err.issues.map((i) => `${i.path.join('.')}: ${i.message}`);
-      console.error('[VALIDATION_ERROR]', messages);
+      logError('VALIDATION_ERROR', messages.join('; '));
       return {
         success: false,
         response: NextResponse.json(

@@ -176,8 +176,9 @@ export async function PATCH(
             }
           });
         }
-      } catch (error) {
-        console.error('[MUX_ASSET_CREATE]', error instanceof Error ? error.message : error);
+      } catch (muxError) {
+        const { logError } = await import('@/lib/debug');
+        logError('MUX_ASSET_CREATE', muxError);
       }
     }
 

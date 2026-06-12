@@ -5,12 +5,17 @@ import crypto from 'crypto';
 import { razorpayVerifySchema } from '@/lib/validations';
 import { validateBody, apiError, handleApiError } from '@/lib/api-utils';
 import { getRazorpay } from '@/lib/razorpay';
+import { isRateLimited } from '@/lib/rate-limit';
 
 export async function POST(req: Request) {
   try {
     const user = await currentUser();
     if (!user || !user.id) {
       return apiError('Unauthorized', 401);
+    }
+
+    if (isRateLimited(`razorpay-verify:${user.id}`, { maxRequests: 10, windowMs: 60_000 })) {
+      return apiError('Too many requests', 429);
     }
 
     const body = await req.json();

@@ -37,6 +37,8 @@ next-env.d.ts
 .aider*
 /tmp/
 
+/scratch/
+
 # scratch / debug artifacts
 *.log
 /eslint*.txt

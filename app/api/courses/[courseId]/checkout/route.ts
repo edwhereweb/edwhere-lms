@@ -3,12 +3,17 @@ import { currentUser } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { getRazorpay } from '@/lib/razorpay';
 import { apiError, handleApiError } from '@/lib/api-utils';
+import { isRateLimited } from '@/lib/rate-limit';
 
 export async function POST(req: Request, { params }: { params: { courseId: string } }) {
   try {
     const user = await currentUser();
     if (!user || !user.id || !user.emailAddresses?.[0]?.emailAddress) {
       return apiError('Unauthorized', 401);
+    }
+
+    if (isRateLimited(`checkout:${user.id}`, { maxRequests: 5, windowMs: 60_000 })) {
+      return apiError('Too many requests', 429);
     }
 
     const [course, existingPurchase] = await Promise.all([
