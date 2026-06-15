@@ -20,7 +20,7 @@ export async function GET(_req: Request, { params }: Params) {
       orderBy: { createdAt: 'desc' }
     });
 
-    const studentUserIds = [...new Set(submissions.map((s) => s.userId))];
+    const studentUserIds = Array.from(new Set(submissions.map((s) => s.userId)));
     const profiles = await db.profile.findMany({
       where: { userId: { in: studentUserIds } },
       select: { userId: true, name: true }

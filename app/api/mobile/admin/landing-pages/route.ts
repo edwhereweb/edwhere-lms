@@ -22,7 +22,7 @@ export async function GET() {
       orderBy: { createdAt: 'desc' }
     });
 
-    const creatorIds = [...new Set(pages.map((p) => p.createdBy))];
+    const creatorIds = Array.from(new Set(pages.map((p) => p.createdBy)));
     const profiles = await db.profile.findMany({
       where: { userId: { in: creatorIds } },
       select: { userId: true, name: true }

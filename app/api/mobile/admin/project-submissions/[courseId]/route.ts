@@ -18,14 +18,14 @@ export async function GET(_req: Request, { params }: Params) {
     const chapters = await db.chapter.findMany({
       where: {
         courseId,
-        submissions: { some: {} }
+        projectSubmissions: { some: {} }
       },
       select: {
         id: true,
         title: true,
         _count: {
           select: {
-            submissions: { where: { status: 'PENDING' } }
+            projectSubmissions: { where: { status: 'PENDING' } }
           }
         }
       },
@@ -35,7 +35,7 @@ export async function GET(_req: Request, { params }: Params) {
     const result = chapters.map((ch) => ({
       chapterId: ch.id,
       chapterTitle: ch.title,
-      pendingCount: ch._count.submissions
+      pendingCount: ch._count.projectSubmissions
     }));
 
     return mobileSuccess(result);

@@ -4,6 +4,7 @@ import { validateBody, apiError, handleApiError } from '@/lib/api-utils';
 import { batchEnrollSchema } from '@/lib/validations';
 import { canEnrollInBatch } from '@/lib/batch-auth';
 import { enrollStudentInBatch, unenrollStudentFromBatch } from '@/lib/batch-enrollment';
+import { db } from '@/lib/db';
 
 export async function POST(req: Request, { params }: { params: Promise<{ batchId: string }> }) {
   try {
@@ -19,7 +20,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ batchId
     const validation = validateBody(batchEnrollSchema, body);
     if (!validation.success) return validation.response;
 
-    const result = await enrollStudentInBatch(batchId, validation.data.userId, userId);
+    let studentUserId = validation.data.userId;
+
+    if (!studentUserId && validation.data.email) {
+      const profile = await db.profile.findFirst({ where: { email: validation.data.email } });
+      if (!profile) return apiError('No user found with this email', 404);
+      studentUserId = profile.userId;
+    }
+
+    if (!studentUserId) return apiError('Either userId or email is required', 400);
+
+    const result = await enrollStudentInBatch(batchId, studentUserId, userId);
 
     if (!result.enrolled) {
       return apiError(result.reason, 400);
@@ -44,7 +55,17 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ batch
     const validation = validateBody(batchEnrollSchema, body);
     if (!validation.success) return validation.response;
 
-    const removed = await unenrollStudentFromBatch(batchId, validation.data.userId);
+    let studentUserId = validation.data.userId;
+
+    if (!studentUserId && validation.data.email) {
+      const profile = await db.profile.findFirst({ where: { email: validation.data.email } });
+      if (!profile) return apiError('No user found with this email', 404);
+      studentUserId = profile.userId;
+    }
+
+    if (!studentUserId) return apiError('Either userId or email is required', 400);
+
+    const removed = await unenrollStudentFromBatch(batchId, studentUserId);
     return NextResponse.json({ removed });
   } catch (error) {
     return handleApiError('UNENROLL_BATCH_STUDENT', error);
