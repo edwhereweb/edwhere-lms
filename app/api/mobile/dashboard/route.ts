@@ -1,17 +1,16 @@
 import { auth } from '@clerk/nextjs/server';
-import { NextResponse } from 'next/server';
-import { apiError, handleApiError } from '@/lib/api-utils';
+import { mobileSuccess, mobileError, handleMobileApiError } from '@/lib/api-mobile-utils';
 import { getDashboardCourses } from '@/actions/get-dashboard-courses';
 
 export async function GET() {
   try {
     const { userId } = await auth();
-    if (!userId) return apiError('Unauthorized', 401);
+    if (!userId) return mobileError('UNAUTHORIZED', 'Unauthorized', 401);
 
     const data = await getDashboardCourses(userId);
 
-    return NextResponse.json(data);
+    return mobileSuccess(data);
   } catch (error) {
-    return handleApiError('MOBILE_DASHBOARD', error);
+    return handleMobileApiError('MOBILE_DASHBOARD', error);
   }
 }

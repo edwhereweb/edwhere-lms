@@ -18,6 +18,14 @@ const envSchema = z.object({
   ENABLE_DEBUG_LOGS: z
     .enum(['true', 'false'])
     .default('false')
+    .transform((v) => v === 'true'),
+  MOBILE_MIN_IOS: z.string().default('1.0.0'),
+  MOBILE_MIN_ANDROID: z.string().default('1.0.0'),
+  MOBILE_LATEST_IOS: z.string().default('1.0.0'),
+  MOBILE_LATEST_ANDROID: z.string().default('1.0.0'),
+  MOBILE_FORCE_UPGRADE: z
+    .enum(['true', 'false'])
+    .default('false')
     .transform((v) => v === 'true')
 });
 

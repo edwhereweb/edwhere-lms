@@ -1,13 +1,12 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
-import { NextResponse } from 'next/server';
-import { apiError, handleApiError } from '@/lib/api-utils';
+import { mobileSuccess, mobileError, handleMobileApiError } from '@/lib/api-mobile-utils';
 import { db } from '@/lib/db';
 import type { SafeProfile } from '@/types';
 
 export async function GET(req: Request) {
   try {
     const { userId } = await auth();
-    if (!userId) return apiError('Unauthorized', 401);
+    if (!userId) return mobileError('UNAUTHORIZED', 'Unauthorized', 401);
 
     // Extract client IP from headers (non-critical)
     let clientIp = 'Unknown IP';
@@ -33,7 +32,7 @@ export async function GET(req: Request) {
 
     if (!currentProfile) {
       const clerkUser = await currentUser();
-      if (!clerkUser) return apiError('Unauthorized', 401);
+      if (!clerkUser) return mobileError('UNAUTHORIZED', 'Unauthorized', 401);
 
       currentProfile = await db.profile.create({
         data: {
@@ -105,8 +104,8 @@ export async function GET(req: Request) {
       lastLoginAt: currentProfile.lastLoginAt ? currentProfile.lastLoginAt.toISOString() : null
     };
 
-    return NextResponse.json(safeProfile);
+    return mobileSuccess(safeProfile);
   } catch (error) {
-    return handleApiError('MOBILE_PROFILE', error);
+    return handleMobileApiError('MOBILE_PROFILE', error);
   }
 }
