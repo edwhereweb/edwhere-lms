@@ -44,7 +44,7 @@ export async function GET() {
 
     const totalRevenue = purchases.reduce((sum, p) => sum + (p.course.price ?? 0), 0);
 
-    const studentUserIds = [...new Set(recentPurchases.map((p) => p.userId))];
+    const studentUserIds = Array.from(new Set(recentPurchases.map((p) => p.userId)));
     const studentProfiles = await db.profile.findMany({
       where: { userId: { in: studentUserIds } },
       select: { userId: true, name: true }
