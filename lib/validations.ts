@@ -365,9 +365,14 @@ export const batchCourseSchema = z.object({
   courseId: z.string().min(1, 'courseId is required')
 });
 
-export const batchEnrollSchema = z.object({
-  userId: z.string().min(1, 'userId is required')
-});
+export const batchEnrollSchema = z
+  .object({
+    userId: z.string().min(1, 'userId is required').optional(),
+    email: z.string().email('Valid email is required').optional()
+  })
+  .refine((data) => data.userId || data.email, {
+    message: 'Either userId or email is required'
+  });
 
 export const batchBulkEnrollSchema = z.object({
   emails: z
@@ -577,6 +582,14 @@ export const updatePaymentEntrySchema = z.object({
 
 export const markEntryPaidSchema = z.object({
   paidAt: z.string().datetime({ offset: true }).optional()
+});
+
+export const mobileCreatePaymentEntrySchema = z.object({
+  leadId: z.string().min(1, 'leadId is required'),
+  amount: z.number().min(0, 'Amount must be 0 or more'),
+  mode: z.enum(['CASH', 'UPI', 'BANK_TRANSFER', 'RAZORPAY', 'CHEQUE', 'OTHER']).default('CASH'),
+  label: z.string().min(1).max(200).optional(),
+  note: z.string().max(2000).optional()
 });
 
 export const requestEntryDeletionSchema = z.object({

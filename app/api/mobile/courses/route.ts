@@ -1,12 +1,11 @@
 import { auth } from '@clerk/nextjs/server';
-import { NextResponse } from 'next/server';
-import { apiError, handleApiError } from '@/lib/api-utils';
+import { mobileSuccess, mobileError, handleMobileApiError } from '@/lib/api-mobile-utils';
 import { getCourses } from '@/actions/get-courses';
 
 export async function GET(req: Request) {
   try {
     const { userId } = await auth();
-    if (!userId) return apiError('Unauthorized', 401);
+    if (!userId) return mobileError('UNAUTHORIZED', 'Unauthorized', 401);
 
     const { searchParams } = new URL(req.url);
     const title = searchParams.get('title') || undefined;
@@ -14,8 +13,8 @@ export async function GET(req: Request) {
 
     const courses = await getCourses({ userId, title, categoryId });
 
-    return NextResponse.json(courses);
+    return mobileSuccess(courses);
   } catch (error) {
-    return handleApiError('MOBILE_COURSES', error);
+    return handleMobileApiError('MOBILE_COURSES', error);
   }
 }

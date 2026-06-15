@@ -1,13 +1,12 @@
 import { auth } from '@clerk/nextjs/server';
-import { NextResponse } from 'next/server';
-import { apiError, handleApiError } from '@/lib/api-utils';
+import { mobileSuccess, mobileError, handleMobileApiError } from '@/lib/api-mobile-utils';
 import { db } from '@/lib/db';
 import { getProgress } from '@/actions/get-progress';
 
 export async function GET(_req: Request, { params }: { params: { courseId: string } }) {
   try {
     const { userId } = await auth();
-    if (!userId) return apiError('Unauthorized', 401);
+    if (!userId) return mobileError('UNAUTHORIZED', 'Unauthorized', 401);
 
     const course = await db.course.findUnique({
       where: { id: params.courseId },
@@ -56,7 +55,7 @@ export async function GET(_req: Request, { params }: { params: { courseId: strin
     });
 
     if (!course) {
-      return apiError('Not Found', 404);
+      return mobileError('NOT_FOUND', 'Not Found', 404);
     }
 
     const progress = await getProgress(userId, course.id);
@@ -78,7 +77,7 @@ export async function GET(_req: Request, { params }: { params: { courseId: strin
       isCompleted: ch.userProgress[0]?.isCompleted ?? false
     });
 
-    return NextResponse.json({
+    return mobileSuccess({
       course: {
         id: course.id,
         title: course.title
@@ -93,6 +92,6 @@ export async function GET(_req: Request, { params }: { params: { courseId: strin
       progress
     });
   } catch (error) {
-    return handleApiError('MOBILE_SIDEBAR', error);
+    return handleMobileApiError('MOBILE_SIDEBAR', error);
   }
 }

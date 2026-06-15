@@ -1,4 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
 
 const isPublicRoute = createRouteMatcher([
   '/',
@@ -14,10 +15,22 @@ const isPublicRoute = createRouteMatcher([
   '/blog(.*)',
   '/pages(.*)',
   '/verify-certificate(.*)',
-  '/api/certificates/verify'
+  '/api/certificates/verify',
+  '/api/mobile/meta/(.*)'
 ]);
 
+const MOBILE_CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-App-Version',
+  'Access-Control-Max-Age': '86400'
+};
+
 export default clerkMiddleware(async (auth, req) => {
+  if (req.method === 'OPTIONS' && req.nextUrl.pathname.startsWith('/api/mobile/')) {
+    return new NextResponse(null, { status: 204, headers: MOBILE_CORS_HEADERS });
+  }
+
   if (!isPublicRoute(req)) {
     await auth.protect();
   }

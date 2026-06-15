@@ -1,6 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { NextResponse } from 'next/server';
-import { apiError, handleApiError } from '@/lib/api-utils';
+import { mobileSuccess, mobileError, handleMobileApiError } from '@/lib/api-mobile-utils';
 import { getChapter } from '@/actions/get-chapter';
 
 export async function GET(
@@ -9,7 +8,7 @@ export async function GET(
 ) {
   try {
     const { userId } = await auth();
-    if (!userId) return apiError('Unauthorized', 401);
+    if (!userId) return mobileError('UNAUTHORIZED', 'Unauthorized', 401);
 
     const data = await getChapter({
       userId,
@@ -18,11 +17,11 @@ export async function GET(
     });
 
     if (!data.chapter) {
-      return apiError('Not Found', 404);
+      return mobileError('NOT_FOUND', 'Not Found', 404);
     }
 
-    return NextResponse.json(data);
+    return mobileSuccess(data);
   } catch (error) {
-    return handleApiError('MOBILE_CHAPTER', error);
+    return handleMobileApiError('MOBILE_CHAPTER', error);
   }
 }
