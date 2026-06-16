@@ -27,6 +27,10 @@ export async function GET(_req: Request, { params }: Params) {
           include: { chapters: { orderBy: { position: 'asc' } } },
           orderBy: { position: 'asc' }
         },
+        chapters: {
+          where: { moduleId: null },
+          orderBy: { position: 'asc' }
+        },
         instructors: {
           include: {
             profile: { select: { id: true, name: true, email: true, imageUrl: true } }

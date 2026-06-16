@@ -453,6 +453,14 @@ export const addCoInstructorSchema = z.object({
   userId: z.string().min(1, 'userId is required')
 });
 
+export const batchInstructorSchema = z.object({
+  email: z.string().email('Must be a valid email address')
+});
+
+export const removeBatchInstructorSchema = z.object({
+  userId: z.string().min(1, 'userId is required')
+});
+
 export const registerSessionUploadSchema = z.object({
   fileUrl: z.string().min(1, 'fileUrl is required'),
   filename: z.string().min(1).max(255),

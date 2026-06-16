@@ -17,7 +17,9 @@ import {
   LayoutList,
   Eye,
   Upload,
-  Award
+  Award,
+  UserCog,
+  ShieldCheck
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -35,7 +37,6 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { BatchContentEditor } from './batch-content-editor';
 import { GradingHub } from './grading-hub';
-import { TaskGrader } from './task-grader';
 import type { BatchContentModule } from '@/actions/get-batches';
 
 interface Course {
@@ -60,6 +61,16 @@ interface Enrollment {
   createdAt: string;
 }
 
+interface BatchInstructor {
+  id: string;
+  userId: string;
+  addedBy: string;
+  createdAt: string;
+  name: string;
+  email: string;
+  imageUrl: string | null;
+}
+
 interface BatchDetailProps {
   batchId: string;
   title: string;
@@ -69,7 +80,10 @@ interface BatchDetailProps {
   status: string;
   courses: BatchCourseRow[];
   enrollments: Enrollment[];
+  instructors: BatchInstructor[];
   isAdmin: boolean;
+  currentUserId: string;
+  createdBy: string;
   allCourses: { id: string; title: string }[];
   modules: BatchContentModule[];
   allowSameDayOfflineSession: boolean;
@@ -110,7 +124,10 @@ export function BatchDetail({
   status,
   courses: initialCourses,
   enrollments: initialEnrollments,
+  instructors: initialInstructors,
   isAdmin,
+  currentUserId,
+  createdBy,
   allCourses,
   modules,
   allowSameDayOfflineSession
@@ -118,6 +135,7 @@ export function BatchDetail({
   const router = useRouter();
   const [courses, setCourses] = useState(initialCourses);
   const [enrollments, setEnrollments] = useState(initialEnrollments);
+  const [instructors, setInstructors] = useState<BatchInstructor[]>(initialInstructors);
 
   const [addCourseId, setAddCourseId] = useState('');
   const [enrollInput, setEnrollInput] = useState('');
@@ -125,6 +143,11 @@ export function BatchDetail({
   const [loadingEnroll, setLoadingEnroll] = useState(false);
   const [removingCourse, setRemovingCourse] = useState<string | null>(null);
   const [removingEnroll, setRemovingEnroll] = useState<string | null>(null);
+
+  // Instructor state
+  const [instructorEmail, setInstructorEmail] = useState('');
+  const [loadingInstructor, setLoadingInstructor] = useState(false);
+  const [removingInstructor, setRemovingInstructor] = useState<string | null>(null);
 
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [configTitle, setConfigTitle] = useState(title);
@@ -136,6 +159,9 @@ export function BatchDetail({
   const [studentSearch, setStudentSearch] = useState('');
   const [studentPage, setStudentPage] = useState(1);
   const itemsPerPage = 10;
+
+  // Only batch creator + admin can manage instructors
+  const canManageInstructors = isAdmin || currentUserId === createdBy;
 
   const availableCourses = allCourses.filter((c) => !courses.some((bc) => bc.courseId === c.id));
 
@@ -274,6 +300,47 @@ export function BatchDetail({
       router.refresh();
     } catch {
       toast.error('Something went wrong');
+    }
+  };
+
+  const handleAddInstructor = async () => {
+    const email = instructorEmail.trim();
+    if (!email) {
+      toast.error('Enter an email address');
+      return;
+    }
+    try {
+      setLoadingInstructor(true);
+      const { data } = await axios.post<BatchInstructor>(
+        `/api/teacher/offline-batches/${batchId}/instructors`,
+        { email }
+      );
+      setInstructors((prev) => [...prev, data]);
+      setInstructorEmail('');
+      toast.success(`${data.name} added as a batch instructor`);
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response) {
+        toast.error(err.response.data?.error ?? 'Something went wrong');
+      } else {
+        toast.error('Something went wrong');
+      }
+    } finally {
+      setLoadingInstructor(false);
+    }
+  };
+
+  const handleRemoveInstructor = async (targetUserId: string) => {
+    try {
+      setRemovingInstructor(targetUserId);
+      await axios.delete(`/api/teacher/offline-batches/${batchId}/instructors`, {
+        data: { userId: targetUserId }
+      });
+      setInstructors((prev) => prev.filter((i) => i.userId !== targetUserId));
+      toast.success('Instructor removed from batch');
+    } catch {
+      toast.error('Something went wrong');
+    } finally {
+      setRemovingInstructor(null);
     }
   };
 
@@ -461,6 +528,10 @@ export function BatchDetail({
             <Award className="h-4 w-4 mr-1.5" />
             Grades / Tasks
           </TabsTrigger>
+          <TabsTrigger value="instructors" id="tab-instructors" className="rounded-lg shrink-0">
+            <UserCog className="h-4 w-4 mr-1.5" />
+            Instructors ({instructors.length})
+          </TabsTrigger>
           <TabsTrigger value="courses" id="tab-courses" className="rounded-lg shrink-0">
             <BookOpen className="h-4 w-4 mr-1.5" />
             Linked Courses ({courses.length})
@@ -494,6 +565,105 @@ export function BatchDetail({
               name: e.name || e.userId
             }))}
           />
+        </TabsContent>
+
+        {/* ── Instructors tab ── */}
+        <TabsContent
+          value="instructors"
+          forceMount
+          className="mt-6 space-y-5 data-[state=inactive]:hidden"
+        >
+          {/* Info callout */}
+          <div className="flex items-start gap-3 rounded-lg border border-indigo-200 bg-indigo-50 dark:border-indigo-800 dark:bg-indigo-950/30 p-4 text-sm">
+            <ShieldCheck className="h-5 w-5 text-indigo-500 shrink-0 mt-0.5" />
+            <div className="text-indigo-800 dark:text-indigo-300">
+              <p className="font-medium mb-0.5">Batch Instructors</p>
+              <p className="text-xs opacity-80">
+                Instructors added here can view this batch, add sessions, and take attendance across
+                all sessions — the same level of access as the batch creator.
+              </p>
+            </div>
+          </div>
+
+          {/* Add instructor (only for owner / admin) */}
+          {canManageInstructors && (
+            <div className="flex gap-2 items-center max-w-lg">
+              <Input
+                id="instructor-email-input"
+                placeholder="Teacher's email address…"
+                value={instructorEmail}
+                onChange={(e) => setInstructorEmail(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleAddInstructor();
+                }}
+                className="h-9 text-sm"
+              />
+              <Button
+                id="add-instructor-btn"
+                size="sm"
+                onClick={handleAddInstructor}
+                disabled={loadingInstructor || !instructorEmail.trim()}
+              >
+                {loadingInstructor ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <UserPlus className="h-4 w-4 mr-1.5" />
+                    Add
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+
+          {/* Instructor list */}
+          {instructors.length === 0 ? (
+            <div className="text-center py-10 text-muted-foreground">
+              <UserCog className="h-10 w-10 mx-auto mb-3 opacity-20" />
+              <p className="text-sm">No additional instructors yet.</p>
+              {canManageInstructors && (
+                <p className="text-xs mt-1">
+                  Add a teacher by email above to give them batch access.
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="divide-y border rounded-lg">
+              {instructors.map((instructor) => (
+                <div
+                  key={instructor.id}
+                  className="flex items-center justify-between px-4 py-3 hover:bg-muted/40"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="h-8 w-8 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-indigo-600 dark:text-indigo-300 text-sm font-bold shrink-0">
+                      {instructor.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold truncate">{instructor.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{instructor.email}</p>
+                    </div>
+                  </div>
+                  {canManageInstructors && (
+                    <Button
+                      id={`remove-instructor-${instructor.userId}`}
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-destructive hover:text-destructive ml-4 shrink-0"
+                      onClick={() => handleRemoveInstructor(instructor.userId)}
+                      disabled={removingInstructor === instructor.userId}
+                      title="Remove instructor"
+                    >
+                      {removingInstructor === instructor.userId ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <X className="h-3.5 w-3.5" />
+                      )}
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </TabsContent>
 
         {/* ── Courses tab ── */}

@@ -114,7 +114,7 @@ export function PaymentDeletionsClient({ entries: initialEntries }: PaymentDelet
         </Dialog>
       )}
 
-      <div className="rounded-xl border bg-white dark:bg-neutral-900 shadow-sm overflow-hidden">
+      <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b bg-neutral-50 dark:bg-neutral-800/60 text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">

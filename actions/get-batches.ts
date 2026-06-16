@@ -88,7 +88,8 @@ export async function getBatchDetail(batchId: string, userId: string, role: stri
             }
           }
         },
-        enrollments: true
+        enrollments: true,
+        instructors: { orderBy: { createdAt: 'asc' } }
       }
     });
 
@@ -98,9 +99,11 @@ export async function getBatchDetail(batchId: string, userId: string, role: stri
 
     // Fetch profiles for all enrolled users to get names and emails
     const enrolledUserIds = batch.enrollments.map((e) => e.userId);
+    const instructorUserIds = batch.instructors.map((i) => i.userId);
+    const allUserIds = Array.from(new Set([...enrolledUserIds, ...instructorUserIds]));
     const profiles = await db.profile.findMany({
-      where: { userId: { in: enrolledUserIds } },
-      select: { userId: true, name: true, email: true }
+      where: { userId: { in: allUserIds } },
+      select: { userId: true, name: true, email: true, imageUrl: true }
     });
     const profileMap = new Map(profiles.map((p) => [p.userId, p]));
 
@@ -110,9 +113,20 @@ export async function getBatchDetail(batchId: string, userId: string, role: stri
       email: profileMap.get(e.userId)?.email || 'No Email'
     }));
 
+    const enrichedInstructors = batch.instructors.map((i) => ({
+      id: i.id,
+      userId: i.userId,
+      addedBy: i.addedBy,
+      createdAt: i.createdAt.toISOString(),
+      name: profileMap.get(i.userId)?.name ?? 'Unknown',
+      email: profileMap.get(i.userId)?.email ?? '',
+      imageUrl: profileMap.get(i.userId)?.imageUrl ?? null
+    }));
+
     return {
       ...batch,
       enrollments: enrichedEnrollments,
+      instructors: enrichedInstructors,
       status: classifyBatch(batch.startDate, batch.endDate),
       startDate: batch.startDate ? batch.startDate.toISOString() : null,
       endDate: batch.endDate ? batch.endDate.toISOString() : null,

@@ -23,14 +23,18 @@ export async function GET(_req: Request, { params }: Params) {
     const studentUserIds = Array.from(new Set(submissions.map((s) => s.userId)));
     const profiles = await db.profile.findMany({
       where: { userId: { in: studentUserIds } },
-      select: { userId: true, name: true }
+      select: { userId: true, name: true, email: true }
     });
-    const nameMap = new Map(profiles.map((p) => [p.userId, p.name]));
+    const profileMap = new Map(profiles.map((p) => [p.userId, p]));
 
-    const result = submissions.map((s) => ({
-      ...s,
-      studentName: nameMap.get(s.userId) ?? 'Unknown'
-    }));
+    const result = submissions.map((s) => {
+      const profile = profileMap.get(s.userId);
+      return {
+        ...s,
+        studentName: profile?.name ?? 'Unknown',
+        studentEmail: profile?.email ?? 'Unknown'
+      };
+    });
 
     return mobileSuccess(result);
   } catch (error) {

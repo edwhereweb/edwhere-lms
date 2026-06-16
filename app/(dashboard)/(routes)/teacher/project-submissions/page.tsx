@@ -71,7 +71,7 @@ export default async function ProjectSubmissionsPage() {
             <Link
               key={course.id}
               href={`/teacher/project-submissions/${course.id}`}
-              className="flex items-center justify-between p-4 border rounded-lg bg-white dark:bg-gray-800 shadow-sm hover:shadow-md hover:border-orange-300 dark:hover:border-orange-700 transition-all group"
+              className="flex items-center justify-between p-4 border rounded-lg bg-card shadow-sm hover:shadow-md hover:border-orange-300 dark:hover:border-orange-700 transition-all group"
             >
               <div className="flex-1 min-w-0 mr-4">
                 <h2 className="font-semibold text-base truncate group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">

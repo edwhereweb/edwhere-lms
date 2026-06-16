@@ -17,9 +17,9 @@ export async function GET() {
       totalCourses,
       totalStudents,
       activeBatches,
-      purchases,
       recentPurchases,
-      pendingApprovals
+      pendingApprovals,
+      pendingReviews
     ] = await Promise.all([
       db.course.count(),
       db.profile.count({ where: { role: 'STUDENT' } }),
@@ -30,19 +30,15 @@ export async function GET() {
         }
       }),
       db.purchase.findMany({
-        include: { course: { select: { price: true } } }
-      }),
-      db.purchase.findMany({
         take: 10,
         orderBy: { createdAt: 'desc' },
         include: {
           course: { select: { title: true } }
         }
       }),
-      db.course.count({ where: { pendingApproval: true } })
+      db.course.count({ where: { pendingApproval: true } }),
+      db.projectSubmission.count({ where: { status: 'PENDING' } })
     ]);
-
-    const totalRevenue = purchases.reduce((sum, p) => sum + (p.course.price ?? 0), 0);
 
     const studentUserIds = Array.from(new Set(recentPurchases.map((p) => p.userId)));
     const studentProfiles = await db.profile.findMany({
@@ -62,7 +58,7 @@ export async function GET() {
       totalCourses,
       totalStudents,
       activeBatches,
-      totalRevenue,
+      pendingReviews,
       recentEnrolments,
       pendingApprovals
     });

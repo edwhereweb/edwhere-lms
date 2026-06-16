@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { TaskGrader } from './task-grader';
-import { ClipboardList, Award, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ClipboardList, Award, CheckCircle2 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import type { BatchContentModule } from '@/actions/get-batches';

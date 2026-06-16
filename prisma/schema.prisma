@@ -532,9 +532,10 @@ model Batch {
   // Admin-only toggle: permits offline sessions to be scheduled on the same day for this batch
   allowSameDayOfflineSession Boolean @default(false)
 
-  courses     BatchCourse[]
-  enrollments BatchEnrollment[]
-  modules     BatchModule[]
+  courses      BatchCourse[]
+  enrollments  BatchEnrollment[]
+  instructors  BatchInstructor[]
+  modules      BatchModule[]
 
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
@@ -574,6 +575,21 @@ model BatchEnrollment {
   totalMcqPossible Int    @default(0)
 
   createdAt  DateTime @default(now())
+
+  @@unique([batchId, userId])
+  @@index([batchId])
+  @@index([userId])
+}
+
+model BatchInstructor {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  batchId   String   @db.ObjectId
+  batch     Batch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  // Clerk userId of the co-instructor
+  userId    String
+  // Clerk userId of whoever granted access
+  addedBy   String
+  createdAt DateTime @default(now())
 
   @@unique([batchId, userId])
   @@index([batchId])

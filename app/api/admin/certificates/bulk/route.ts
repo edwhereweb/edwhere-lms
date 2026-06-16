@@ -59,12 +59,9 @@ export async function POST(req: Request) {
         });
 
         successful.push(certificate);
-      } catch {
-        failed.push({
-          row: index + 1,
-          data: row,
-          reason: 'Database error'
-        });
+      } catch (dbError) {
+        const reason = dbError instanceof Error ? dbError.message : 'Unexpected database error';
+        failed.push({ row: index + 1, data: row, reason });
       }
     }
 

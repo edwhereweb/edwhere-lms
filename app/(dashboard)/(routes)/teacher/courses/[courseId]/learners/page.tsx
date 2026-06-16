@@ -83,7 +83,7 @@ const CourseLearnersPage = async ({ params }: { params: { courseId: string } }) 
         </div>
 
         {learners.length === 0 ? (
-          <div className="text-center text-sm text-muted-foreground mt-10 p-8 border rounded-md bg-slate-50 dark:bg-slate-900">
+          <div className="text-center text-sm text-muted-foreground mt-10 p-8 border rounded-md bg-muted/30">
             No learners enrolled yet.
           </div>
         ) : (
@@ -100,14 +100,11 @@ const CourseLearnersPage = async ({ params }: { params: { courseId: string } }) 
               </thead>
               <tbody className="divide-y">
                 {learners.map((learner) => (
-                  <tr
-                    key={learner.id}
-                    className="bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-900 transition"
-                  >
+                  <tr key={learner.id} className="bg-card hover:bg-muted/40 transition">
                     <td className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">
                       {learner.name}
                     </td>
-                    <td className="px-6 py-4 text-slate-500">{learner.email}</td>
+                    <td className="px-6 py-4 text-muted-foreground">{learner.email}</td>
                     <td className="px-6 py-4">
                       <Badge
                         variant={
@@ -133,7 +130,7 @@ const CourseLearnersPage = async ({ params }: { params: { courseId: string } }) 
                               : 'Unknown'}
                       </Badge>
                     </td>
-                    <td className="px-6 py-4 text-slate-500">
+                    <td className="px-6 py-4 text-muted-foreground">
                       {new Intl.DateTimeFormat('en-US', {
                         month: 'short',
                         day: 'numeric',

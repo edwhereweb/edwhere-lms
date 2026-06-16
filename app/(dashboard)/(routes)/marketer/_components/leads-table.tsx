@@ -366,7 +366,7 @@ export function LeadsTable({ leads }: LeadsTableProps) {
       </div>
 
       {/* ── Table ── */}
-      <div className="overflow-x-auto rounded-xl border bg-white dark:bg-neutral-900 shadow-sm">
+      <div className="overflow-x-auto rounded-xl border bg-card shadow-sm">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b bg-neutral-50 dark:bg-neutral-800/60 text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">

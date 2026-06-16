@@ -60,7 +60,18 @@ const BatchDetailPage = async ({ params }: { params: Promise<{ batchId: string }
             createdAt: enrollment.createdAt.toISOString()
           };
         })}
+        instructors={batch.instructors.map((i) => ({
+          id: i.id,
+          userId: i.userId,
+          addedBy: i.addedBy,
+          createdAt: i.createdAt,
+          name: i.name,
+          email: i.email,
+          imageUrl: i.imageUrl
+        }))}
         isAdmin={profile.role === 'ADMIN'}
+        currentUserId={profile.userId}
+        createdBy={batch.createdBy}
         allCourses={allCourses}
         modules={modules ?? []}
         allowSameDayOfflineSession={batch.allowSameDayOfflineSession}

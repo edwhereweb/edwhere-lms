@@ -75,5 +75,11 @@ export async function hasBatchAccess(batchId: string, userId: string): Promise<b
   });
   if (isCoInstructor) return true;
 
+  // Check if they were explicitly added as a batch-level instructor
+  const isBatchInstructor = await db.batchInstructor.findUnique({
+    where: { batchId_userId: { batchId, userId } }
+  });
+  if (isBatchInstructor) return true;
+
   return false;
 }

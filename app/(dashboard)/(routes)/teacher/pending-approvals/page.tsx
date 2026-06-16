@@ -36,7 +36,7 @@ const PendingApprovalsPage = async () => {
 
       {pendingCourses.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-          <CheckCircle className="h-12 w-12 mb-4 text-[#171717]" />
+          <CheckCircle className="h-12 w-12 mb-4 text-foreground/30" />
           <p className="text-lg font-medium">All caught up!</p>
           <p className="text-sm">No courses pending approval.</p>
         </div>
@@ -45,7 +45,7 @@ const PendingApprovalsPage = async () => {
           {pendingCourses.map((course) => (
             <div
               key={course.id}
-              className="flex items-center justify-between p-4 border rounded-lg bg-white dark:bg-gray-800 shadow-sm"
+              className="flex items-center justify-between p-4 border rounded-lg bg-card shadow-sm"
             >
               <div className="flex-1 min-w-0 mr-4">
                 <h2 className="font-semibold text-base truncate">{course.title}</h2>
