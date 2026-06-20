@@ -16,7 +16,8 @@ const isPublicRoute = createRouteMatcher([
   '/pages(.*)',
   '/verify-certificate(.*)',
   '/api/certificates/verify',
-  '/api/mobile/meta/(.*)'
+  '/api/mobile/meta/(.*)',
+  '/delete-account'
 ]);
 
 const MOBILE_CORS_HEADERS = {
