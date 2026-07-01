@@ -20,7 +20,7 @@ function generateCredentialId(): string {
   return `CERT-${yy}${mm}${dd}-${hex}`;
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const { userId } = await auth();
     if (!userId) return mobileError('UNAUTHORIZED', 'Unauthorized', 401);
@@ -30,7 +30,21 @@ export async function GET() {
       return mobileError('FORBIDDEN', 'Forbidden', 403);
     }
 
+    const { searchParams } = new URL(req.url);
+    const search = searchParams.get('search');
+
+    const where: Record<string, unknown> = {};
+
+    if (search) {
+      where.OR = [
+        { recipientName: { contains: search, mode: 'insensitive' } },
+        { courseName: { contains: search, mode: 'insensitive' } },
+        { credentialId: { contains: search, mode: 'insensitive' } }
+      ];
+    }
+
     const certificates = await db.certificate.findMany({
+      where,
       orderBy: { createdAt: 'desc' }
     });
 

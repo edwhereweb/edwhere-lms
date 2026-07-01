@@ -17,7 +17,7 @@ export async function GET() {
       totalCourses,
       totalStudents,
       activeBatches,
-      recentPurchases,
+      recentSubmissionsData,
       pendingApprovals,
       pendingReviews
     ] = await Promise.all([
@@ -29,29 +29,40 @@ export async function GET() {
           OR: [{ endDate: { gte: now } }, { endDate: null }]
         }
       }),
-      db.purchase.findMany({
+      db.projectSubmission.findMany({
+        where: { status: 'PENDING' },
         take: 10,
         orderBy: { createdAt: 'desc' },
         include: {
-          course: { select: { title: true } }
+          chapter: {
+            select: {
+              title: true,
+              course: { select: { id: true, title: true } }
+            }
+          }
         }
       }),
       db.course.count({ where: { pendingApproval: true } }),
       db.projectSubmission.count({ where: { status: 'PENDING' } })
     ]);
 
-    const studentUserIds = Array.from(new Set(recentPurchases.map((p) => p.userId)));
+    const studentUserIds = Array.from(new Set(recentSubmissionsData.map((s) => s.userId)));
     const studentProfiles = await db.profile.findMany({
       where: { userId: { in: studentUserIds } },
       select: { userId: true, name: true }
     });
     const nameMap = new Map(studentProfiles.map((p) => [p.userId, p.name]));
 
-    const recentEnrolments = recentPurchases.map((p) => ({
-      id: p.id,
-      studentName: nameMap.get(p.userId) ?? 'Unknown',
-      courseTitle: p.course.title,
-      date: p.createdAt.toISOString()
+    const recentSubmissions = recentSubmissionsData.map((s) => ({
+      id: s.id,
+      studentName: nameMap.get(s.userId) ?? 'Unknown',
+      courseTitle: s.chapter.course.title,
+      courseId: s.chapter.course.id,
+      chapterId: s.chapterId,
+      chapterTitle: s.chapter.title,
+      driveUrl: s.driveUrl,
+      status: s.status,
+      date: s.createdAt.toISOString()
     }));
 
     return mobileSuccess({
@@ -59,7 +70,7 @@ export async function GET() {
       totalStudents,
       activeBatches,
       pendingReviews,
-      recentEnrolments,
+      recentSubmissions,
       pendingApprovals
     });
   } catch (error) {
