@@ -9,14 +9,11 @@ import {
 import { canManagePlacement } from '@/lib/placement';
 import { db } from '@/lib/db';
 import { createPlacementCompanySchema } from '@/lib/validations';
+import type { NextRequest } from 'next/server';
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
-    const { userId } = await auth();
-    if (!userId) return mobileError('UNAUTHORIZED', 'Unauthorized', 401);
-
-    const { searchParams } = new URL(req.url);
-    const search = searchParams.get('search');
+    const search = req.nextUrl.searchParams.get('search');
 
     const companies = await db.placementCompany.findMany({
       where: {

@@ -9,14 +9,8 @@ import { canManagePlacement } from '@/lib/placement';
 import { db } from '@/lib/db';
 import { updatePlacementJobSchema } from '@/lib/validations';
 
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ jobId: string }> }
-) {
+export async function GET(_req: Request, { params }: { params: Promise<{ jobId: string }> }) {
   try {
-    const { userId } = await auth();
-    if (!userId) return mobileError('UNAUTHORIZED', 'Unauthorized', 401);
-
     const { jobId } = await params;
 
     const job = await db.placementJob.findUnique({
@@ -27,8 +21,7 @@ export async function GET(
       }
     });
 
-    if (!job) return mobileError('NOT_FOUND', 'Job not found', 404);
-    if (!job.isActive) return mobileError('NOT_FOUND', 'Job not found', 404);
+    if (!job || !job.isActive) return mobileError('NOT_FOUND', 'Job not found', 404);
 
     return mobileSuccess(job);
   } catch (error) {
@@ -36,10 +29,7 @@ export async function GET(
   }
 }
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ jobId: string }> }
-) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ jobId: string }> }) {
   try {
     const { userId } = await auth();
     if (!userId) return mobileError('UNAUTHORIZED', 'Unauthorized', 401);
@@ -71,10 +61,7 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  _req: Request,
-  { params }: { params: Promise<{ jobId: string }> }
-) {
+export async function DELETE(_req: Request, { params }: { params: Promise<{ jobId: string }> }) {
   try {
     const { userId } = await auth();
     if (!userId) return mobileError('UNAUTHORIZED', 'Unauthorized', 401);

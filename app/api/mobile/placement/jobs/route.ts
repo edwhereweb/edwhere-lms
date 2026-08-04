@@ -9,13 +9,11 @@ import {
 import { canManagePlacement } from '@/lib/placement';
 import { db } from '@/lib/db';
 import { createPlacementJobSchema } from '@/lib/validations';
+import type { NextRequest } from 'next/server';
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
-    const { userId } = await auth();
-    if (!userId) return mobileError('UNAUTHORIZED', 'Unauthorized', 401);
-
-    const { searchParams } = new URL(req.url);
+    const { searchParams } = req.nextUrl;
     const search = searchParams.get('search');
     const companyId = searchParams.get('companyId');
     const type = searchParams.get('type');

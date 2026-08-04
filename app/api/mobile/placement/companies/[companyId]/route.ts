@@ -9,14 +9,8 @@ import { canManagePlacement } from '@/lib/placement';
 import { db } from '@/lib/db';
 import { updatePlacementCompanySchema } from '@/lib/validations';
 
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ companyId: string }> }
-) {
+export async function GET(_req: Request, { params }: { params: Promise<{ companyId: string }> }) {
   try {
-    const { userId } = await auth();
-    if (!userId) return mobileError('UNAUTHORIZED', 'Unauthorized', 401);
-
     const { companyId } = await params;
 
     const company = await db.placementCompany.findUnique({
@@ -29,8 +23,7 @@ export async function GET(
       }
     });
 
-    if (!company) return mobileError('NOT_FOUND', 'Company not found', 404);
-    if (!company.isActive) return mobileError('NOT_FOUND', 'Company not found', 404);
+    if (!company || !company.isActive) return mobileError('NOT_FOUND', 'Company not found', 404);
 
     return mobileSuccess(company);
   } catch (error) {
@@ -38,10 +31,7 @@ export async function GET(
   }
 }
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ companyId: string }> }
-) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ companyId: string }> }) {
   try {
     const { userId } = await auth();
     if (!userId) return mobileError('UNAUTHORIZED', 'Unauthorized', 401);

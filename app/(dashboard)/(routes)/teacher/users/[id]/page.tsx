@@ -4,35 +4,44 @@ import { format } from 'date-fns';
 
 import { db } from '@/lib/db';
 import { MemberRoleForm } from './_components/member-role-form';
+import { PlacementAccessForm } from './_components/placement-access-form';
 import getSafeProfile from '@/actions/get-safe-profile';
 
 interface ProfileIdPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 const ProfileIdPage: React.FC<ProfileIdPageProps> = async ({ params }) => {
   const profile = await getSafeProfile();
+  const { id } = await params;
 
   if (!profile) {
     return redirect('/teacher/users/');
   }
 
   // Only allow ADMINs to view/edit anyone. Non-admins can only view/edit their own profile.
-  if (profile.role !== 'ADMIN' && profile.id !== params.id) {
+  if (profile.role !== 'ADMIN' && profile.id !== id) {
     return redirect('/teacher/users/');
   }
 
-  const targetProfile = await db.profile.findUnique({
-    where: {
-      id: params.id
-    }
-  });
+  const targetProfile = await db.profile.findUnique({ where: { id } });
 
   if (!targetProfile) {
     return redirect('/teacher/users/');
   }
+
+  const isAdmin = profile.role === 'ADMIN';
+
+  const placementAccess = isAdmin
+    ? await db.placementUser
+        .findUnique({
+          where: { userId: targetProfile.userId },
+          select: { isActive: true }
+        })
+        .catch(() => null)
+    : null;
 
   return (
     <div className="flex-1 p-6">
@@ -55,14 +64,14 @@ const ProfileIdPage: React.FC<ProfileIdPageProps> = async ({ params }) => {
               </span>
             </div>
           </div>
+
+          {isAdmin && (
+            <PlacementAccessForm profileId={targetProfile.id} placementAccess={placementAccess} />
+          )}
         </div>
 
         <div>
-          <MemberRoleForm
-            initialData={targetProfile}
-            id={targetProfile.id}
-            isAdmin={profile.role === 'ADMIN'}
-          />
+          <MemberRoleForm initialData={targetProfile} id={targetProfile.id} isAdmin={isAdmin} />
         </div>
       </div>
     </div>
