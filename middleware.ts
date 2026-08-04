@@ -17,7 +17,11 @@ const isPublicRoute = createRouteMatcher([
   '/verify-certificate(.*)',
   '/api/certificates/verify',
   '/api/mobile/meta/(.*)',
-  '/delete-account'
+  '/delete-account',
+  '/api/mobile/placement/companies',
+  '/api/mobile/placement/companies/(.*)',
+  '/api/mobile/placement/jobs',
+  '/api/mobile/placement/jobs/(.*)'
 ]);
 
 const MOBILE_CORS_HEADERS = {
