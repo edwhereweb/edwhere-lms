@@ -625,3 +625,78 @@ export const adminEnrolSchema = z.object({
     .min(1, 'At least one student is required')
     .max(100)
 });
+
+// ── Placement schemas ──────────────────────────────────────────────
+
+export const createPlacementUserSchema = z.object({
+  name: z.string().min(1, 'Name is required').max(150),
+  email: z.string().email('Invalid email'),
+  phone: z.string().max(20).optional(),
+  resumeUrl: z.string().url().optional(),
+  skills: z.array(z.string().min(1).max(100)).default([]),
+  experience: z.number().int().min(0).default(0)
+});
+
+export const updatePlacementUserSchema = z.object({
+  name: z.string().min(1).max(150).optional(),
+  phone: z.string().max(20).nullable().optional(),
+  resumeUrl: z.string().url().nullable().optional(),
+  skills: z.array(z.string().min(1).max(100)).optional(),
+  experience: z.number().int().min(0).optional(),
+  isActive: z.boolean().optional()
+});
+
+export const createPlacementCompanySchema = z.object({
+  name: z.string().min(1, 'Company name is required').max(200),
+  description: z.string().max(2000).optional(),
+  website: z.string().url().optional(),
+  logoUrl: z.string().url().optional(),
+  industry: z.string().max(100).optional()
+});
+
+export const updatePlacementCompanySchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  description: z.string().max(2000).nullable().optional(),
+  website: z.string().url().nullable().optional(),
+  logoUrl: z.string().url().nullable().optional(),
+  industry: z.string().max(100).nullable().optional(),
+  isActive: z.boolean().optional()
+});
+
+const JOB_TYPES = ['FULL_TIME', 'PART_TIME', 'INTERNSHIP', 'CONTRACT'] as const;
+
+export const createPlacementJobSchema = z.object({
+  companyId: z.string().min(1, 'Company ID is required'),
+  title: z.string().min(1, 'Job title is required').max(200),
+  description: z.string().min(1, 'Description is required').max(5000),
+  location: z.string().max(200).optional(),
+  type: z.enum(JOB_TYPES).default('FULL_TIME'),
+  minSalary: z.number().min(0).optional(),
+  maxSalary: z.number().min(0).optional(),
+  skills: z.array(z.string().min(1).max(100)).default([]),
+  deadline: z.string().datetime({ offset: true }).optional()
+});
+
+export const updatePlacementJobSchema = z.object({
+  title: z.string().min(1).max(200).optional(),
+  description: z.string().min(1).max(5000).optional(),
+  location: z.string().max(200).nullable().optional(),
+  type: z.enum(JOB_TYPES).optional(),
+  minSalary: z.number().min(0).nullable().optional(),
+  maxSalary: z.number().min(0).nullable().optional(),
+  skills: z.array(z.string().min(1).max(100)).optional(),
+  isActive: z.boolean().optional(),
+  deadline: z.string().datetime({ offset: true }).nullable().optional()
+});
+
+const APPLICATION_STATUSES = ['APPLIED', 'SHORTLISTED', 'INTERVIEWED', 'OFFERED', 'REJECTED', 'WITHDRAWN'] as const;
+
+export const createPlacementApplicationSchema = z.object({
+  jobId: z.string().min(1, 'Job ID is required'),
+  note: z.string().max(1000).optional()
+});
+
+export const updatePlacementApplicationStatusSchema = z.object({
+  status: z.enum(APPLICATION_STATUSES),
+  note: z.string().max(1000).nullable().optional()
+});

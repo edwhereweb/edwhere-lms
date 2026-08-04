@@ -981,3 +981,81 @@ model UserBadge {
   @@unique([userId, badgeId])
   @@index([userId])
 }
+
+// ── Placement Module ──────────────────────────
+
+model PlacementUser {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @unique // Clerk userId
+  name        String
+  email       String   @unique
+  phone       String?
+  resumeUrl   String?
+  skills      String[]
+  experience  Int      @default(0) // years
+  isActive    Boolean  @default(true)
+
+  applications PlacementApplication[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PlacementCompany {
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  description String?
+  website     String?
+  logoUrl     String?
+  industry    String?
+  isActive    Boolean @default(true)
+
+  jobs PlacementJob[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([name])
+}
+
+model PlacementJob {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  companyId   String   @db.ObjectId
+  company     PlacementCompany @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  title       String
+  description String
+  location    String?
+  type        String   @default("FULL_TIME") // FULL_TIME, PART_TIME, INTERNSHIP, CONTRACT
+  minSalary   Float?
+  maxSalary   Float?
+  skills      String[]
+  isActive    Boolean  @default(true)
+  deadline    DateTime?
+
+  applications PlacementApplication[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([isActive])
+}
+
+model PlacementApplication {
+  id        String        @id @default(auto()) @map("_id") @db.ObjectId
+  jobId     String        @db.ObjectId
+  job       PlacementJob  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  userId    String        @db.ObjectId
+  user      PlacementUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status    String        @default("APPLIED") // APPLIED, SHORTLISTED, INTERVIEWED, OFFERED, REJECTED, WITHDRAWN
+  note      String?
+  appliedAt DateTime      @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([jobId, userId])
+  @@index([userId])
+  @@index([jobId])
+  @@index([status])
+}
