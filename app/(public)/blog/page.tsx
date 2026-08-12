@@ -55,13 +55,13 @@ const BlogIndexPage = async ({ searchParams }: BlogIndexPageProps) => {
           {/* Sidebar / Filters */}
           <div className="md:w-64 flex-shrink-0 space-y-8">
             <div>
-              <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500 mb-4">
+              <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-4">
                 Categories
               </h3>
               <div className="flex flex-col gap-y-2">
                 <Link
                   href="/blog"
-                  className={`text-sm py-2 px-3 rounded-md transition-colors ${!searchParams.categoryId ? 'bg-sky-100 text-sky-700 font-bold' : 'hover:bg-slate-100 text-slate-600'}`}
+                  className={`text-sm py-2 px-3 rounded-md transition-colors ${!searchParams.categoryId ? 'bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-400 font-bold' : 'hover:bg-muted text-muted-foreground'}`}
                 >
                   All Topics
                 </Link>
@@ -69,7 +69,7 @@ const BlogIndexPage = async ({ searchParams }: BlogIndexPageProps) => {
                   <Link
                     key={cat.id}
                     href={`/blog?categoryId=${cat.id}`}
-                    className={`text-sm py-2 px-3 rounded-md transition-colors ${searchParams.categoryId === cat.id ? 'bg-sky-100 text-sky-700 font-bold' : 'hover:bg-slate-100 text-slate-600'}`}
+                    className={`text-sm py-2 px-3 rounded-md transition-colors ${searchParams.categoryId === cat.id ? 'bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-400 font-bold' : 'hover:bg-muted text-muted-foreground'}`}
                   >
                     {cat.name}
                   </Link>
@@ -81,8 +81,8 @@ const BlogIndexPage = async ({ searchParams }: BlogIndexPageProps) => {
           {/* Posts Grid */}
           <div className="flex-1">
             {posts.length === 0 ? (
-              <div className="text-center py-20 border-2 border-dashed border-slate-200 rounded-3xl">
-                <p className="text-slate-500 text-lg">No articles found in this category.</p>
+              <div className="text-center py-20 border-2 border-dashed border-border rounded-3xl">
+                <p className="text-muted-foreground text-lg">No articles found in this category.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">

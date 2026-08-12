@@ -30,7 +30,7 @@ export const PublicCourseCard = ({
 
     return (
         <Link href={courseUrl} className="group">
-            <div className="rounded-2xl overflow-hidden border border-gray-100 bg-white shadow-sm hover:shadow-xl transition-all duration-300 h-full flex flex-col">
+            <div className="rounded-2xl overflow-hidden border border-border bg-card shadow-sm hover:shadow-xl transition-all duration-300 h-full flex flex-col">
                 {/* Image */}
                 <div className="relative w-full aspect-video overflow-hidden">
                     <Image
@@ -41,7 +41,7 @@ export const PublicCourseCard = ({
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                     />
                     {category && (
-                        <span className="absolute bottom-3 right-3 bg-white/90 backdrop-blur-sm text-xs font-semibold font-inter text-gray-700 px-3 py-1 rounded-full shadow-sm">
+                        <span className="absolute bottom-3 right-3 bg-background/90 backdrop-blur-sm text-xs font-semibold font-inter text-foreground px-3 py-1 rounded-full shadow-sm">
                             {category}
                         </span>
                     )}
@@ -49,12 +49,12 @@ export const PublicCourseCard = ({
 
                 {/* Content */}
                 <div className="p-4 flex flex-col flex-1">
-                    <h3 className="font-opensans text-base font-semibold text-gray-900 line-clamp-2 group-hover:text-[#6715FF] transition-colors">
+                    <h3 className="font-opensans text-base font-semibold text-card-foreground line-clamp-2 group-hover:text-[#6715FF] transition-colors">
                         {title}
                     </h3>
 
                     {description && (
-                        <p className="text-sm text-gray-500 font-inter mt-1 line-clamp-2 flex-1">
+                        <p className="text-sm text-muted-foreground font-inter mt-1 line-clamp-2 flex-1">
                             {stripHtml(description)}
                         </p>
                     )}
@@ -66,7 +66,7 @@ export const PublicCourseCard = ({
                                 {instructors.slice(0, 3).map((inst, i) => (
                                     <div
                                         key={i}
-                                        className="w-6 h-6 rounded-full bg-gray-200 border-2 border-white overflow-hidden"
+                                        className="w-6 h-6 rounded-full bg-muted border-2 border-card overflow-hidden"
                                     >
                                         {inst.imageUrl ? (
                                             <Image
@@ -84,21 +84,21 @@ export const PublicCourseCard = ({
                                     </div>
                                 ))}
                             </div>
-                            <span className="text-xs text-gray-500 font-inter truncate">
+                            <span className="text-xs text-muted-foreground font-inter truncate">
                                 {instructors.map((i) => i.name).join(', ')}
                             </span>
                         </div>
                     )}
 
                     {/* Footer */}
-                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-                        <div className="flex items-center gap-1 text-xs text-gray-500 font-inter">
+                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground font-inter">
                             <BookOpen className="h-3.5 w-3.5" />
                             <span>
                                 {chaptersCount} {chaptersCount === 1 ? 'Chapter' : 'Chapters'}
                             </span>
                         </div>
-                        <span className="font-semibold text-sm font-inter text-gray-900">
+                        <span className="font-semibold text-sm font-inter text-card-foreground">
                             {price ? formatPrice(price) : 'Free'}
                         </span>
                     </div>

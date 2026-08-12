@@ -56,13 +56,13 @@ export default function VerifyCertificatePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F7F7] flex flex-col">
+    <div className="min-h-screen bg-muted flex flex-col">
       <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-8 py-12 sm:py-16">
         {!certificate ? (
           /* ── Verification Form ──────────────────────── */
           <div className="max-w-lg mx-auto">
             <div className="mb-8">
-              <h1 className="text-2xl sm:text-3xl font-bold text-[#1F1F1F] mb-2">
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
                 Certificate Verification
               </h1>
               <p className="text-[#ACB3C2] text-sm">
@@ -70,16 +70,16 @@ export default function VerifyCertificatePage() {
               </p>
             </div>
 
-            <div className="bg-white rounded-xl border border-[#E5E5E5] p-6 sm:p-8">
+            <div className="bg-card rounded-xl border border-border p-6 sm:p-8">
               <form onSubmit={handleVerify} className="space-y-5">
                 <div className="space-y-1.5">
-                  <Label htmlFor="credentialId" className="text-[#1F1F1F] font-medium text-sm">
+                  <Label htmlFor="credentialId" className="text-foreground font-medium text-sm">
                     Credential ID
                   </Label>
                   <Input
                     id="credentialId"
                     placeholder="e.g. CERT-230515-A1B2C"
-                    className="h-11 border-[#E5E5E5] text-[#1F1F1F] placeholder:text-[#ACB3C2] focus-visible:ring-[#F80602] focus-visible:border-[#F80602]"
+                    className="h-11 border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-[#F80602] focus-visible:border-[#F80602]"
                     value={credentialId}
                     onChange={(e) => {
                       setCredentialId(e.target.value);
@@ -89,13 +89,13 @@ export default function VerifyCertificatePage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="dateOfAchievement" className="text-[#1F1F1F] font-medium text-sm">
+                  <Label htmlFor="dateOfAchievement" className="text-foreground font-medium text-sm">
                     Date of Achievement
                   </Label>
                   <Input
                     id="dateOfAchievement"
                     type="date"
-                    className="h-11 border-[#E5E5E5] text-[#1F1F1F] focus-visible:ring-[#F80602] focus-visible:border-[#F80602] block w-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                    className="h-11 border-border text-foreground focus-visible:ring-[#F80602] focus-visible:border-[#F80602] block w-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                     value={dateOfAchievement}
                     onChange={(e) => {
                       setDateOfAchievement(e.target.value);
@@ -105,7 +105,7 @@ export default function VerifyCertificatePage() {
                 </div>
 
                 {error && (
-                  <div className="flex items-start gap-2.5 p-3.5 rounded-lg bg-red-50 border border-red-100 text-red-700">
+                  <div className="flex items-start gap-2.5 p-3.5 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-100 dark:border-red-800 text-red-700 dark:text-red-400">
                     <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
                     <p className="text-sm leading-relaxed">{error}</p>
                   </div>
@@ -132,7 +132,7 @@ export default function VerifyCertificatePage() {
           /* ── Verified Result ────────────────────────── */
           <div className="max-w-xl mx-auto">
             {/* Status banner */}
-            <div className="flex items-center gap-3 bg-green-50 border border-green-200 text-green-800 rounded-xl px-5 py-4 mb-6">
+            <div className="flex items-center gap-3 bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-400 rounded-xl px-5 py-4 mb-6">
               <CheckCircle className="w-5 h-5 shrink-0 text-green-600" />
               <div>
                 <p className="font-semibold text-sm">Certificate Verified</p>
@@ -143,7 +143,7 @@ export default function VerifyCertificatePage() {
             </div>
 
             {/* Certificate detail card */}
-            <div className="bg-white rounded-xl border border-[#E5E5E5] overflow-hidden">
+            <div className="bg-card rounded-xl border border-border overflow-hidden">
               {/* Card top bar */}
               <div className="bg-[#F80602] h-1.5 w-full" />
 
@@ -153,12 +153,12 @@ export default function VerifyCertificatePage() {
                   <p className="text-[11px] font-semibold uppercase tracking-widest text-[#ACB3C2] mb-1">
                     This certifies that
                   </p>
-                  <p className="text-2xl sm:text-3xl font-bold text-[#1F1F1F]">
+                  <p className="text-2xl sm:text-3xl font-bold text-foreground">
                     {certificate.recipientName}
                   </p>
                 </div>
 
-                <div className="h-px bg-[#E5E5E5]" />
+                <div className="h-px bg-border" />
 
                 {/* Course */}
                 <div>
@@ -174,13 +174,13 @@ export default function VerifyCertificatePage() {
                     <p className="text-[11px] font-semibold uppercase tracking-widest text-[#ACB3C2] mb-1">
                       Duration
                     </p>
-                    <p className="text-sm font-medium text-[#1F1F1F]">{certificate.duration}</p>
+                    <p className="text-sm font-medium text-foreground">{certificate.duration}</p>
                   </div>
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-widest text-[#ACB3C2] mb-1">
                       Mode
                     </p>
-                    <p className="text-sm font-medium text-[#1F1F1F] capitalize">
+                    <p className="text-sm font-medium text-foreground capitalize">
                       {certificate.deliveryMode}
                     </p>
                   </div>
@@ -188,7 +188,7 @@ export default function VerifyCertificatePage() {
                     <p className="text-[11px] font-semibold uppercase tracking-widest text-[#ACB3C2] mb-1">
                       Date Achieved
                     </p>
-                    <p className="text-sm font-medium text-[#1F1F1F]">
+                    <p className="text-sm font-medium text-foreground">
                       {certificate.dateOfAchievement}
                     </p>
                   </div>
@@ -197,7 +197,7 @@ export default function VerifyCertificatePage() {
                       <p className="text-[11px] font-semibold uppercase tracking-widest text-[#ACB3C2] mb-1">
                         Score (Out of 100)
                       </p>
-                      <p className="text-sm font-medium text-[#1F1F1F]">
+                      <p className="text-sm font-medium text-foreground">
                         <span className="text-base font-bold text-[#F80602]">
                           {certificate.score}
                         </span>
@@ -207,7 +207,7 @@ export default function VerifyCertificatePage() {
                   )}
                 </div>
 
-                <div className="h-px bg-[#E5E5E5]" />
+                <div className="h-px bg-border" />
 
                 {/* Credential ID & issuer */}
                 <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -215,7 +215,7 @@ export default function VerifyCertificatePage() {
                     <p className="text-[11px] font-semibold uppercase tracking-widest text-[#ACB3C2] mb-1">
                       Credential ID
                     </p>
-                    <code className="text-sm font-mono text-[#1F1F1F]">
+                    <code className="text-sm font-mono text-foreground">
                       {certificate.credentialId}
                     </code>
                   </div>
@@ -245,7 +245,7 @@ export default function VerifyCertificatePage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-[#E5E5E5] bg-white py-5">
+      <footer className="border-t border-border bg-background py-5">
         <div className="max-w-5xl mx-auto px-4 sm:px-8 flex items-center justify-between gap-4 flex-wrap text-xs text-[#ACB3C2]">
           <div className="flex items-center gap-2">
             <Image
