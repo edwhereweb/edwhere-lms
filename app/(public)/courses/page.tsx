@@ -69,7 +69,7 @@ export default async function PublicCoursesPage({ searchParams }: CoursesPagePro
   const hasUncategorized = courses.some((c) => !c.categoryId);
 
   return (
-    <div className="bg-white min-h-[80vh]">
+    <div className="bg-background min-h-[80vh]">
       {/* Hero Header */}
       <section className="bg-[#111111] text-white">
         <div className="max-w-[1400px] mx-auto px-6 py-16 text-center">
@@ -96,8 +96,8 @@ export default async function PublicCoursesPage({ searchParams }: CoursesPagePro
 
         {courses.length === 0 ? (
           <div className="text-center py-20">
-            <p className="text-xl text-gray-500 font-inter">No courses found</p>
-            <p className="text-sm text-gray-400 mt-2">
+            <p className="text-xl text-muted-foreground font-inter">No courses found</p>
+            <p className="text-sm text-muted-foreground/70 mt-2">
               Try adjusting your search or filter criteria
             </p>
           </div>

@@ -27,13 +27,13 @@ export const PublicSearchBar = ({ defaultValue }: PublicSearchBarProps) => {
 
     return (
         <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <input
                 type="text"
                 placeholder="Search for courses..."
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
-                className="w-full pl-12 pr-4 py-3.5 bg-white text-black rounded-xl border-0 text-base font-inter shadow-lg focus:outline-none focus:ring-2 focus:ring-[#6715FF] placeholder:text-gray-400"
+                className="w-full pl-12 pr-4 py-3.5 bg-background text-foreground rounded-xl border-0 text-base font-inter shadow-lg focus:outline-none focus:ring-2 focus:ring-[#6715FF] placeholder:text-muted-foreground"
             />
         </div>
     );

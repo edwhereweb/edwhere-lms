@@ -44,7 +44,7 @@ export const PublicCategoryFilter = ({
                         onClick={() => handleClick(category.id)}
                         className={`px-4 py-2 rounded-full text-sm font-medium font-inter transition-all border ${isSelected
                                 ? 'bg-[#6715FF] text-white border-[#6715FF] shadow-md'
-                                : 'bg-white text-gray-700 border-gray-200 hover:border-[#6715FF] hover:text-[#6715FF]'
+                                : 'bg-background text-foreground border-border hover:border-[#6715FF] hover:text-[#6715FF]'
                             }`}
                     >
                         {category.name}

@@ -287,30 +287,30 @@ export default async function PublicCourseDetailPage({ params }: { params: { cou
         </div>
       </section>
 
-      <section className="bg-white border-b">
+      <section className="bg-background border-b">
         <div className="max-w-[1200px] mx-auto px-6 py-8 grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="rounded-lg border p-4">
-            <p className="font-semibold text-gray-900 mb-1">Outcome-driven learning</p>
-            <p className="text-sm text-gray-600">
+            <p className="font-semibold text-foreground mb-1">Outcome-driven learning</p>
+            <p className="text-sm text-muted-foreground">
               Build practical skills through guided modules and chapter milestones.
             </p>
           </div>
           <div className="rounded-lg border p-4">
-            <p className="font-semibold text-gray-900 mb-1">Trusted instruction</p>
-            <p className="text-sm text-gray-600">
+            <p className="font-semibold text-foreground mb-1">Trusted instruction</p>
+            <p className="text-sm text-muted-foreground">
               Learn from experienced instructors with real-world domain expertise.
             </p>
           </div>
           <div className="rounded-lg border p-4">
-            <p className="font-semibold text-gray-900 mb-1">Secure and supported</p>
-            <p className="text-sm text-gray-600">
+            <p className="font-semibold text-foreground mb-1">Secure and supported</p>
+            <p className="text-sm text-muted-foreground">
               Secure payment checkout with support for purchase or refund assistance.
             </p>
           </div>
         </div>
       </section>
 
-      <div className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t bg-white/95 backdrop-blur p-4">
+      <div className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t bg-background/95 backdrop-blur p-4">
         <CourseBuyCta
           courseId={course.id}
           amount={course.price}
@@ -320,9 +320,9 @@ export default async function PublicCourseDetailPage({ params }: { params: { cou
       </div>
 
       {/* Course Curriculum */}
-      <section className="bg-white">
+      <section className="bg-background">
         <div className="max-w-[1200px] mx-auto px-6 py-16">
-          <h2 className="font-poppins text-2xl font-semibold text-gray-900 mb-8">
+          <h2 className="font-poppins text-2xl font-semibold text-foreground mb-8">
             Course Curriculum
           </h2>
 
@@ -331,18 +331,18 @@ export default async function PublicCourseDetailPage({ params }: { params: { cou
             {course.chapters.map((chapter, index) => (
               <div
                 key={chapter.id}
-                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100"
+                className="flex items-center justify-between p-4 bg-muted rounded-lg border border-border"
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-semibold text-gray-400 w-8">
+                  <span className="text-sm font-semibold text-muted-foreground w-8">
                     {String(index + 1).padStart(2, '0')}
                   </span>
-                  <span className="font-inter text-sm font-medium text-gray-800">
+                  <span className="font-inter text-sm font-medium text-foreground">
                     {chapter.title}
                   </span>
                 </div>
                 {chapter.isFree && (
-                  <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded">
+                  <span className="text-xs font-semibold text-green-600 bg-green-50 dark:bg-green-950/40 dark:text-green-400 px-2 py-0.5 rounded">
                     Free
                   </span>
                 )}
@@ -351,21 +351,21 @@ export default async function PublicCourseDetailPage({ params }: { params: { cou
 
             {/* Modules with chapters */}
             {course.modules.map((mod) => (
-              <div key={mod.id} className="border border-gray-200 rounded-xl overflow-hidden">
-                <div className="bg-gray-100 px-4 py-3">
-                  <h3 className="font-inter text-sm font-semibold text-gray-800">{mod.title}</h3>
+              <div key={mod.id} className="border border-border rounded-xl overflow-hidden">
+                <div className="bg-muted px-4 py-3">
+                  <h3 className="font-inter text-sm font-semibold text-foreground">{mod.title}</h3>
                 </div>
-                <div className="divide-y divide-gray-100">
+                <div className="divide-y divide-border">
                   {mod.chapters.map((chapter, index) => (
                     <div key={chapter.id} className="flex items-center justify-between px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <span className="text-sm font-semibold text-gray-400 w-8">
+                        <span className="text-sm font-semibold text-muted-foreground w-8">
                           {String(index + 1).padStart(2, '0')}
                         </span>
-                        <span className="font-inter text-sm text-gray-700">{chapter.title}</span>
+                        <span className="font-inter text-sm text-foreground">{chapter.title}</span>
                       </div>
                       {chapter.isFree && (
-                        <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded">
+                        <span className="text-xs font-semibold text-green-600 bg-green-50 dark:bg-green-950/40 dark:text-green-400 px-2 py-0.5 rounded">
                           Free
                         </span>
                       )}
@@ -376,7 +376,7 @@ export default async function PublicCourseDetailPage({ params }: { params: { cou
             ))}
 
             {totalChapters === 0 && (
-              <p className="text-center text-gray-400 font-inter py-8">Curriculum coming soon</p>
+              <p className="text-center text-muted-foreground font-inter py-8">Curriculum coming soon</p>
             )}
           </div>
         </div>
@@ -384,18 +384,18 @@ export default async function PublicCourseDetailPage({ params }: { params: { cou
 
       {/* Instructors */}
       {course.instructors.length > 0 && (
-        <section className="bg-gray-50">
+        <section className="bg-muted">
           <div className="max-w-[1200px] mx-auto px-6 py-16">
-            <h2 className="font-poppins text-2xl font-semibold text-gray-900 mb-8">
+            <h2 className="font-poppins text-2xl font-semibold text-foreground mb-8">
               Your Instructors
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
               {course.instructors.map((inst) => (
                 <div
                   key={inst.id}
-                  className="flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-100 shadow-sm"
+                  className="flex items-center gap-4 p-4 bg-card rounded-xl border border-border shadow-sm"
                 >
-                  <div className="w-14 h-14 rounded-full bg-gray-200 overflow-hidden shrink-0">
+                  <div className="w-14 h-14 rounded-full bg-muted overflow-hidden shrink-0">
                     {inst.profile.imageUrl ? (
                       <Image
                         src={inst.profile.imageUrl}
@@ -411,8 +411,8 @@ export default async function PublicCourseDetailPage({ params }: { params: { cou
                     )}
                   </div>
                   <div>
-                    <p className="font-inter font-semibold text-gray-900">{inst.profile.name}</p>
-                    <p className="text-xs text-gray-500 font-inter">Instructor</p>
+                    <p className="font-inter font-semibold text-card-foreground">{inst.profile.name}</p>
+                    <p className="text-xs text-muted-foreground font-inter">Instructor</p>
                   </div>
                 </div>
               ))}

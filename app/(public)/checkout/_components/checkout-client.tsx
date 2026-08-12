@@ -243,7 +243,7 @@ export function CheckoutClient({
           <p className="font-semibold text-xl">{amountLabel}</p>
         </div>
 
-        <div className="rounded-lg bg-slate-50 border px-4 py-3 text-sm space-y-1">
+        <div className="rounded-lg bg-muted border px-4 py-3 text-sm space-y-1">
           <p className="font-medium">Why buy with confidence?</p>
           <p>• Secure payment via Razorpay</p>
           <p>• Instant access after successful payment</p>
@@ -251,7 +251,7 @@ export function CheckoutClient({
         </div>
 
         {errorMessage && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950/40 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400">
             {errorMessage}
           </div>
         )}
@@ -261,7 +261,7 @@ export function CheckoutClient({
         </Button>
       </div>
 
-      <div className="md:hidden fixed bottom-0 inset-x-0 border-t bg-white/95 backdrop-blur p-4 z-40">
+      <div className="md:hidden fixed bottom-0 inset-x-0 border-t bg-background/95 backdrop-blur p-4 z-40">
         <Button onClick={onCheckoutClick} disabled={isSubmitting} className="w-full h-11">
           {isSubmitting ? 'Processing...' : `Pay ${amountLabel}`}
         </Button>
