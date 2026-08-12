@@ -3,10 +3,13 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { cache } from 'react';
-import { BookOpen, Users, Tag, ChevronRight } from 'lucide-react';
+import { auth } from '@clerk/nextjs/server';
+import { BookOpen, Users, Tag, ChevronRight, ShieldCheck, Award } from 'lucide-react';
 
 import { db } from '@/lib/db';
-import { formatPrice, stripHtml } from '@/lib/format';
+import { stripHtml } from '@/lib/format';
+import { CourseBuyCta } from './_components/course-buy-cta';
+import { CourseViewTracker } from './_components/course-view-tracker';
 
 // ── Helpers ─────────────────────────────────────────────────────────────
 
@@ -115,12 +118,24 @@ export async function generateMetadata({
 // ── Page Component ──────────────────────────────────────────────────────
 
 export default async function PublicCourseDetailPage({ params }: { params: { courseId: string } }) {
+  const { userId } = await auth();
   const course = await getCourseBySlug(params.courseId);
   if (!course || !(course as unknown as { isWebVisible: boolean }).isWebVisible) notFound();
+  const purchase = userId
+    ? await db.purchase.findUnique({
+        where: {
+          userId_courseId: {
+            userId,
+            courseId: course.id
+          }
+        }
+      })
+    : null;
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://learn.edwhere.com';
   const totalChapters =
     course.chapters.length + course.modules.reduce((sum, m) => sum + m.chapters.length, 0);
+  const isEnrolled = Boolean(purchase);
 
   const instructorNames = course.instructors.map((i) => i.profile.name);
 
@@ -165,6 +180,7 @@ export default async function PublicCourseDetailPage({ params }: { params: { cou
 
   return (
     <>
+      <CourseViewTracker courseId={course.id} amount={course.price} />
       {/* JSON-LD */}
       <script
         type="application/ld+json"
@@ -236,14 +252,21 @@ export default async function PublicCourseDetailPage({ params }: { params: { cou
               </div>
 
               {/* Price + CTA */}
-              <div className="flex items-center gap-4">
-                <Link
-                  href={`/courses/${course.id}/start`}
-                  className="inline-flex items-center justify-center px-8 py-3.5 bg-[#6715FF] text-white font-opensans font-semibold text-base rounded-xl transition-all hover:bg-[#5210CC] hover:shadow-lg hover:shadow-purple-500/20"
-                >
-                  Enroll Now
-                  {course.price ? ` — ${formatPrice(course.price)}` : ' — Free'}
-                </Link>
+              <div className="flex flex-col items-start gap-3">
+                <CourseBuyCta
+                  courseId={course.id}
+                  amount={course.price}
+                  isAuthenticated={Boolean(userId)}
+                  isEnrolled={isEnrolled}
+                />
+                <div className="text-sm text-gray-300 flex flex-wrap items-center gap-3">
+                  <span className="inline-flex items-center gap-1">
+                    <ShieldCheck className="h-4 w-4" /> Secure payment
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <Award className="h-4 w-4" /> Trusted instructors
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -263,6 +286,38 @@ export default async function PublicCourseDetailPage({ params }: { params: { cou
           </div>
         </div>
       </section>
+
+      <section className="bg-white border-b">
+        <div className="max-w-[1200px] mx-auto px-6 py-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="rounded-lg border p-4">
+            <p className="font-semibold text-gray-900 mb-1">Outcome-driven learning</p>
+            <p className="text-sm text-gray-600">
+              Build practical skills through guided modules and chapter milestones.
+            </p>
+          </div>
+          <div className="rounded-lg border p-4">
+            <p className="font-semibold text-gray-900 mb-1">Trusted instruction</p>
+            <p className="text-sm text-gray-600">
+              Learn from experienced instructors with real-world domain expertise.
+            </p>
+          </div>
+          <div className="rounded-lg border p-4">
+            <p className="font-semibold text-gray-900 mb-1">Secure and supported</p>
+            <p className="text-sm text-gray-600">
+              Secure payment checkout with support for purchase or refund assistance.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <div className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t bg-white/95 backdrop-blur p-4">
+        <CourseBuyCta
+          courseId={course.id}
+          amount={course.price}
+          isAuthenticated={Boolean(userId)}
+          isEnrolled={isEnrolled}
+        />
+      </div>
 
       {/* Course Curriculum */}
       <section className="bg-white">
@@ -368,18 +423,19 @@ export default async function PublicCourseDetailPage({ params }: { params: { cou
 
       {/* Bottom CTA */}
       <section className="bg-[#111111] text-white">
-        <div className="max-w-[1200px] mx-auto px-6 py-16 text-center">
+        <div className="max-w-[1200px] mx-auto px-6 py-16 text-center pb-28 md:pb-16">
           <h2 className="font-poppins text-3xl font-semibold mb-4">Ready to get started?</h2>
           <p className="font-inter text-gray-400 mb-8 max-w-lg mx-auto">
-            Enroll now and start learning with hands-on, expert-led training.
+            Build practical outcomes with expert mentorship, secure checkout, and support.
           </p>
-          <Link
-            href={`/courses/${course.id}/start`}
-            className="inline-flex items-center justify-center px-10 py-4 bg-[#6715FF] text-white font-opensans font-semibold text-lg rounded-xl transition-all hover:bg-[#5210CC] hover:shadow-lg hover:shadow-purple-500/20"
-          >
-            Enroll Now
-            {course.price ? ` — ${formatPrice(course.price)}` : ' — Free'}
-          </Link>
+          <div className="flex justify-center">
+            <CourseBuyCta
+              courseId={course.id}
+              amount={course.price}
+              isAuthenticated={Boolean(userId)}
+              isEnrolled={isEnrolled}
+            />
+          </div>
         </div>
       </section>
     </>

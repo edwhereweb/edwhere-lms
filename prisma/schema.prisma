@@ -23,6 +23,13 @@ enum PurchaseOnboardingSource {
   BATCH_ENROLLMENT
 }
 
+enum CourseOrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}
+
 model Profile {
   id String @id @default(auto()) @map("_id") @db.ObjectId
   userId String @unique
@@ -63,6 +70,7 @@ model Course {
   modules     Module[]
   chapters    Chapter[]
   purchases   Purchase[]
+  orders      CourseOrder[]
   instructors CourseInstructor[]
   messages    CourseMessage[]
   blogTagMappings BlogTagMapping[]
@@ -288,6 +296,26 @@ model Purchase {
   @@index([courseId])
 }
 
+model CourseOrder {
+  id                 String           @id @default(auto()) @map("_id") @db.ObjectId
+  userId             String
+  courseId           String           @db.ObjectId
+  course             Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  status             CourseOrderStatus @default(PENDING)
+  amountInPaise      Int
+  currency           String
+  razorpayOrderId    String           @unique
+  razorpayPaymentId  String?
+  razorpaySignature  String?
+  failureCode        String?
+  failureDescription String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  @@index([userId, courseId, status])
+  @@index([courseId, status])
+}
+
 model RazorpayCustomer {
   id                  String     @id @default(auto()) @map("_id") @db.ObjectId
   userId              String     @unique
@@ -306,6 +334,23 @@ model Logging {
   statusCode Int?
   errorMessage String?
   createdAt DateTime @default(now())
+}
+
+model FunnelEvent {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  event           String
+  dedupeKey       String   @unique
+  userId          String?
+  courseId        String   @db.ObjectId
+  amount          Float?
+  currency        String?
+  source          String?
+  device          String?
+  checkoutOrderId String?  @db.ObjectId
+  paymentOrderId  String?
+  createdAt       DateTime @default(now())
+
+  @@index([courseId, event, createdAt])
 }
 
 enum LeadClosureStatus {

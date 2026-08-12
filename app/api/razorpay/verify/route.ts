@@ -1,20 +1,21 @@
 import { db } from '@/lib/db';
-import { currentUser } from '@clerk/nextjs/server';
+import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { razorpayVerifySchema } from '@/lib/validations';
 import { validateBody, apiError, handleApiError } from '@/lib/api-utils';
 import { getRazorpay } from '@/lib/razorpay';
 import { isRateLimited } from '@/lib/rate-limit';
+import { debug } from '@/lib/debug';
 
 export async function POST(req: Request) {
   try {
-    const user = await currentUser();
-    if (!user || !user.id) {
+    const { userId } = await auth();
+    if (!userId) {
       return apiError('Unauthorized', 401);
     }
 
-    if (isRateLimited(`razorpay-verify:${user.id}`, { maxRequests: 10, windowMs: 60_000 })) {
+    if (isRateLimited(`razorpay-verify:${userId}`, { maxRequests: 10, windowMs: 60_000 })) {
       return apiError('Too many requests', 429);
     }
 
@@ -22,8 +23,7 @@ export async function POST(req: Request) {
     const validation = validateBody(razorpayVerifySchema, body);
     if (!validation.success) return validation.response;
 
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, courseId } =
-      validation.data;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = validation.data;
 
     const secret = process.env.RAZORPAY_KEY_SECRET;
     if (!secret) {
@@ -35,19 +35,40 @@ export async function POST(req: Request) {
       .createHmac('sha256', secret)
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
       .digest('hex');
+    const expected = Buffer.from(generatedSignature, 'hex');
+    const received = Buffer.from(razorpay_signature, 'hex');
 
-    if (
-      !crypto.timingSafeEqual(
-        Uint8Array.from(Buffer.from(generatedSignature, 'hex')),
-        Uint8Array.from(Buffer.from(razorpay_signature, 'hex'))
-      )
-    ) {
+    if (expected.length !== received.length || !crypto.timingSafeEqual(expected, received)) {
       return apiError('Invalid payment signature', 400);
     }
 
-    // Step 2: Fetch the order from Razorpay to get the authoritative courseId and
-    // userId that were embedded server-side at checkout. This prevents an attacker
-    // from paying for a cheap course and supplying a different courseId here.
+    const checkoutOrder = await db.courseOrder.findUnique({
+      where: { razorpayOrderId: razorpay_order_id }
+    });
+
+    if (!checkoutOrder) {
+      return apiError('Checkout order not found', 404);
+    }
+
+    if (checkoutOrder.userId !== userId) {
+      return apiError('Payment does not belong to this account', 400);
+    }
+
+    if (
+      checkoutOrder.status === 'PAID' &&
+      checkoutOrder.razorpayPaymentId === razorpay_payment_id
+    ) {
+      return NextResponse.json({ success: true });
+    }
+
+    if (
+      checkoutOrder.status === 'PAID' &&
+      checkoutOrder.razorpayPaymentId !== razorpay_payment_id
+    ) {
+      return apiError('Order already paid', 409);
+    }
+
+    // Step 2: Fetch the order from Razorpay to get authoritative metadata.
     const order = await getRazorpay().orders.fetch(razorpay_order_id);
     const notes = order.notes as Record<string, string> | undefined;
     const authoritativeCourseId = notes?.courseId;
@@ -57,18 +78,15 @@ export async function POST(req: Request) {
       return apiError('Order metadata missing', 400);
     }
 
-    // The client-supplied courseId must match what was recorded on the order.
-    if (authoritativeCourseId !== courseId) {
-      return apiError('Payment does not match this course', 400);
-    }
-
-    // The order must belong to the currently authenticated user.
-    if (authoritativeUserId !== user.id) {
+    if (authoritativeUserId !== userId) {
       return apiError('Payment does not belong to this account', 400);
     }
 
-    // Step 3: Cross-check the paid amount against the current course price so a
-    // price change between checkout and verify cannot be exploited (defence-in-depth).
+    if (authoritativeCourseId !== checkoutOrder.courseId) {
+      return apiError('Payment does not match checkout context', 400);
+    }
+
+    // Step 3: Cross-check the paid amount.
     const course = await db.course.findUnique({
       where: { id: authoritativeCourseId },
       select: { price: true }
@@ -83,21 +101,51 @@ export async function POST(req: Request) {
       return apiError('Payment amount does not match course price', 400);
     }
 
-    const existingPurchase = await db.purchase.findUnique({
-      where: {
-        userId_courseId: { userId: user.id, courseId: authoritativeCourseId }
+    await db.$transaction(async (tx) => {
+      const latest = await tx.courseOrder.findUnique({
+        where: { razorpayOrderId: razorpay_order_id }
+      });
+
+      if (!latest) return;
+      if (latest.status === 'PAID' && latest.razorpayPaymentId === razorpay_payment_id) {
+        return;
       }
+      if (latest.status === 'PAID' && latest.razorpayPaymentId !== razorpay_payment_id) {
+        throw new Error('Order already paid with another payment id');
+      }
+
+      await tx.courseOrder.update({
+        where: { id: latest.id },
+        data: {
+          status: 'PAID',
+          razorpayPaymentId: razorpay_payment_id,
+          razorpaySignature: razorpay_signature,
+          failureCode: null,
+          failureDescription: null
+        }
+      });
+
+      await tx.purchase.upsert({
+        where: {
+          userId_courseId: {
+            userId,
+            courseId: authoritativeCourseId
+          }
+        },
+        update: {},
+        create: {
+          userId,
+          courseId: authoritativeCourseId,
+          onboardingSource: 'PAID'
+        }
+      });
     });
 
-    if (existingPurchase) {
-      return NextResponse.json({ success: true });
-    }
-
-    const onboardingData: Record<string, string> = {
-      onboardingSource: 'PAID'
-    };
-    await db.purchase.create({
-      data: { courseId: authoritativeCourseId, userId: user.id, ...onboardingData }
+    debug('PAYMENT_SUCCESS', {
+      userId,
+      courseId: authoritativeCourseId,
+      razorpayOrderId: razorpay_order_id,
+      razorpayPaymentId: razorpay_payment_id
     });
 
     return NextResponse.json({ success: true });
