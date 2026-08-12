@@ -113,8 +113,35 @@ export const instructorSchema = z.object({
 export const razorpayVerifySchema = z.object({
   razorpay_order_id: z.string().min(1),
   razorpay_payment_id: z.string().min(1),
-  razorpay_signature: z.string().min(1),
-  courseId: z.string().min(1)
+  razorpay_signature: z.string().min(1)
+});
+
+export const checkoutOrderStatusSchema = z.object({
+  status: z.enum(['FAILED', 'CANCELLED']),
+  failureCode: z.string().max(100).optional(),
+  failureDescription: z.string().max(500).optional()
+});
+
+export const funnelEventSchema = z.object({
+  event: z.enum([
+    'course_view',
+    'buy_click',
+    'login_prompt_from_buy',
+    'login_success_from_buy',
+    'checkout_started',
+    'payment_initiated',
+    'payment_success',
+    'payment_failed',
+    'checkout_abandoned'
+  ]),
+  courseId: z.string().min(1),
+  amount: z.number().nonnegative().optional(),
+  currency: z.string().min(1).optional(),
+  source: z.string().max(100).optional(),
+  device: z.string().max(100).optional(),
+  dedupeKey: z.string().min(1).max(200),
+  checkoutOrderId: z.string().optional(),
+  paymentOrderId: z.string().optional()
 });
 
 export const profileUpdateSchema = z.object({
@@ -689,7 +716,14 @@ export const updatePlacementJobSchema = z.object({
   deadline: z.string().datetime({ offset: true }).nullable().optional()
 });
 
-const APPLICATION_STATUSES = ['APPLIED', 'SHORTLISTED', 'INTERVIEWED', 'OFFERED', 'REJECTED', 'WITHDRAWN'] as const;
+const APPLICATION_STATUSES = [
+  'APPLIED',
+  'SHORTLISTED',
+  'INTERVIEWED',
+  'OFFERED',
+  'REJECTED',
+  'WITHDRAWN'
+] as const;
 
 export const createPlacementApplicationSchema = z.object({
   jobId: z.string().min(1, 'Job ID is required'),

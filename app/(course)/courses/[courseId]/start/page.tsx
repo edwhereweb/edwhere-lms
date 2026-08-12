@@ -5,7 +5,11 @@ import { sortChapters } from '@/lib/chapter-utils';
 
 const CourseStartPage = async ({ params }: { params: { courseId: string } }) => {
   const { userId } = await auth();
-  if (!userId) return redirect('/sign-in');
+  if (!userId) {
+    return redirect(
+      `/sign-in?next=${encodeURIComponent(`/checkout?courseId=${params.courseId}&intent=buy`)}`
+    );
+  }
 
   const course = await db.course.findUnique({
     where: { id: params.courseId },

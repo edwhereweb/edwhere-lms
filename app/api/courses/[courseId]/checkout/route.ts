@@ -1,19 +1,25 @@
 import { db } from '@/lib/db';
-import { currentUser } from '@clerk/nextjs/server';
+import { auth, currentUser } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { getRazorpay } from '@/lib/razorpay';
 import { apiError, handleApiError } from '@/lib/api-utils';
 import { isRateLimited } from '@/lib/rate-limit';
+import { debug } from '@/lib/debug';
 
-export async function POST(req: Request, { params }: { params: { courseId: string } }) {
+export async function POST(_req: Request, { params }: { params: { courseId: string } }) {
   try {
-    const user = await currentUser();
-    if (!user || !user.id || !user.emailAddresses?.[0]?.emailAddress) {
+    const { userId } = await auth();
+    if (!userId) {
       return apiError('Unauthorized', 401);
     }
 
-    if (isRateLimited(`checkout:${user.id}`, { maxRequests: 5, windowMs: 60_000 })) {
+    if (isRateLimited(`checkout:${userId}`, { maxRequests: 5, windowMs: 60_000 })) {
       return apiError('Too many requests', 429);
+    }
+
+    const user = await currentUser();
+    if (!user || !user.emailAddresses?.[0]?.emailAddress) {
+      return apiError('Unauthorized', 401);
     }
 
     const [course, existingPurchase] = await Promise.all([
@@ -22,7 +28,7 @@ export async function POST(req: Request, { params }: { params: { courseId: strin
       }),
       db.purchase.findUnique({
         where: {
-          userId_courseId: { userId: user.id, courseId: params.courseId }
+          userId_courseId: { userId, courseId: params.courseId }
         }
       })
     ]);
@@ -42,17 +48,48 @@ export async function POST(req: Request, { params }: { params: { courseId: strin
     const amountInPaise = Math.round(course.price * 100);
     const receipt = `${params.courseId.slice(-16)}_${Date.now().toString(36)}`;
 
+    await db.courseOrder.updateMany({
+      where: {
+        userId,
+        courseId: params.courseId,
+        status: 'PENDING'
+      },
+      data: {
+        status: 'CANCELLED',
+        failureDescription: 'Superseded by a newer checkout attempt.'
+      }
+    });
+
     const order = await getRazorpay().orders.create({
       amount: amountInPaise,
       currency: 'INR',
       receipt,
       notes: {
         courseId: params.courseId,
-        userId: user.id
+        userId
       }
     });
 
+    const checkoutOrder = await db.courseOrder.create({
+      data: {
+        userId,
+        courseId: params.courseId,
+        amountInPaise,
+        currency: 'INR',
+        razorpayOrderId: order.id,
+        status: 'PENDING'
+      }
+    });
+
+    debug('CHECKOUT_STARTED', {
+      userId,
+      courseId: params.courseId,
+      checkoutOrderId: checkoutOrder.id,
+      razorpayOrderId: order.id
+    });
+
     return NextResponse.json({
+      checkoutOrderId: checkoutOrder.id,
       orderId: order.id,
       amount: order.amount,
       currency: order.currency,
