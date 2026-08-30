@@ -122,6 +122,56 @@ export const checkoutOrderStatusSchema = z.object({
   failureDescription: z.string().max(500).optional()
 });
 
+export const checkoutRequestSchema = z.object({
+  couponCode: z.string().trim().min(1).max(40).optional()
+});
+
+const couponTypeEnum = z.enum(['PERCENT', 'FIXED']);
+
+const isoDateString = z
+  .string()
+  .refine((value) => !isNaN(Date.parse(value)), 'Must be a valid date');
+
+const couponFieldsSchema = z.object({
+  code: z
+    .string()
+    .trim()
+    .min(3, 'Code must be at least 3 characters')
+    .max(40)
+    .regex(/^[A-Za-z0-9_-]+$/, 'Code may only contain letters, numbers, dashes and underscores'),
+  type: couponTypeEnum,
+  value: z.number().positive('Value must be greater than 0'),
+  currency: z.string().min(3).max(10).optional(),
+  isActive: z.boolean().optional(),
+  startsAt: isoDateString.optional().nullable(),
+  expiresAt: isoDateString.optional().nullable(),
+  maxRedemptions: z.number().int().positive().optional().nullable(),
+  maxRedemptionsPerUser: z.number().int().positive().optional().nullable(),
+  applicableCourseIds: z.array(z.string()).optional()
+});
+
+const percentValueWithinRange = (data: { type?: 'PERCENT' | 'FIXED'; value?: number }) => {
+  if (data.type === 'PERCENT' && typeof data.value === 'number') {
+    return data.value > 0 && data.value <= 100;
+  }
+  return true;
+};
+
+export const createCouponSchema = couponFieldsSchema.refine(percentValueWithinRange, {
+  message: 'Percent value must be between 1 and 100',
+  path: ['value']
+});
+
+export const updateCouponSchema = couponFieldsSchema.partial().refine(percentValueWithinRange, {
+  message: 'Percent value must be between 1 and 100',
+  path: ['value']
+});
+
+export const validateCouponSchema = z.object({
+  courseId: z.string().min(1, 'courseId is required'),
+  couponCode: z.string().trim().min(1, 'couponCode is required').max(40)
+});
+
 export const funnelEventSchema = z.object({
   event: z.enum([
     'course_view',

@@ -2,16 +2,26 @@ import { db } from '@/lib/db';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { getRazorpay } from '@/lib/razorpay';
-import { apiError, handleApiError } from '@/lib/api-utils';
+import { validateBody, apiError, handleApiError } from '@/lib/api-utils';
+import { checkoutRequestSchema } from '@/lib/validations';
+import { validateCouponForCourse } from '@/lib/coupons';
 import { isRateLimited } from '@/lib/rate-limit';
 import { debug } from '@/lib/debug';
 
-export async function POST(_req: Request, { params }: { params: { courseId: string } }) {
+export async function POST(req: Request, { params }: { params: { courseId: string } }) {
   try {
     const { userId } = await auth();
     if (!userId) {
       return apiError('Unauthorized', 401);
     }
+
+    // Body is optional for backward compatibility with existing clients that
+    // POST without a request body.
+    const rawBody = await req.text();
+    const parsedBody = rawBody ? JSON.parse(rawBody) : {};
+    const bodyValidation = validateBody(checkoutRequestSchema, parsedBody);
+    if (!bodyValidation.success) return bodyValidation.response;
+    const { couponCode } = bodyValidation.data;
 
     if (isRateLimited(`checkout:${userId}`, { maxRequests: 5, windowMs: 60_000 })) {
       return apiError('Too many requests', 429);
@@ -45,7 +55,30 @@ export async function POST(_req: Request, { params }: { params: { courseId: stri
       return apiError('Already purchased', 400);
     }
 
-    const amountInPaise = Math.round(course.price * 100);
+    const originalAmountInPaise = Math.round(course.price * 100);
+    let amountInPaise = originalAmountInPaise;
+    let appliedCouponId: string | undefined;
+    let appliedCouponCode: string | undefined;
+    let discountAmountInPaise: number | undefined;
+
+    if (couponCode) {
+      const couponResult = await validateCouponForCourse({
+        code: couponCode,
+        courseId: params.courseId,
+        userId,
+        originalAmountInPaise
+      });
+
+      if (!couponResult.valid) {
+        return apiError(couponResult.message, 400);
+      }
+
+      appliedCouponId = couponResult.coupon.id;
+      appliedCouponCode = couponResult.coupon.code;
+      discountAmountInPaise = couponResult.discountAmountInPaise;
+      amountInPaise = couponResult.finalAmountInPaise;
+    }
+
     const receipt = `${params.courseId.slice(-16)}_${Date.now().toString(36)}`;
 
     await db.courseOrder.updateMany({
@@ -77,7 +110,15 @@ export async function POST(_req: Request, { params }: { params: { courseId: stri
         amountInPaise,
         currency: 'INR',
         razorpayOrderId: order.id,
-        status: 'PENDING'
+        status: 'PENDING',
+        ...(appliedCouponId
+          ? {
+              couponId: appliedCouponId,
+              couponCode: appliedCouponCode,
+              originalAmountInPaise,
+              discountAmountInPaise
+            }
+          : {})
       }
     });
 
@@ -85,7 +126,8 @@ export async function POST(_req: Request, { params }: { params: { courseId: stri
       userId,
       courseId: params.courseId,
       checkoutOrderId: checkoutOrder.id,
-      razorpayOrderId: order.id
+      razorpayOrderId: order.id,
+      couponCode: appliedCouponCode
     });
 
     return NextResponse.json({
