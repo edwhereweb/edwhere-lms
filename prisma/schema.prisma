@@ -30,6 +30,11 @@ enum CourseOrderStatus {
   CANCELLED
 }
 
+enum CouponType {
+  PERCENT
+  FIXED
+}
+
 model Profile {
   id String @id @default(auto()) @map("_id") @db.ObjectId
   userId String @unique
@@ -309,11 +314,59 @@ model CourseOrder {
   razorpaySignature  String?
   failureCode        String?
   failureDescription String?
+
+  // Optional coupon metadata — additive, null when no coupon was applied.
+  couponId               String?  @db.ObjectId
+  couponCode             String?
+  originalAmountInPaise  Int?
+  discountAmountInPaise  Int?
+
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
 
   @@index([userId, courseId, status])
   @@index([courseId, status])
+  @@index([couponId])
+}
+
+model Coupon {
+  id                    String     @id @default(auto()) @map("_id") @db.ObjectId
+  code                  String     @unique
+  type                  CouponType
+  value                 Float
+  currency              String     @default("INR")
+  isActive              Boolean    @default(true)
+  startsAt              DateTime?
+  expiresAt             DateTime?
+  maxRedemptions        Int?
+  maxRedemptionsPerUser Int?
+  applicableCourseIds   String[]   @db.ObjectId
+  createdByUserId       String
+
+  redemptions           CouponRedemption[]
+
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
+
+  @@index([isActive])
+}
+
+model CouponRedemption {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  couponId       String   @db.ObjectId
+  coupon         Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  userId         String
+  courseId       String   @db.ObjectId
+  courseOrderId  String?  @db.ObjectId
+  discountAmount Int
+  redeemedAt     DateTime @default(now())
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([courseOrderId])
+  @@index([couponId, userId])
+  @@index([couponId, courseId])
 }
 
 model RazorpayCustomer {

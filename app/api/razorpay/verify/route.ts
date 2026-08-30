@@ -96,7 +96,9 @@ export async function POST(req: Request) {
       return apiError('Course not found', 404);
     }
 
-    const expectedAmountInPaise = Math.round(course.price * 100);
+    const originalAmountInPaise = Math.round(course.price * 100);
+    const discountAmountInPaise = checkoutOrder.discountAmountInPaise ?? 0;
+    const expectedAmountInPaise = Math.max(0, originalAmountInPaise - discountAmountInPaise);
     if (Number(order.amount) !== expectedAmountInPaise) {
       return apiError('Payment amount does not match course price', 400);
     }
@@ -139,6 +141,24 @@ export async function POST(req: Request) {
           onboardingSource: 'PAID'
         }
       });
+
+      if (latest.couponId) {
+        const existingRedemption = await tx.couponRedemption.findFirst({
+          where: { courseOrderId: latest.id }
+        });
+
+        if (!existingRedemption) {
+          await tx.couponRedemption.create({
+            data: {
+              couponId: latest.couponId,
+              userId: latest.userId,
+              courseId: latest.courseId,
+              courseOrderId: latest.id,
+              discountAmount: latest.discountAmountInPaise ?? 0
+            }
+          });
+        }
+      }
     });
 
     debug('PAYMENT_SUCCESS', {

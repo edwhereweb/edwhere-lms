@@ -24,6 +24,7 @@ import {
   GraduationCap,
   Settings,
   Award,
+  Percent,
   type LucideIcon
 } from 'lucide-react';
 import SidebarItem from './sidebar-item';
@@ -114,6 +115,7 @@ const teacherSections: SidebarSectionDef[] = [
       { icon: UserPlus, label: 'Manual Enrolment', href: '/teacher/enrolments', adminOnly: true },
       { icon: Tag, label: 'Categories', href: '/teacher/categories', adminOnly: true },
       { icon: Award, label: 'Certificates', href: '/admin/certificates', adminOnly: true },
+      { icon: Percent, label: 'Coupons', href: '/admin/coupons', adminOnly: true },
       {
         icon: Wallet,
         label: 'Payment Deletions',
