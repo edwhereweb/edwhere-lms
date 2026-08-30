@@ -140,12 +140,25 @@ This is the most safety-critical path in the system. Treat changes here with ext
 
 Use `rzp_test_*` keys. The card `4111 1111 1111 1111` with any CVV / future expiry passes by default. See [07-third-party.md](./07-third-party.md#razorpay) for more.
 
+### Coupons (optional discount step)
+
+Coupons are additive and never required — checkout works unchanged when no coupon is supplied.
+
+- Buyer optionally enters a code on the checkout page and clicks **Apply**. Client calls `POST /api/coupons/validate` with `{ courseId, couponCode }`, which re-runs `validateCouponForCourse()` (`lib/coupons.ts`) and returns a preview (`originalPrice`, `discountAmount`, `finalPrice`) or an invalid reason (expired/inactive/not applicable/limit reached). This preview is display-only.
+- At `POST /api/courses/[id]/checkout`, if a `couponCode` is present in the body, the server **re-validates it from scratch** (never trusts the preview) and creates the Razorpay order for the discounted amount. The applied coupon's id/code and the original/discount amounts are persisted on the `CourseOrder` row.
+- On successful verification (`/api/razorpay/verify`) or webhook capture (`/api/webhook/razorpay`), if the paid `CourseOrder` has a `couponId`, a `CouponRedemption` row is created (idempotently, keyed by `courseOrderId`) for audit and to enforce per-user/global usage limits on future purchases.
+- Coupon codes are case-insensitive; always normalized to uppercase via `normalizeCouponCode()`.
+- Admins manage coupons at `/admin/coupons` (sidebar → Administration → Coupons, admin-only).
+
 ### Where to look
 
 - `app/(course)/courses/[courseId]/chapters/[chapterId]/_components/course-enroll-button.tsx`
 - `app/api/courses/[courseId]/checkout/route.ts`
 - `app/api/razorpay/verify/route.ts`
 - `lib/razorpay.ts`
+- `lib/coupons.ts`, `lib/coupon-utils.ts` — coupon validation/discount logic
+- `app/api/coupons/validate/route.ts`, `app/api/admin/coupons/**` — coupon APIs
+- `app/(dashboard)/(routes)/admin/coupons/` — admin coupon management UI
 
 ---
 

@@ -48,6 +48,17 @@ Source of truth: `prisma/schema.prisma`. Whenever this doc disagrees with the sc
 - `position` is an integer with no DB-level uniqueness — uniqueness within parent is enforced by application logic (`reorder` endpoint).
 - Cardinality: chapters scale with content. A typical course has 10–60 chapters; total in low thousands.
 
+### Coupon / CouponRedemption
+
+**Stores:** discount coupons for course purchases and their audit trail.
+
+- `Coupon.code` is unique and always normalized to uppercase (`normalizeCouponCode()` in `lib/coupon-utils.ts`) — case-insensitive at the API boundary.
+- `Coupon.applicableCourseIds` empty means "applies to all courses"; non-empty restricts to those courses.
+- `Coupon.maxRedemptions` / `maxRedemptionsPerUser` are optional caps enforced by counting `CouponRedemption` rows at validation time (`lib/coupons.ts`).
+- `CouponRedemption` is 1:1 with a `CourseOrder` via unique `courseOrderId` (nullable, since a redemption can theoretically be created without one, but in practice always tied to the paid order) — created only after payment success/webhook capture, never at preview time.
+- `CourseOrder` carries optional, additive `couponId` / `couponCode` / `originalAmountInPaise` / `discountAmountInPaise` fields — `null` for orders with no coupon, so existing rows and the non-coupon checkout path are unaffected.
+- Cardinality: coupons are low volume (dozens); redemptions grow with paid, coupon-assisted orders.
+
 ### MuxData
 
 - 1:1 with Chapter via unique `chapterId`.

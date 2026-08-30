@@ -4,7 +4,7 @@ import { type ColumnDef } from '@tanstack/react-table';
 import { Pencil } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { getCouponStatus, type CouponStatus } from '@/lib/coupons';
+import { getCouponStatus, type CouponStatus } from '@/lib/coupon-utils';
 import { type CouponListItem } from './types';
 
 const statusBadgeVariant: Record<
