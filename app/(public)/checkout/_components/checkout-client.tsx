@@ -5,7 +5,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { trackFunnelEvent } from '@/lib/funnel-analytics';
+import { formatPrice } from '@/lib/format';
 
 type LatestOrder = {
   id: string;
@@ -24,6 +26,14 @@ type CheckoutClientProps = {
   userEmail: string;
   latestOrder: LatestOrder;
   intent: string | null;
+};
+
+type CouponPreview = {
+  code: string;
+  originalPrice: number;
+  discountAmount: number;
+  finalPrice: number;
+  message: string;
 };
 
 declare global {
@@ -64,6 +74,12 @@ export function CheckoutClient({
   const [errorMessage, setErrorMessage] = useState<string | null>(
     latestOrder?.failureDescription ?? null
   );
+  const [couponInput, setCouponInput] = useState('');
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState<CouponPreview | null>(null);
+
+  const payableAmountLabel = appliedCoupon ? formatPrice(appliedCoupon.finalPrice) : amountLabel;
 
   const retrying = latestOrder?.status === 'FAILED' || latestOrder?.status === 'CANCELLED';
   const checkoutStartedDedupe = useMemo(() => `checkout_started:${courseId}`, [courseId]);
@@ -87,6 +103,45 @@ export function CheckoutClient({
     });
   }, [amount, courseId, intent]);
 
+  const onApplyCoupon = async () => {
+    const code = couponInput.trim();
+    if (!code) return;
+    try {
+      setIsApplyingCoupon(true);
+      setCouponError(null);
+      const { data } = await axios.post('/api/coupons/validate', {
+        courseId,
+        couponCode: code
+      });
+
+      if (!data.valid) {
+        setAppliedCoupon(null);
+        setCouponError(data.message ?? 'Invalid coupon code.');
+        return;
+      }
+
+      setAppliedCoupon({
+        code: data.code,
+        originalPrice: data.originalPrice,
+        discountAmount: data.discountAmount,
+        finalPrice: data.finalPrice,
+        message: data.message
+      });
+      toast.success(data.message ?? 'Coupon applied.');
+    } catch {
+      setAppliedCoupon(null);
+      setCouponError('Failed to validate coupon. Please try again.');
+    } finally {
+      setIsApplyingCoupon(false);
+    }
+  };
+
+  const onRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponError(null);
+    setCouponInput('');
+  };
+
   const onCheckoutClick = async () => {
     if (isSubmitting) return;
 
@@ -94,7 +149,9 @@ export function CheckoutClient({
       setIsSubmitting(true);
       setErrorMessage(null);
 
-      const { data } = await axios.post(`/api/courses/${courseId}/checkout`);
+      const { data } = await axios.post(`/api/courses/${courseId}/checkout`, {
+        ...(appliedCoupon ? { couponCode: appliedCoupon.code } : {})
+      });
       await loadRazorpayScript();
 
       const {
@@ -240,7 +297,50 @@ export function CheckoutClient({
               {courseSlug ? `/courses/${courseSlug}` : `/courses/${courseId}`}
             </p>
           </div>
-          <p className="font-semibold text-xl">{amountLabel}</p>
+          <div className="text-right">
+            {appliedCoupon ? (
+              <>
+                <p className="text-sm text-muted-foreground line-through">{amountLabel}</p>
+                <p className="font-semibold text-xl">{payableAmountLabel}</p>
+              </>
+            ) : (
+              <p className="font-semibold text-xl">{amountLabel}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Have a coupon?</p>
+          {appliedCoupon ? (
+            <div className="flex items-center justify-between gap-2 rounded-lg border border-green-300 bg-green-50 dark:bg-green-950/40 dark:border-green-800 px-4 py-3 text-sm text-green-700 dark:text-green-400">
+              <span>
+                Coupon <span className="font-mono font-semibold">{appliedCoupon.code}</span> applied
+                — you save {formatPrice(appliedCoupon.discountAmount)}.
+              </span>
+              <Button variant="ghost" size="sm" onClick={onRemoveCoupon}>
+                Remove
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Input
+                value={couponInput}
+                onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                placeholder="Enter coupon code"
+                disabled={isApplyingCoupon}
+                className="flex-1 font-mono"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onApplyCoupon}
+                disabled={isApplyingCoupon || !couponInput.trim()}
+              >
+                {isApplyingCoupon ? 'Applying...' : 'Apply'}
+              </Button>
+            </div>
+          )}
+          {couponError && <p className="text-sm text-red-600 dark:text-red-400">{couponError}</p>}
         </div>
 
         <div className="rounded-lg bg-muted border px-4 py-3 text-sm space-y-1">
@@ -263,7 +363,7 @@ export function CheckoutClient({
 
       <div className="md:hidden fixed bottom-0 inset-x-0 border-t bg-background/95 backdrop-blur p-4 z-40">
         <Button onClick={onCheckoutClick} disabled={isSubmitting} className="w-full h-11">
-          {isSubmitting ? 'Processing...' : `Pay ${amountLabel}`}
+          {isSubmitting ? 'Processing...' : `Pay ${payableAmountLabel}`}
         </Button>
       </div>
     </div>

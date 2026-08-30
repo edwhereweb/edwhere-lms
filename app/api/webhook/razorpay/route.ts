@@ -90,6 +90,24 @@ export async function POST(req: Request) {
             onboardingSource: 'PAID'
           }
         });
+
+        if (latest.couponId) {
+          const existingRedemption = await tx.couponRedemption.findFirst({
+            where: { courseOrderId: latest.id }
+          });
+
+          if (!existingRedemption) {
+            await tx.couponRedemption.create({
+              data: {
+                couponId: latest.couponId,
+                userId: latest.userId,
+                courseId: latest.courseId,
+                courseOrderId: latest.id,
+                discountAmount: latest.discountAmountInPaise ?? 0
+              }
+            });
+          }
+        }
       });
     }
 
