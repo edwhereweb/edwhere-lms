@@ -139,6 +139,7 @@ model Quiz {
   maxTabSwitches  Int?
   passScore       Float?      // minimum % to pass (e.g. 60.0)
   maxAttempts     Int         @default(1)
+  allowSubmissionReportView Boolean @default(false)
 
   questions       Question[]
   attempts        QuizAttempt[]

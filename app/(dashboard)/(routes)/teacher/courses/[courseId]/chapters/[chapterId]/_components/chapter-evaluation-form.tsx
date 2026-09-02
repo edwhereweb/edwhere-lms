@@ -10,7 +10,15 @@ import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { Chapter } from '@prisma/client';
 
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormDescription
+} from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -41,7 +49,8 @@ export const ChapterEvaluationForm = ({
       randomize: initialData.quiz?.randomize ?? false,
       maxAttempts: initialData.quiz?.maxAttempts ?? 1,
       maxTabSwitches: initialData.quiz?.maxTabSwitches ?? null,
-      passScore: initialData.quiz?.passScore ?? null
+      passScore: initialData.quiz?.passScore ?? null,
+      allowSubmissionReportView: initialData.quiz?.allowSubmissionReportView ?? false
     }
   });
 
@@ -80,22 +89,32 @@ export const ChapterEvaluationForm = ({
       {!isEditing && (
         <div className="text-sm mt-2 space-y-2 text-slate-600 dark:text-slate-300">
           <p>
-            <span className="font-semibold">Type:</span> {initialData.quiz?.isGraded ? 'Graded Evaluation' : 'Practice Test'}
+            <span className="font-semibold">Type:</span>{' '}
+            {initialData.quiz?.isGraded ? 'Graded Evaluation' : 'Practice Test'}
           </p>
           <p>
-            <span className="font-semibold">Time Limit:</span> {initialData.quiz?.timeLimit ? `${initialData.quiz.timeLimit} minutes` : 'No Limit'}
+            <span className="font-semibold">Time Limit:</span>{' '}
+            {initialData.quiz?.timeLimit ? `${initialData.quiz.timeLimit} minutes` : 'No Limit'}
           </p>
           <p>
-            <span className="font-semibold">Randomize Questions:</span> {initialData.quiz?.randomize ? 'Yes' : 'No'}
+            <span className="font-semibold">Randomize Questions:</span>{' '}
+            {initialData.quiz?.randomize ? 'Yes' : 'No'}
           </p>
           <p>
-            <span className="font-semibold">Max Attempts:</span> {initialData.quiz?.maxAttempts || 1}
+            <span className="font-semibold">Max Attempts:</span>{' '}
+            {initialData.quiz?.maxAttempts || 1}
           </p>
           <p>
-            <span className="font-semibold">Max Tab Switches (Anti-cheat):</span> {initialData.quiz?.maxTabSwitches ?? 'Disabled'}
+            <span className="font-semibold">Max Tab Switches (Anti-cheat):</span>{' '}
+            {initialData.quiz?.maxTabSwitches ?? 'Disabled'}
           </p>
           <p>
-            <span className="font-semibold">Pass Score:</span> {initialData.quiz?.passScore != null ? `${initialData.quiz.passScore}%` : 'Not Set'}
+            <span className="font-semibold">Pass Score:</span>{' '}
+            {initialData.quiz?.passScore != null ? `${initialData.quiz.passScore}%` : 'Not Set'}
+          </p>
+          <p>
+            <span className="font-semibold">Submission Report Visible to Learner:</span>{' '}
+            {initialData.quiz?.allowSubmissionReportView ? 'Yes' : 'No'}
           </p>
         </div>
       )}
@@ -109,15 +128,13 @@ export const ChapterEvaluationForm = ({
               render={({ field }) => (
                 <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
                   <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
+                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
                   <div className="space-y-1 leading-none">
                     <FormLabel>Graded Evaluation</FormLabel>
                     <FormDescription>
-                      If checked, this test will factor into the user&apos;s final course score and cannot be easily retaken without depleting attempts.
+                      If checked, this test will factor into the user&apos;s final course score and
+                      cannot be easily retaken without depleting attempts.
                     </FormDescription>
                   </div>
                 </FormItem>
@@ -138,7 +155,9 @@ export const ChapterEvaluationForm = ({
                         placeholder="e.g. 30 (Leave empty for no limit)"
                         {...field}
                         value={field.value || ''}
-                        onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
+                        onChange={(e) =>
+                          field.onChange(e.target.value ? parseInt(e.target.value) : null)
+                        }
                       />
                     </FormControl>
                     <FormMessage />
@@ -159,7 +178,9 @@ export const ChapterEvaluationForm = ({
                         placeholder="e.g. 1"
                         {...field}
                         value={field.value || ''}
-                        onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : 1)}
+                        onChange={(e) =>
+                          field.onChange(e.target.value ? parseInt(e.target.value) : 1)
+                        }
                       />
                     </FormControl>
                     <FormMessage />
@@ -180,7 +201,9 @@ export const ChapterEvaluationForm = ({
                         placeholder="e.g. 3 (Leave empty to disable)"
                         {...field}
                         value={field.value || ''}
-                        onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
+                        onChange={(e) =>
+                          field.onChange(e.target.value ? parseInt(e.target.value) : null)
+                        }
                       />
                     </FormControl>
                     <FormDescription>
@@ -204,7 +227,9 @@ export const ChapterEvaluationForm = ({
                         placeholder="e.g. 60 (Leave empty for no threshold)"
                         {...field}
                         value={field.value || ''}
-                        onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
+                        onChange={(e) =>
+                          field.onChange(e.target.value ? parseFloat(e.target.value) : null)
+                        }
                       />
                     </FormControl>
                     <FormDescription>
@@ -222,13 +247,29 @@ export const ChapterEvaluationForm = ({
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 mt-4">
                   <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
+                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
                   <div className="space-y-1 leading-none">
                     <FormLabel>Randomize Question Order</FormLabel>
+                  </div>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="allowSubmissionReportView"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 mt-4">
+                  <FormControl>
+                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>The learner should be able to see the submission report</FormLabel>
+                    <FormDescription>
+                      When enabled, learners can view a detailed per-question review of their
+                      completed attempts, including their answers and the correct answers.
+                    </FormDescription>
                   </div>
                 </FormItem>
               )}
