@@ -233,7 +233,8 @@ export const createQuizSchema = z.object({
   randomize: z.boolean().optional(),
   maxAttempts: z.number().int().min(1, 'Attempts must be at least 1').nullable().optional(),
   maxTabSwitches: z.number().int().min(0).nullable().optional(),
-  passScore: z.number().min(0).max(100).nullable().optional()
+  passScore: z.number().min(0).max(100).nullable().optional(),
+  allowSubmissionReportView: z.boolean().optional()
 });
 
 export const createQuestionSchema = z.object({
