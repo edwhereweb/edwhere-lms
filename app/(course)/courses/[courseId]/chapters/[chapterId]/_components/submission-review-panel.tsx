@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { CheckCircle2, XCircle, Loader2, Download, FileSpreadsheet, X } from 'lucide-react';
+import { CheckCircle2, XCircle, Loader2, Download, FileSpreadsheet } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 
 interface SubmissionReviewPanelProps {
@@ -91,14 +92,11 @@ export const SubmissionReviewPanel = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-900 rounded-md shadow-lg max-w-3xl w-full max-h-[85vh] overflow-y-auto p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold">Submission Report</h2>
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            <X className="h-5 w-5" />
-          </Button>
-        </div>
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Submission Report</DialogTitle>
+        </DialogHeader>
 
         {loading && (
           <div className="flex items-center justify-center p-8">
@@ -195,7 +193,7 @@ export const SubmissionReviewPanel = ({
             </div>
           </>
         )}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };
