@@ -7,6 +7,7 @@ import { validateBody, apiError, handleApiError } from '@/lib/api-utils';
 import { getRazorpay } from '@/lib/razorpay';
 import { isRateLimited } from '@/lib/rate-limit';
 import { debug } from '@/lib/debug';
+import { sendCapiEvent } from '@/lib/meta-tracking';
 
 export async function POST(req: Request) {
   try {
@@ -89,7 +90,7 @@ export async function POST(req: Request) {
     // Step 3: Cross-check the paid amount.
     const course = await db.course.findUnique({
       where: { id: authoritativeCourseId },
-      select: { price: true }
+      select: { price: true, title: true }
     });
 
     if (!course || !course.price) {
@@ -160,6 +161,38 @@ export async function POST(req: Request) {
         }
       }
     });
+
+    // Authoritative Purchase CAPI conversion tracking
+    void (async () => {
+      try {
+        const userProfile = await db.profile.findUnique({
+          where: { userId },
+          select: { email: true, name: true }
+        });
+
+        await sendCapiEvent({
+          eventName: 'Purchase',
+          eventId: `purchase_${razorpay_order_id}`,
+          userData: {
+            email: userProfile?.email,
+            externalId: userId,
+            firstName: userProfile?.name?.split(' ')[0],
+            lastName: userProfile?.name?.split(' ').slice(1).join(' ')
+          },
+          customData: {
+            content_ids: [authoritativeCourseId],
+            content_name: course.title,
+            content_type: 'product',
+            value: expectedAmountInPaise / 100,
+            currency: 'INR',
+            order_id: razorpay_order_id,
+            num_items: 1
+          }
+        });
+      } catch {
+        // Safe fail-silent: never block payment verification response
+      }
+    })();
 
     debug('PAYMENT_SUCCESS', {
       userId,

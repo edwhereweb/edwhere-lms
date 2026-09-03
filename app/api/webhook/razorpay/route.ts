@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { apiError, handleApiError } from '@/lib/api-utils';
+import { sendCapiEvent } from '@/lib/meta-tracking';
 
 type RazorpayWebhookPayload = {
   event?: string;
@@ -10,6 +11,7 @@ type RazorpayWebhookPayload = {
       entity?: {
         id?: string;
         order_id?: string;
+        amount?: number;
         error_code?: string;
         error_description?: string;
       };
@@ -109,6 +111,47 @@ export async function POST(req: Request) {
           }
         }
       });
+
+      // Authoritative Purchase CAPI conversion tracking from webhook
+      void (async () => {
+        try {
+          const [orderCourse, userProfile] = await Promise.all([
+            db.course.findUnique({
+              where: { id: existingOrder.courseId },
+              select: { title: true }
+            }),
+            db.profile.findUnique({
+              where: { userId: existingOrder.userId },
+              select: { email: true, name: true }
+            })
+          ]);
+
+          const paidAmountInRupees =
+            (existingOrder.amountInPaise || (payment?.amount ? Number(payment.amount) : 0)) / 100;
+
+          await sendCapiEvent({
+            eventName: 'Purchase',
+            eventId: `purchase_${razorpayOrderId}`,
+            userData: {
+              email: userProfile?.email,
+              externalId: existingOrder.userId,
+              firstName: userProfile?.name?.split(' ')[0],
+              lastName: userProfile?.name?.split(' ').slice(1).join(' ')
+            },
+            customData: {
+              content_ids: [existingOrder.courseId],
+              content_name: orderCourse?.title ?? 'Course Enrollment',
+              content_type: 'product',
+              value: paidAmountInRupees,
+              currency: 'INR',
+              order_id: razorpayOrderId,
+              num_items: 1
+            }
+          });
+        } catch {
+          // Safe fail-silent: never block webhook response
+        }
+      })();
     }
 
     if (event === 'payment.failed' && existingOrder.status !== 'PAID') {

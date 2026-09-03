@@ -1158,3 +1158,41 @@ model PlacementApplication {
   @@index([jobId])
   @@index([status])
 }
+
+// ── Meta Tracking Settings (Pixel + CAPI) ──────────────────
+
+enum MetaTrackingMode {
+  OFF
+  PIXEL
+  CAPI
+  HYBRID
+}
+
+model MetaTrackingSettings {
+  id                        String           @id @default(auto()) @map("_id") @db.ObjectId
+  metaTrackingEnabled       Boolean          @default(false)
+  metaPixelId               String?
+  metaAccessToken           String?
+  metaTestEventCode         String?
+  metaTrackingMode          MetaTrackingMode @default(OFF)
+
+  // Event toggles (all default to false)
+  trackPageView             Boolean          @default(false)
+  trackViewContent          Boolean          @default(false)
+  trackCompleteRegistration Boolean          @default(false)
+  trackInitiateCheckout     Boolean          @default(false)
+  trackPurchase             Boolean          @default(false)
+  trackSearch               Boolean          @default(false)
+  trackLead                 Boolean          @default(false)
+  trackAddToCart            Boolean          @default(false)
+  trackContact              Boolean          @default(false)
+
+  advancedMatchingEnabled   Boolean          @default(false)
+  consentRequired           Boolean          @default(false)
+  debugEnabled              Boolean          @default(false)
+
+  updatedByUserId           String?
+  createdAt                 DateTime         @default(now())
+  updatedAt                 DateTime         @updatedAt
+}
+

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { trackFunnelEvent } from '@/lib/funnel-analytics';
 import { formatPrice } from '@/lib/format';
+import { useMetaPixel } from '@/components/providers/meta-pixel-provider';
 
 type LatestOrder = {
   id: string;
@@ -70,6 +71,7 @@ export function CheckoutClient({
   intent
 }: CheckoutClientProps) {
   const router = useRouter();
+  const { track } = useMetaPixel();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(
     latestOrder?.failureDescription ?? null
@@ -178,6 +180,21 @@ export function CheckoutClient({
         dedupeKey: `payment_initiated:${checkoutOrderId}`
       });
 
+      track(
+        'InitiateCheckout',
+        {
+          content_ids: [courseId],
+          content_name: courseTitle,
+          content_type: 'product',
+          value: appliedCoupon ? appliedCoupon.finalPrice : amount,
+          currency: currency || 'INR',
+          num_items: 1
+        },
+        {
+          eventId: `init_checkout_${checkoutOrderId}`
+        }
+      );
+
       const options = {
         key: keyId,
         amount: amountInPaise,
@@ -209,6 +226,22 @@ export function CheckoutClient({
               paymentOrderId: response.razorpay_order_id,
               dedupeKey: `payment_success:${response.razorpay_payment_id}`
             });
+
+            track(
+              'Purchase',
+              {
+                content_ids: [courseId],
+                content_name: courseTitle,
+                content_type: 'product',
+                value: appliedCoupon ? appliedCoupon.finalPrice : amount,
+                currency: 'INR',
+                order_id: response.razorpay_order_id,
+                num_items: 1
+              },
+              {
+                eventId: `purchase_${response.razorpay_order_id}`
+              }
+            );
 
             toast.success('Payment successful! You are now enrolled.');
             router.push(`/courses/${courseId}/start`);
