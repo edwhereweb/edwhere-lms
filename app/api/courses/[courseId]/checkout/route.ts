@@ -7,6 +7,7 @@ import { checkoutRequestSchema } from '@/lib/validations';
 import { validateCouponForCourse } from '@/lib/coupons';
 import { isRateLimited } from '@/lib/rate-limit';
 import { debug } from '@/lib/debug';
+import { sendCapiEvent } from '@/lib/meta-tracking';
 
 export async function POST(req: Request, { params }: { params: { courseId: string } }) {
   try {
@@ -128,6 +129,28 @@ export async function POST(req: Request, { params }: { params: { courseId: strin
       checkoutOrderId: checkoutOrder.id,
       razorpayOrderId: order.id,
       couponCode: appliedCouponCode
+    });
+
+    // Non-blocking Meta CAPI InitiateCheckout tracking
+    void sendCapiEvent({
+      eventName: 'InitiateCheckout',
+      eventId: `init_checkout_${checkoutOrder.id}`,
+      userData: {
+        email: user.emailAddresses[0].emailAddress,
+        externalId: userId,
+        firstName: user.firstName ?? undefined,
+        lastName: user.lastName ?? undefined
+      },
+      customData: {
+        content_ids: [params.courseId],
+        content_name: course.title,
+        content_type: 'product',
+        value: amountInPaise / 100,
+        currency: 'INR',
+        num_items: 1
+      }
+    }).catch(() => {
+      // Safe fail-silent: never block checkout flow
     });
 
     return NextResponse.json({

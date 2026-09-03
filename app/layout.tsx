@@ -6,6 +6,8 @@ import { ToastProvider } from '@/components/providers/toaster-provider';
 import ThemeSwitch from '@/components/theme-switch';
 import ThemeContextProvider from '@/components/providers/theme-provider';
 import { ConfettiProvider } from '@/components/providers/confetti-provider';
+import { MetaPixelProvider } from '@/components/providers/meta-pixel-provider';
+import { getMetaTrackingSettings, getPublicMetaTrackingConfig } from '@/lib/meta-tracking/settings';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const poppins = Poppins({
@@ -88,7 +90,15 @@ export const metadata: Metadata = {
   }
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  let initialConfig = null;
+  try {
+    const settings = await getMetaTrackingSettings();
+    initialConfig = getPublicMetaTrackingConfig(settings);
+  } catch {
+    // Fail-safe
+  }
+
   return (
     <ClerkProvider>
       <html lang="en" suppressHydrationWarning>
@@ -96,10 +106,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           className={`${inter.variable} ${poppins.variable} ${openSans.variable} ${inter.className}`}
         >
           <ThemeContextProvider>
-            <ConfettiProvider />
-            <ToastProvider />
-            {children}
-            <ThemeSwitch />
+            <MetaPixelProvider initialConfig={initialConfig}>
+              <ConfettiProvider />
+              <ToastProvider />
+              {children}
+              <ThemeSwitch />
+            </MetaPixelProvider>
           </ThemeContextProvider>
         </body>
       </html>

@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { logError } from '@/lib/debug';
+import { sendCapiEvent } from '@/lib/meta-tracking';
 import { SafeProfile } from '@/types';
 import { headers } from 'next/headers';
 import { auth, currentUser } from '@clerk/nextjs/server';
@@ -47,15 +48,18 @@ export default async function getSafeProfile() {
       const clerkUser = await currentUser();
       if (!clerkUser) return redirect('/sign-in');
 
+      const userEmail = (clerkUser.emailAddresses[0]?.emailAddress ?? '').toLowerCase();
+      const userName =
+        `${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim() ||
+        clerkUser.username ||
+        'User';
+
       currentProfile = await db.profile.create({
         data: {
           userId,
-          name:
-            `${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim() ||
-            clerkUser.username ||
-            'User',
+          name: userName,
           imageUrl: clerkUser.imageUrl ?? '',
-          email: (clerkUser.emailAddresses[0]?.emailAddress ?? '').toLowerCase(),
+          email: userEmail,
           lastLoginAt: new Date(),
           lastLoginIp: clientIp
         },
@@ -71,6 +75,24 @@ export default async function getSafeProfile() {
           lastLoginAt: true,
           lastLoginIp: true
         }
+      });
+
+      // Non-blocking Meta CAPI CompleteRegistration tracking
+      void sendCapiEvent({
+        eventName: 'CompleteRegistration',
+        eventId: `reg_${currentProfile.id}`,
+        userData: {
+          email: userEmail,
+          externalId: userId,
+          firstName: clerkUser.firstName ?? undefined,
+          lastName: clerkUser.lastName ?? undefined,
+          clientIpAddress: clientIp !== 'Unknown IP' ? clientIp : undefined
+        },
+        customData: {
+          status: 'completed'
+        }
+      }).catch(() => {
+        // Fail-safe: never block profile creation
       });
     } else {
       // Logic to conditionally update the login timestamp and IP

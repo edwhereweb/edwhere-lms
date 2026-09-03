@@ -180,7 +180,12 @@ export default async function PublicCourseDetailPage({ params }: { params: { cou
 
   return (
     <>
-      <CourseViewTracker courseId={course.id} amount={course.price} />
+      <CourseViewTracker
+        courseId={course.id}
+        title={course.title}
+        category={course.category?.name}
+        amount={course.price}
+      />
       {/* JSON-LD */}
       <script
         type="application/ld+json"
@@ -376,7 +381,9 @@ export default async function PublicCourseDetailPage({ params }: { params: { cou
             ))}
 
             {totalChapters === 0 && (
-              <p className="text-center text-muted-foreground font-inter py-8">Curriculum coming soon</p>
+              <p className="text-center text-muted-foreground font-inter py-8">
+                Curriculum coming soon
+              </p>
             )}
           </div>
         </div>
@@ -411,7 +418,9 @@ export default async function PublicCourseDetailPage({ params }: { params: { cou
                     )}
                   </div>
                   <div>
-                    <p className="font-inter font-semibold text-card-foreground">{inst.profile.name}</p>
+                    <p className="font-inter font-semibold text-card-foreground">
+                      {inst.profile.name}
+                    </p>
                     <p className="text-xs text-muted-foreground font-inter">Instructor</p>
                   </div>
                 </div>

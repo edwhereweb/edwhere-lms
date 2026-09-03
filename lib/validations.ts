@@ -785,3 +785,30 @@ export const updatePlacementApplicationStatusSchema = z.object({
   status: z.enum(APPLICATION_STATUSES),
   note: z.string().max(1000).nullable().optional()
 });
+
+// ── Meta Tracking (Pixel + CAPI) schemas ───────────────────────
+
+export const updateMetaTrackingSettingsSchema = z.object({
+  metaTrackingEnabled: z.boolean().optional(),
+  metaPixelId: z.string().trim().max(100).nullable().optional(),
+  metaAccessToken: z.string().trim().max(1000).nullable().optional(),
+  metaTestEventCode: z.string().trim().max(100).nullable().optional(),
+  metaTrackingMode: z.enum(['OFF', 'PIXEL', 'CAPI', 'HYBRID']).optional(),
+  trackPageView: z.boolean().optional(),
+  trackViewContent: z.boolean().optional(),
+  trackCompleteRegistration: z.boolean().optional(),
+  trackInitiateCheckout: z.boolean().optional(),
+  trackPurchase: z.boolean().optional(),
+  trackSearch: z.boolean().optional(),
+  trackLead: z.boolean().optional(),
+  trackAddToCart: z.boolean().optional(),
+  trackContact: z.boolean().optional(),
+  advancedMatchingEnabled: z.boolean().optional(),
+  consentRequired: z.boolean().optional(),
+  debugEnabled: z.boolean().optional()
+});
+
+export const testMetaTrackingEventSchema = z.object({
+  eventName: z.string().trim().min(1).max(100).optional(),
+  testEventCode: z.string().trim().max(100).optional()
+});
