@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { formatPrice } from '@/lib/format';
 import { trackFunnelEvent } from '@/lib/funnel-analytics';
+import { cn } from '@/lib/utils';
 
 export type CouponPreviewInfo = {
   code: string;
@@ -24,20 +25,22 @@ export type CouponPreviewInfo = {
 
 type CourseBuySectionProps = {
   courseId: string;
-  originalAmount: number | null;
+  originalPrice: number | null;
   isAuthenticated: boolean;
   isEnrolled: boolean;
-  initialCoupon?: CouponPreviewInfo | null;
-  initialError?: string | null;
+  initialCouponInfo?: CouponPreviewInfo | null;
+  initialCouponError?: string | null;
+  className?: string;
 };
 
 export function CourseBuySection({
   courseId,
-  originalAmount,
+  originalPrice: originalAmount,
   isAuthenticated,
   isEnrolled,
-  initialCoupon = null,
-  initialError = null
+  initialCouponInfo: initialCoupon = null,
+  initialCouponError: initialError = null,
+  className
 }: CourseBuySectionProps) {
   const router = useRouter();
   const [isNavigating, setIsNavigating] = useState(false);
@@ -135,7 +138,7 @@ export function CourseBuySection({
   };
 
   return (
-    <div className="w-full space-y-4">
+    <div className={cn('w-full space-y-4', className)}>
       {/* Price Display */}
       {originalAmount !== null && originalAmount > 0 && (
         <div className="flex flex-wrap items-baseline gap-3">
