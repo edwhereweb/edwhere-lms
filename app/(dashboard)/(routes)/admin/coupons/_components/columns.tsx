@@ -1,10 +1,11 @@
 'use client';
 
 import { type ColumnDef } from '@tanstack/react-table';
-import { Pencil } from 'lucide-react';
+import { Copy, Pencil } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { getCouponStatus, type CouponStatus } from '@/lib/coupon-utils';
+import { buildCouponLandingUrl, getCouponStatus, type CouponStatus } from '@/lib/coupon-utils';
 import { type CouponListItem } from './types';
 
 const statusBadgeVariant: Record<
@@ -26,6 +27,15 @@ const statusLabel: Record<CouponStatus, string> = {
 
 function toDate(value: string | null) {
   return value ? new Date(value) : null;
+}
+
+async function copyPromoUrl(url: string) {
+  try {
+    await navigator.clipboard.writeText(url);
+    toast.success('Promo URL copied to clipboard');
+  } catch {
+    toast.error('Could not copy — please try again');
+  }
 }
 
 export function buildColumns({
@@ -103,6 +113,38 @@ export function buildColumns({
                 Auto-apply
               </Badge>
             )}
+          </div>
+        );
+      }
+    },
+    {
+      id: 'promoUrl',
+      header: 'Promo URL',
+      cell: ({ row }) => {
+        const { campaignToken } = row.original;
+        if (!campaignToken) return <span className="text-muted-foreground text-xs">—</span>;
+
+        const applicableCourseId = row.original.applicableCourseIds[0] ?? null;
+        const promoUrl = buildCouponLandingUrl({
+          campaignToken,
+          courseId: applicableCourseId
+        });
+
+        return (
+          <div className="flex items-center gap-2 max-w-[220px]">
+            <span className="truncate font-mono text-xs text-muted-foreground" title={promoUrl}>
+              {promoUrl}
+            </span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="shrink-0 h-7 px-2"
+              onClick={() => void copyPromoUrl(promoUrl)}
+              aria-label="Copy promo URL"
+            >
+              <Copy className="h-3.5 w-3.5" />
+            </Button>
           </div>
         );
       }

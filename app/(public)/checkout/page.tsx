@@ -15,6 +15,21 @@ type CheckoutPageProps = {
   };
 };
 
+type AutoAppliedCouponResult =
+  | {
+      status: 'applied';
+      code: string;
+      originalPrice: number;
+      discountAmount: number;
+      finalPrice: number;
+      message: string;
+    }
+  | {
+      status: 'invalid';
+      message: string;
+    }
+  | null;
+
 export default async function CheckoutPage({ searchParams }: CheckoutPageProps) {
   const { userId } = await auth();
   if (!userId) {
@@ -115,7 +130,7 @@ async function getAutoAppliedCouponPreview({
   userId: string;
   courseId: string;
   originalAmountInPaise: number;
-}) {
+}): Promise<AutoAppliedCouponResult> {
   try {
     const cookieValue = cookies().get(CAMPAIGN_COOKIE_NAME)?.value;
     const token = await verifyCampaignCookieValue(cookieValue);
@@ -131,9 +146,12 @@ async function getAutoAppliedCouponPreview({
       originalAmountInPaise
     });
 
-    if (!result.valid) return null;
+    if (!result.valid) {
+      return { status: 'invalid', message: result.message };
+    }
 
     return {
+      status: 'applied',
       code: result.coupon.code,
       originalPrice: result.originalAmountInPaise / 100,
       discountAmount: result.discountAmountInPaise / 100,

@@ -6,6 +6,7 @@ import {
   getCampaignCookieMaxAgeSeconds,
   isValidCampaignToken
 } from '@/lib/campaign-cookie';
+import { CAMPAIGN_TOKEN_PARAM } from '@/lib/coupon-utils';
 
 const isPublicRoute = createRouteMatcher([
   '/',
@@ -37,10 +38,6 @@ const MOBILE_CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-App-Version',
   'Access-Control-Max-Age': '86400'
 };
-
-// Query param carrying a Meta Ads (or other campaign) coupon token, e.g.
-// an ad destination URL like `/courses/aws-101?ct=META_AWS_50`.
-const CAMPAIGN_TOKEN_PARAM = 'ct';
 
 export default clerkMiddleware(async (auth, req) => {
   if (req.method === 'OPTIONS' && req.nextUrl.pathname.startsWith('/api/mobile/')) {
