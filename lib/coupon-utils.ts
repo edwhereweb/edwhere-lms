@@ -1,5 +1,38 @@
 import type { Coupon } from '@prisma/client';
 
+const DEFAULT_APP_URL = 'https://learn.edwhere.com';
+
+// Query param carrying a Meta Ads (or other campaign) coupon token, e.g.
+// an ad destination URL like `/courses/aws-101?ct=META_AWS_50`. Shared by
+// the middleware (which captures it into a signed cookie) and by anything
+// that needs to build/display a promo landing URL for a coupon.
+export const CAMPAIGN_TOKEN_PARAM = 'ct';
+
+/**
+ * Builds the canonical, absolute landing URL for a coupon's campaign
+ * token — the single source of truth for this URL shape so admin UI and
+ * any future callers never duplicate the construction logic. Links to a
+ * specific course when one is provided, otherwise falls back to the
+ * course catalog.
+ */
+export function buildCouponLandingUrl({
+  campaignToken,
+  courseId,
+  baseUrl
+}: {
+  campaignToken: string;
+  courseId?: string | null;
+  baseUrl?: string;
+}): string {
+  const origin = (baseUrl ?? process.env.NEXT_PUBLIC_APP_URL ?? DEFAULT_APP_URL).replace(
+    /\/+$/,
+    ''
+  );
+  const path = courseId ? `/courses/${courseId}` : '/courses';
+  const params = new URLSearchParams({ [CAMPAIGN_TOKEN_PARAM]: campaignToken });
+  return `${origin}${path}?${params.toString()}`;
+}
+
 /** Case-insensitive coupon codes are normalized to uppercase everywhere. */
 export function normalizeCouponCode(code: string): string {
   return code.trim().toUpperCase();

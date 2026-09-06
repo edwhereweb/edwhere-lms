@@ -27,7 +27,7 @@ type CheckoutClientProps = {
   userEmail: string;
   latestOrder: LatestOrder;
   intent: string | null;
-  autoAppliedCoupon: CouponPreview | null;
+  autoAppliedCoupon: AutoAppliedCouponResult;
 };
 
 type CouponPreview = {
@@ -37,6 +37,11 @@ type CouponPreview = {
   finalPrice: number;
   message: string;
 };
+
+type AutoAppliedCouponResult =
+  | ({ status: 'applied' } & CouponPreview)
+  | { status: 'invalid'; message: string }
+  | null;
 
 declare global {
   interface Window {
@@ -81,8 +86,15 @@ export function CheckoutClient({
   const [couponInput, setCouponInput] = useState('');
   const [couponError, setCouponError] = useState<string | null>(null);
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
-  const [appliedCoupon, setAppliedCoupon] = useState<CouponPreview | null>(autoAppliedCoupon);
-  const [couponIsAutoApplied, setCouponIsAutoApplied] = useState(Boolean(autoAppliedCoupon));
+  const [appliedCoupon, setAppliedCoupon] = useState<CouponPreview | null>(
+    autoAppliedCoupon?.status === 'applied' ? autoAppliedCoupon : null
+  );
+  const [couponIsAutoApplied, setCouponIsAutoApplied] = useState(
+    autoAppliedCoupon?.status === 'applied'
+  );
+  const [invalidUrlCouponMessage, setInvalidUrlCouponMessage] = useState<string | null>(
+    autoAppliedCoupon?.status === 'invalid' ? autoAppliedCoupon.message : null
+  );
 
   const payableAmountLabel = appliedCoupon ? formatPrice(appliedCoupon.finalPrice) : amountLabel;
 
@@ -109,7 +121,7 @@ export function CheckoutClient({
   }, [amount, courseId, intent]);
 
   useEffect(() => {
-    if (!autoAppliedCoupon) return;
+    if (autoAppliedCoupon?.status !== 'applied') return;
     void trackFunnelEvent({
       event: 'campaign_coupon_auto_applied',
       courseId,
@@ -125,6 +137,7 @@ export function CheckoutClient({
     try {
       setIsApplyingCoupon(true);
       setCouponError(null);
+      setInvalidUrlCouponMessage(null);
       const { data } = await axios.post('/api/coupons/validate', {
         courseId,
         couponCode: code
@@ -396,6 +409,12 @@ export function CheckoutClient({
                 {isApplyingCoupon ? 'Applying...' : 'Apply'}
               </Button>
             </div>
+          )}
+          {invalidUrlCouponMessage && !appliedCoupon && (
+            <p className="text-sm text-amber-600 dark:text-amber-400">
+              {invalidUrlCouponMessage} You can still checkout at the regular price, or try another
+              coupon below.
+            </p>
           )}
           {couponError && <p className="text-sm text-red-600 dark:text-red-400">{couponError}</p>}
         </div>
