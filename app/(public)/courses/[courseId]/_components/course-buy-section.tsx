@@ -79,29 +79,36 @@ export function CourseBuySection({
         couponCode: code
       });
 
-      if (!data.valid) {
+      const isApplied = data?.valid === true || data?.status === 'applied';
+
+      if (!isApplied) {
         setAppliedCoupon(null);
-        setCouponError(data.message ?? 'Invalid coupon code.');
+        setCouponError(data?.message ?? 'Invalid coupon code.');
         return;
       }
 
       const couponInfo: CouponPreviewInfo = {
-        code: data.code,
+        code: data.code ?? code,
         type: data.type,
         value: data.value,
         originalPrice: data.originalPrice,
         discountAmount: data.discountAmount,
         finalPrice: data.finalPrice,
-        message: data.message ?? `Coupon "${data.code}" applied.`
+        message: data.message ?? `Coupon "${data.code ?? code}" applied.`,
+        isAutoApplied: data.isAutoApplied
       };
 
       setAppliedCoupon(couponInfo);
       setCouponError(null);
       setCouponInput('');
       toast.success(couponInfo.message);
-    } catch {
+    } catch (error) {
       setAppliedCoupon(null);
-      setCouponError('Failed to validate coupon. Please try again.');
+      const serverMessage = axios.isAxiosError(error)
+        ? ((error.response?.data as { error?: string; message?: string } | undefined)?.error ??
+          (error.response?.data as { error?: string; message?: string } | undefined)?.message)
+        : undefined;
+      setCouponError(serverMessage ?? 'Failed to validate coupon. Please try again.');
     } finally {
       setIsApplying(false);
     }
