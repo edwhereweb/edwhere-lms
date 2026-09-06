@@ -155,7 +155,8 @@ export async function POST(req: Request) {
               userId: latest.userId,
               courseId: latest.courseId,
               courseOrderId: latest.id,
-              discountAmount: latest.discountAmountInPaise ?? 0
+              discountAmount: latest.discountAmountInPaise ?? 0,
+              source: latest.couponSource ?? null
             }
           });
         }

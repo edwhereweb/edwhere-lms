@@ -10,6 +10,8 @@ export type CouponListItem = {
   maxRedemptions: number | null;
   maxRedemptionsPerUser: number | null;
   applicableCourseIds: string[];
+  campaignToken: string | null;
+  autoApply: boolean;
   createdByUserId: string;
   createdAt: string;
   updatedAt: string;

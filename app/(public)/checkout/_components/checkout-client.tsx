@@ -27,6 +27,7 @@ type CheckoutClientProps = {
   userEmail: string;
   latestOrder: LatestOrder;
   intent: string | null;
+  autoAppliedCoupon: CouponPreview | null;
 };
 
 type CouponPreview = {
@@ -68,7 +69,8 @@ export function CheckoutClient({
   userName,
   userEmail,
   latestOrder,
-  intent
+  intent,
+  autoAppliedCoupon
 }: CheckoutClientProps) {
   const router = useRouter();
   const { track } = useMetaPixel();
@@ -79,7 +81,8 @@ export function CheckoutClient({
   const [couponInput, setCouponInput] = useState('');
   const [couponError, setCouponError] = useState<string | null>(null);
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
-  const [appliedCoupon, setAppliedCoupon] = useState<CouponPreview | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<CouponPreview | null>(autoAppliedCoupon);
+  const [couponIsAutoApplied, setCouponIsAutoApplied] = useState(Boolean(autoAppliedCoupon));
 
   const payableAmountLabel = appliedCoupon ? formatPrice(appliedCoupon.finalPrice) : amountLabel;
 
@@ -105,6 +108,17 @@ export function CheckoutClient({
     });
   }, [amount, courseId, intent]);
 
+  useEffect(() => {
+    if (!autoAppliedCoupon) return;
+    void trackFunnelEvent({
+      event: 'campaign_coupon_auto_applied',
+      courseId,
+      amount,
+      dedupeKey: `campaign_coupon_auto_applied:${courseId}:${autoAppliedCoupon.code}`
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const onApplyCoupon = async () => {
     const code = couponInput.trim();
     if (!code) return;
@@ -118,6 +132,7 @@ export function CheckoutClient({
 
       if (!data.valid) {
         setAppliedCoupon(null);
+        setCouponIsAutoApplied(false);
         setCouponError(data.message ?? 'Invalid coupon code.');
         return;
       }
@@ -129,9 +144,11 @@ export function CheckoutClient({
         finalPrice: data.finalPrice,
         message: data.message
       });
+      setCouponIsAutoApplied(false);
       toast.success(data.message ?? 'Coupon applied.');
     } catch {
       setAppliedCoupon(null);
+      setCouponIsAutoApplied(false);
       setCouponError('Failed to validate coupon. Please try again.');
     } finally {
       setIsApplyingCoupon(false);
@@ -140,6 +157,7 @@ export function CheckoutClient({
 
   const onRemoveCoupon = () => {
     setAppliedCoupon(null);
+    setCouponIsAutoApplied(false);
     setCouponError(null);
     setCouponInput('');
   };
@@ -152,7 +170,12 @@ export function CheckoutClient({
       setErrorMessage(null);
 
       const { data } = await axios.post(`/api/courses/${courseId}/checkout`, {
-        ...(appliedCoupon ? { couponCode: appliedCoupon.code } : {})
+        ...(appliedCoupon
+          ? {
+              couponCode: appliedCoupon.code,
+              couponSource: couponIsAutoApplied ? 'campaign' : 'manual'
+            }
+          : {})
       });
       await loadRazorpayScript();
 
@@ -347,8 +370,9 @@ export function CheckoutClient({
           {appliedCoupon ? (
             <div className="flex items-center justify-between gap-2 rounded-lg border border-green-300 bg-green-50 dark:bg-green-950/40 dark:border-green-800 px-4 py-3 text-sm text-green-700 dark:text-green-400">
               <span>
-                Coupon <span className="font-mono font-semibold">{appliedCoupon.code}</span> applied
-                — you save {formatPrice(appliedCoupon.discountAmount)}.
+                Coupon <span className="font-mono font-semibold">{appliedCoupon.code}</span>{' '}
+                {couponIsAutoApplied ? 'applied automatically' : 'applied'} — you save{' '}
+                {formatPrice(appliedCoupon.discountAmount)}.
               </span>
               <Button variant="ghost" size="sm" onClick={onRemoveCoupon}>
                 Remove

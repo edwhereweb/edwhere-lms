@@ -29,6 +29,21 @@ export type CouponValidationResult =
     };
 
 /**
+ * Resolves a Meta Ads campaign token (captured via the signed
+ * `edwhere_campaign` cookie, see `lib/campaign-cookie.ts`) to the coupon
+ * code it maps to. Only returns a code for coupons explicitly flagged
+ * `autoApply: true` — campaign tokens must never silently unlock coupons
+ * that were only meant for manual entry. The returned code still goes
+ * through the exact same `validateCouponForCourse` checks as a manually
+ * typed coupon before it can affect a price.
+ */
+export async function resolveCampaignCouponCode(token: string): Promise<string | null> {
+  const coupon = await db.coupon.findUnique({ where: { campaignToken: token } });
+  if (!coupon || !coupon.autoApply) return null;
+  return coupon.code;
+}
+
+/**
  * Re-validates a coupon server-side against a specific course/user context.
  * Must be called both for checkout preview and again at order creation —
  * never trust a client-supplied discount amount.

@@ -36,6 +36,15 @@ export async function PATCH(req: Request, { params }: { params: { couponId: stri
       }
     }
 
+    if (data.campaignToken) {
+      const tokenConflict = await db.coupon.findUnique({
+        where: { campaignToken: data.campaignToken }
+      });
+      if (tokenConflict && tokenConflict.id !== params.couponId) {
+        return apiError('A coupon with this campaign token already exists', 409);
+      }
+    }
+
     const coupon = await db.coupon.update({
       where: { id: params.couponId },
       data: {
@@ -56,7 +65,9 @@ export async function PATCH(req: Request, { params }: { params: { couponId: stri
           : {}),
         ...(data.applicableCourseIds !== undefined
           ? { applicableCourseIds: data.applicableCourseIds }
-          : {})
+          : {}),
+        ...(data.campaignToken !== undefined ? { campaignToken: data.campaignToken } : {}),
+        ...(data.autoApply !== undefined ? { autoApply: data.autoApply } : {})
       }
     });
 

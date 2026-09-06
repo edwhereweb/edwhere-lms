@@ -22,7 +22,7 @@ export async function POST(req: Request, { params }: { params: { courseId: strin
     const parsedBody = rawBody ? JSON.parse(rawBody) : {};
     const bodyValidation = validateBody(checkoutRequestSchema, parsedBody);
     if (!bodyValidation.success) return bodyValidation.response;
-    const { couponCode } = bodyValidation.data;
+    const { couponCode, couponSource } = bodyValidation.data;
 
     if (isRateLimited(`checkout:${userId}`, { maxRequests: 5, windowMs: 60_000 })) {
       return apiError('Too many requests', 429);
@@ -116,6 +116,7 @@ export async function POST(req: Request, { params }: { params: { courseId: strin
           ? {
               couponId: appliedCouponId,
               couponCode: appliedCouponCode,
+              couponSource: couponSource ?? 'manual',
               originalAmountInPaise,
               discountAmountInPaise
             }

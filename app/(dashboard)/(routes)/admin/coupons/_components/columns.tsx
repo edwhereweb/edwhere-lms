@@ -90,6 +90,24 @@ export function buildColumns({
       }
     },
     {
+      id: 'campaign',
+      header: 'Campaign',
+      cell: ({ row }) => {
+        const { campaignToken, autoApply } = row.original;
+        if (!campaignToken) return <span className="text-muted-foreground text-xs">—</span>;
+        return (
+          <div className="flex flex-col gap-1">
+            <span className="font-mono text-xs">{campaignToken}</span>
+            {autoApply && (
+              <Badge variant="secondary" className="w-fit text-xs">
+                Auto-apply
+              </Badge>
+            )}
+          </div>
+        );
+      }
+    },
+    {
       id: 'actions',
       header: 'Actions',
       cell: ({ row }) => {

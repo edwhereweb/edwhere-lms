@@ -48,6 +48,15 @@ export async function POST(req: Request) {
       return apiError('A coupon with this code already exists', 409);
     }
 
+    if (data.campaignToken) {
+      const existingToken = await db.coupon.findUnique({
+        where: { campaignToken: data.campaignToken }
+      });
+      if (existingToken) {
+        return apiError('A coupon with this campaign token already exists', 409);
+      }
+    }
+
     const coupon = await db.coupon.create({
       data: {
         code,
@@ -60,6 +69,8 @@ export async function POST(req: Request) {
         maxRedemptions: data.maxRedemptions ?? null,
         maxRedemptionsPerUser: data.maxRedemptionsPerUser ?? null,
         applicableCourseIds: data.applicableCourseIds ?? [],
+        campaignToken: data.campaignToken ?? null,
+        autoApply: data.autoApply ?? false,
         createdByUserId: userId
       }
     });
