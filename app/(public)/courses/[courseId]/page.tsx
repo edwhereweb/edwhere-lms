@@ -3,11 +3,16 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { cache } from 'react';
+import { cookies } from 'next/headers';
 import { auth } from '@clerk/nextjs/server';
-import { BookOpen, Users, Tag, ChevronRight, ShieldCheck, Award } from 'lucide-react';
+import { BookOpen, Users, Tag, ChevronRight } from 'lucide-react';
 
 import { db } from '@/lib/db';
 import { stripHtml } from '@/lib/format';
+import { getPublicBaseUrl } from '@/lib/url-utils';
+import { CAMPAIGN_COOKIE_NAME } from '@/lib/campaign-cookie';
+import { resolveCouponPreviewForCourse } from '@/lib/coupons';
+import { CourseBuySection } from './_components/course-buy-section';
 import { CourseBuyCta } from './_components/course-buy-cta';
 import { CourseViewTracker } from './_components/course-view-tracker';
 
@@ -117,7 +122,13 @@ export async function generateMetadata({
 
 // ── Page Component ──────────────────────────────────────────────────────
 
-export default async function PublicCourseDetailPage({ params }: { params: { courseId: string } }) {
+export default async function PublicCourseDetailPage({
+  params,
+  searchParams
+}: {
+  params: { courseId: string };
+  searchParams: { coupon?: string; ct?: string };
+}) {
   const { userId } = await auth();
   const course = await getCourseBySlug(params.courseId);
   if (!course || !(course as unknown as { isWebVisible: boolean }).isWebVisible) notFound();
@@ -132,10 +143,38 @@ export default async function PublicCourseDetailPage({ params }: { params: { cou
       })
     : null;
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://learn.edwhere.com';
+  const baseUrl = getPublicBaseUrl({ preferPublic: true });
   const totalChapters =
     course.chapters.length + course.modules.reduce((sum, m) => sum + m.chapters.length, 0);
   const isEnrolled = Boolean(purchase);
+
+  const initialCouponPreview = course.price
+    ? await resolveCouponPreviewForCourse({
+        courseId: course.id,
+        originalPriceInRupees: course.price,
+        couponCode: searchParams.coupon,
+        campaignToken: searchParams.ct,
+        campaignCookieToken: cookies().get(CAMPAIGN_COOKIE_NAME)?.value,
+        userId: userId ?? undefined
+      })
+    : null;
+
+  const initialCouponInfo =
+    initialCouponPreview?.status === 'applied'
+      ? {
+          code: initialCouponPreview.code,
+          type: initialCouponPreview.type,
+          value: initialCouponPreview.value,
+          originalPrice: initialCouponPreview.originalPrice,
+          discountAmount: initialCouponPreview.discountAmount,
+          finalPrice: initialCouponPreview.finalPrice,
+          message: initialCouponPreview.message,
+          isAutoApplied: initialCouponPreview.isAutoApplied
+        }
+      : null;
+
+  const initialCouponError =
+    initialCouponPreview?.status === 'invalid' ? initialCouponPreview.message : null;
 
   const instructorNames = course.instructors.map((i) => i.profile.name);
 
@@ -257,22 +296,14 @@ export default async function PublicCourseDetailPage({ params }: { params: { cou
               </div>
 
               {/* Price + CTA */}
-              <div className="flex flex-col items-start gap-3">
-                <CourseBuyCta
-                  courseId={course.id}
-                  amount={course.price}
-                  isAuthenticated={Boolean(userId)}
-                  isEnrolled={isEnrolled}
-                />
-                <div className="text-sm text-gray-300 flex flex-wrap items-center gap-3">
-                  <span className="inline-flex items-center gap-1">
-                    <ShieldCheck className="h-4 w-4" /> Secure payment
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <Award className="h-4 w-4" /> Trusted instructors
-                  </span>
-                </div>
-              </div>
+              <CourseBuySection
+                courseId={course.id}
+                originalPrice={course.price}
+                isAuthenticated={Boolean(userId)}
+                isEnrolled={isEnrolled}
+                initialCouponInfo={initialCouponInfo}
+                initialCouponError={initialCouponError}
+              />
             </div>
 
             {/* Right: Image */}
@@ -438,11 +469,14 @@ export default async function PublicCourseDetailPage({ params }: { params: { cou
             Build practical outcomes with expert mentorship, secure checkout, and support.
           </p>
           <div className="flex justify-center">
-            <CourseBuyCta
+            <CourseBuySection
               courseId={course.id}
-              amount={course.price}
+              originalPrice={course.price}
               isAuthenticated={Boolean(userId)}
               isEnrolled={isEnrolled}
+              initialCouponInfo={initialCouponInfo}
+              initialCouponError={initialCouponError}
+              className="max-w-md w-full text-left"
             />
           </div>
         </div>

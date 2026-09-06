@@ -9,6 +9,8 @@ import { ConfettiProvider } from '@/components/providers/confetti-provider';
 import { MetaPixelProvider } from '@/components/providers/meta-pixel-provider';
 import { getMetaTrackingSettings, getPublicMetaTrackingConfig } from '@/lib/meta-tracking/settings';
 
+import { getPublicBaseUrl } from '@/lib/url-utils';
+
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const poppins = Poppins({
   subsets: ['latin'],
@@ -22,7 +24,7 @@ const openSans = Open_Sans({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://learn.edwhere.com'),
+  metadataBase: new URL(getPublicBaseUrl({ preferPublic: true })),
   title: {
     default: 'Edwhere Education | Online Courses in Ethical Hacking, Python, and More',
     template: '%s | Edwhere Education'

@@ -9,9 +9,12 @@ import { isRateLimited } from '@/lib/rate-limit';
 export async function POST(req: Request) {
   try {
     const { userId } = await auth();
-    if (!userId) return apiError('Unauthorized', 401);
 
-    if (isRateLimited(`coupon-validate:${userId}`, { maxRequests: 20, windowMs: 60_000 })) {
+    const rateLimitKey = userId
+      ? `coupon-validate:${userId}`
+      : `coupon-validate:guest:${req.headers.get('x-forwarded-for') ?? 'anon'}`;
+
+    if (isRateLimited(rateLimitKey, { maxRequests: 20, windowMs: 60_000 })) {
       return apiError('Too many requests', 429);
     }
 
@@ -33,7 +36,7 @@ export async function POST(req: Request) {
     const result = await validateCouponForCourse({
       code: couponCode,
       courseId,
-      userId,
+      userId: userId ?? '',
       originalAmountInPaise
     });
 

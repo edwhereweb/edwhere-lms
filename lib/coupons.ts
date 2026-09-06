@@ -124,3 +124,101 @@ export async function validateCouponForCourse({
     finalAmountInPaise
   };
 }
+
+export type CouponPreviewResult =
+  | {
+      status: 'applied';
+      code: string;
+      type: 'PERCENT' | 'FIXED';
+      value: number;
+      originalPrice: number;
+      discountAmount: number;
+      finalPrice: number;
+      message: string;
+      isAutoApplied?: boolean;
+    }
+  | {
+      status: 'invalid';
+      message: string;
+    }
+  | null;
+
+/**
+ * Server-side helper to resolve initial coupon preview for course or checkout page.
+ * Checks explicit coupon code from URL or campaign token/cookie.
+ */
+export async function resolveCouponPreviewForCourse({
+  courseId,
+  originalPriceInRupees,
+  couponCode,
+  campaignToken,
+  campaignCookieToken,
+  userId = ''
+}: {
+  courseId: string;
+  originalPriceInRupees: number;
+  couponCode?: string | null;
+  campaignToken?: string | null;
+  campaignCookieToken?: string | null;
+  userId?: string;
+}): Promise<CouponPreviewResult> {
+  const originalAmountInPaise = Math.round(originalPriceInRupees * 100);
+
+  // 1. Explicit coupon code from URL / input
+  const explicitCode = couponCode?.trim();
+  if (explicitCode) {
+    const result = await validateCouponForCourse({
+      code: explicitCode,
+      courseId,
+      userId,
+      originalAmountInPaise
+    });
+
+    if (result.valid) {
+      return {
+        status: 'applied',
+        code: result.coupon.code,
+        type: result.coupon.type,
+        value: result.coupon.value,
+        originalPrice: result.originalAmountInPaise / 100,
+        discountAmount: result.discountAmountInPaise / 100,
+        finalPrice: result.finalAmountInPaise / 100,
+        message: `Coupon "${result.coupon.code}" applied.`
+      };
+    } else {
+      return { status: 'invalid', message: result.message };
+    }
+  }
+
+  // 2. Campaign token (from query param or cookie)
+  const token = campaignToken?.trim() ?? campaignCookieToken?.trim();
+  if (token) {
+    const autoCode = await resolveCampaignCouponCode(token);
+    if (autoCode) {
+      const result = await validateCouponForCourse({
+        code: autoCode,
+        courseId,
+        userId,
+        originalAmountInPaise
+      });
+
+      if (result.valid) {
+        return {
+          status: 'applied',
+          code: result.coupon.code,
+          type: result.coupon.type,
+          value: result.coupon.value,
+          originalPrice: result.originalAmountInPaise / 100,
+          discountAmount: result.discountAmountInPaise / 100,
+          finalPrice: result.finalAmountInPaise / 100,
+          message: `Coupon "${result.coupon.code}" applied automatically.`,
+          isAutoApplied: true
+        };
+      } else {
+        return { status: 'invalid', message: result.message };
+      }
+    }
+  }
+
+  return null;
+}
