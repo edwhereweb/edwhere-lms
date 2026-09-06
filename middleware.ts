@@ -8,7 +8,7 @@ import {
 } from '@/lib/campaign-cookie';
 import { CAMPAIGN_TOKEN_PARAM } from '@/lib/coupon-utils';
 
-const isPublicRoute = createRouteMatcher([
+export const isPublicRoute = createRouteMatcher([
   '/',
   '/contact',
   '/courses(.*)',
@@ -19,6 +19,7 @@ const isPublicRoute = createRouteMatcher([
   '/api/contact',
   '/api/health',
   '/api/public(.*)',
+  '/api/coupons/validate',
   '/api/analytics(.*)',
   '/blog(.*)',
   '/pages(.*)',
