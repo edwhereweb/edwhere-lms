@@ -4,14 +4,16 @@ import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { db } from '@/lib/db';
 import { formatPrice } from '@/lib/format';
-import { CAMPAIGN_COOKIE_NAME, verifyCampaignCookieValue } from '@/lib/campaign-cookie';
-import { resolveCampaignCouponCode, validateCouponForCourse } from '@/lib/coupons';
+import { CAMPAIGN_COOKIE_NAME } from '@/lib/campaign-cookie';
+import { resolveCouponPreviewForCourse } from '@/lib/coupons';
 import { CheckoutClient } from './_components/checkout-client';
 
 type CheckoutPageProps = {
   searchParams: {
     courseId?: string;
     intent?: string;
+    coupon?: string;
+    ct?: string;
   };
 };
 
@@ -33,9 +35,13 @@ type AutoAppliedCouponResult =
 export default async function CheckoutPage({ searchParams }: CheckoutPageProps) {
   const { userId } = await auth();
   if (!userId) {
-    const next = searchParams.courseId
-      ? `/checkout?courseId=${encodeURIComponent(searchParams.courseId)}`
-      : '/checkout';
+    const query = new URLSearchParams();
+    if (searchParams.courseId) query.set('courseId', searchParams.courseId);
+    if (searchParams.intent) query.set('intent', searchParams.intent);
+    if (searchParams.coupon) query.set('coupon', searchParams.coupon);
+    if (searchParams.ct) query.set('ct', searchParams.ct);
+
+    const next = `/checkout?${query.toString()}`;
     return redirect(`/sign-in?next=${encodeURIComponent(next)}`);
   }
 
@@ -96,15 +102,33 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
   const userName =
     `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim() || primaryEmail.split('@')[0] || '';
 
-  // Resolve a Meta Ads (or other campaign) auto-apply coupon from the
-  // signed cookie set by middleware — always re-validated server-side via
-  // the same `validateCouponForCourse` path a manually typed code goes
-  // through, so a forged/expired cookie can never affect the price.
-  const autoAppliedCoupon = await getAutoAppliedCouponPreview({
-    userId,
+  // Resolve coupon preview from URL (applied on course page or via promo link)
+  // or signed campaign cookie set by middleware. Always re-validated server-side.
+  const couponPreview = await resolveCouponPreviewForCourse({
     courseId: course.id,
-    originalAmountInPaise: Math.round(course.price * 100)
+    originalPriceInRupees: course.price,
+    couponCode: searchParams.coupon,
+    campaignToken: searchParams.ct,
+    campaignCookieToken: cookies().get(CAMPAIGN_COOKIE_NAME)?.value,
+    userId
   });
+
+  const autoAppliedCoupon: AutoAppliedCouponResult =
+    couponPreview?.status === 'applied'
+      ? {
+          status: 'applied',
+          code: couponPreview.code,
+          originalPrice: couponPreview.originalPrice,
+          discountAmount: couponPreview.discountAmount,
+          finalPrice: couponPreview.finalPrice,
+          message: couponPreview.message
+        }
+      : couponPreview?.status === 'invalid'
+        ? {
+            status: 'invalid',
+            message: couponPreview.message
+          }
+        : null;
 
   return (
     <CheckoutClient
@@ -120,46 +144,4 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
       autoAppliedCoupon={autoAppliedCoupon}
     />
   );
-}
-
-async function getAutoAppliedCouponPreview({
-  userId,
-  courseId,
-  originalAmountInPaise
-}: {
-  userId: string;
-  courseId: string;
-  originalAmountInPaise: number;
-}): Promise<AutoAppliedCouponResult> {
-  try {
-    const cookieValue = cookies().get(CAMPAIGN_COOKIE_NAME)?.value;
-    const token = await verifyCampaignCookieValue(cookieValue);
-    if (!token) return null;
-
-    const couponCode = await resolveCampaignCouponCode(token);
-    if (!couponCode) return null;
-
-    const result = await validateCouponForCourse({
-      code: couponCode,
-      courseId,
-      userId,
-      originalAmountInPaise
-    });
-
-    if (!result.valid) {
-      return { status: 'invalid', message: result.message };
-    }
-
-    return {
-      status: 'applied',
-      code: result.coupon.code,
-      originalPrice: result.originalAmountInPaise / 100,
-      discountAmount: result.discountAmountInPaise / 100,
-      finalPrice: result.finalAmountInPaise / 100,
-      message: `Coupon "${result.coupon.code}" applied automatically.`
-    };
-  } catch {
-    // Fail open: never block checkout if campaign resolution errors out.
-    return null;
-  }
 }

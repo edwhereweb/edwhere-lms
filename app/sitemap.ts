@@ -1,9 +1,9 @@
 import type { MetadataRoute } from 'next';
-
 import { db } from '@/lib/db';
+import { getPublicBaseUrl } from '@/lib/url-utils';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://learn.edwhere.com';
+  const baseUrl = getPublicBaseUrl({ preferPublic: true });
 
   const publishedCourses = await db.course.findMany({
     where: { isPublished: true },
