@@ -9,11 +9,16 @@ type FunnelEventName =
   | 'payment_initiated'
   | 'payment_success'
   | 'payment_failed'
-  | 'checkout_abandoned';
+  | 'checkout_abandoned'
+  | 'campaign_coupon_captured'
+  | 'campaign_coupon_auto_applied'
+  | 'dashboard_onboarding_impression'
+  | 'dashboard_category_tile_click';
 
 type TrackFunnelEventInput = {
   event: FunnelEventName;
-  courseId: string;
+  courseId?: string;
+  categoryId?: string;
   amount?: number;
   currency?: string;
   source?: string;
@@ -68,6 +73,7 @@ function markSent(dedupeKey: string) {
 export async function trackFunnelEvent({
   event,
   courseId,
+  categoryId,
   amount,
   currency = 'INR',
   source = 'web',
@@ -76,7 +82,8 @@ export async function trackFunnelEvent({
   dedupeKey
 }: TrackFunnelEventInput) {
   const eventKey =
-    dedupeKey ?? `${event}:${courseId}:${checkoutOrderId ?? paymentOrderId ?? 'none'}`;
+    dedupeKey ??
+    `${event}:${courseId ?? categoryId ?? 'none'}:${checkoutOrderId ?? paymentOrderId ?? 'none'}`;
   if (hasSent(eventKey)) return;
   markSent(eventKey);
 
@@ -89,6 +96,7 @@ export async function trackFunnelEvent({
       body: JSON.stringify({
         event,
         courseId,
+        categoryId,
         amount,
         currency,
         source,

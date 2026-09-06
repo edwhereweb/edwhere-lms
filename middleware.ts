@@ -1,5 +1,11 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
+import {
+  CAMPAIGN_COOKIE_NAME,
+  buildCampaignCookieValue,
+  getCampaignCookieMaxAgeSeconds,
+  isValidCampaignToken
+} from '@/lib/campaign-cookie';
 
 const isPublicRoute = createRouteMatcher([
   '/',
@@ -32,6 +38,10 @@ const MOBILE_CORS_HEADERS = {
   'Access-Control-Max-Age': '86400'
 };
 
+// Query param carrying a Meta Ads (or other campaign) coupon token, e.g.
+// an ad destination URL like `/courses/aws-101?ct=META_AWS_50`.
+const CAMPAIGN_TOKEN_PARAM = 'ct';
+
 export default clerkMiddleware(async (auth, req) => {
   if (req.method === 'OPTIONS' && req.nextUrl.pathname.startsWith('/api/mobile/')) {
     return new NextResponse(null, { status: 204, headers: MOBILE_CORS_HEADERS });
@@ -39,6 +49,26 @@ export default clerkMiddleware(async (auth, req) => {
 
   if (!isPublicRoute(req)) {
     await auth.protect();
+  }
+
+  // First-touch campaign token capture: only ever store the opaque token in
+  // a signed cookie here — never resolve it to a coupon/discount at the
+  // Edge. Actual coupon resolution + validation always happens server-side
+  // in Node.js route handlers (see lib/coupons.ts#resolveCampaignCouponCode)
+  // so a forged token can never grant a discount.
+  if (req.method === 'GET') {
+    const token = req.nextUrl.searchParams.get(CAMPAIGN_TOKEN_PARAM);
+    if (isValidCampaignToken(token)) {
+      const response = NextResponse.next();
+      response.cookies.set(CAMPAIGN_COOKIE_NAME, await buildCampaignCookieValue(token), {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: getCampaignCookieMaxAgeSeconds()
+      });
+      return response;
+    }
   }
 });
 

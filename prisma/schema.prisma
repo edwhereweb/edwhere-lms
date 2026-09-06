@@ -319,6 +319,7 @@ model CourseOrder {
   // Optional coupon metadata — additive, null when no coupon was applied.
   couponId               String?  @db.ObjectId
   couponCode             String?
+  couponSource           String?
   originalAmountInPaise  Int?
   discountAmountInPaise  Int?
 
@@ -344,6 +345,13 @@ model Coupon {
   applicableCourseIds   String[]   @db.ObjectId
   createdByUserId       String
 
+  // Meta Ads / campaign auto-apply: a short opaque token embedded in ad
+  // destination URLs (e.g. ?ct=<token>) that resolves to this coupon.
+  // Never expose `code` directly in ad URLs — the token is indirection so
+  // the coupon can be rotated/disabled without touching live ad creatives.
+  campaignToken         String?    @unique
+  autoApply             Boolean    @default(false)
+
   redemptions           CouponRedemption[]
 
   createdAt             DateTime   @default(now())
@@ -360,6 +368,7 @@ model CouponRedemption {
   courseId       String   @db.ObjectId
   courseOrderId  String?  @db.ObjectId
   discountAmount Int
+  source         String?
   redeemedAt     DateTime @default(now())
 
   createdAt      DateTime @default(now())
@@ -395,7 +404,8 @@ model FunnelEvent {
   event           String
   dedupeKey       String   @unique
   userId          String?
-  courseId        String   @db.ObjectId
+  courseId        String?  @db.ObjectId
+  categoryId      String?  @db.ObjectId
   amount          Float?
   currency        String?
   source          String?

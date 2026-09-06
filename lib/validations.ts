@@ -123,7 +123,8 @@ export const checkoutOrderStatusSchema = z.object({
 });
 
 export const checkoutRequestSchema = z.object({
-  couponCode: z.string().trim().min(1).max(40).optional()
+  couponCode: z.string().trim().min(1).max(40).optional(),
+  couponSource: z.enum(['manual', 'campaign']).optional()
 });
 
 const couponTypeEnum = z.enum(['PERCENT', 'FIXED']);
@@ -147,7 +148,16 @@ const couponFieldsSchema = z.object({
   expiresAt: isoDateString.optional().nullable(),
   maxRedemptions: z.number().int().positive().optional().nullable(),
   maxRedemptionsPerUser: z.number().int().positive().optional().nullable(),
-  applicableCourseIds: z.array(z.string()).optional()
+  applicableCourseIds: z.array(z.string()).optional(),
+  campaignToken: z
+    .string()
+    .trim()
+    .min(4)
+    .max(60)
+    .regex(/^[A-Za-z0-9_-]+$/, 'Token may only contain letters, numbers, dashes and underscores')
+    .optional()
+    .nullable(),
+  autoApply: z.boolean().optional()
 });
 
 const percentValueWithinRange = (data: { type?: 'PERCENT' | 'FIXED'; value?: number }) => {
@@ -182,9 +192,14 @@ export const funnelEventSchema = z.object({
     'payment_initiated',
     'payment_success',
     'payment_failed',
-    'checkout_abandoned'
+    'checkout_abandoned',
+    'campaign_coupon_captured',
+    'campaign_coupon_auto_applied',
+    'dashboard_onboarding_impression',
+    'dashboard_category_tile_click'
   ]),
-  courseId: z.string().min(1),
+  courseId: z.string().min(1).optional(),
+  categoryId: z.string().min(1).optional(),
   amount: z.number().nonnegative().optional(),
   currency: z.string().min(1).optional(),
   source: z.string().max(100).optional(),

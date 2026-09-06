@@ -42,6 +42,8 @@ type FormState = {
   maxRedemptions: string;
   maxRedemptionsPerUser: string;
   applicableCourseIds: string[];
+  campaignToken: string;
+  autoApply: boolean;
 };
 
 const emptyForm: FormState = {
@@ -53,7 +55,9 @@ const emptyForm: FormState = {
   expiresAt: '',
   maxRedemptions: '',
   maxRedemptionsPerUser: '',
-  applicableCourseIds: []
+  applicableCourseIds: [],
+  campaignToken: '',
+  autoApply: false
 };
 
 function toDateInputValue(value: string | null): string {
@@ -84,7 +88,9 @@ export function CouponFormDialog({
         maxRedemptionsPerUser: coupon.maxRedemptionsPerUser
           ? String(coupon.maxRedemptionsPerUser)
           : '',
-        applicableCourseIds: coupon.applicableCourseIds
+        applicableCourseIds: coupon.applicableCourseIds,
+        campaignToken: coupon.campaignToken ?? '',
+        autoApply: coupon.autoApply
       });
     } else {
       setForm(emptyForm);
@@ -115,7 +121,9 @@ export function CouponFormDialog({
       expiresAt: form.expiresAt ? new Date(form.expiresAt).toISOString() : null,
       maxRedemptions: form.maxRedemptions ? Number(form.maxRedemptions) : null,
       maxRedemptionsPerUser: form.maxRedemptionsPerUser ? Number(form.maxRedemptionsPerUser) : null,
-      applicableCourseIds: form.applicableCourseIds
+      applicableCourseIds: form.applicableCourseIds,
+      campaignToken: form.campaignToken.trim() ? form.campaignToken.trim() : null,
+      autoApply: form.campaignToken.trim() ? form.autoApply : false
     };
 
     try {
@@ -238,6 +246,31 @@ export function CouponFormDialog({
                 onChange={(e) => setForm((p) => ({ ...p, maxRedemptionsPerUser: e.target.value }))}
               />
             </div>
+          </div>
+
+          <div className="space-y-2 rounded-md border p-3">
+            <Label htmlFor="coupon-campaign-token">Campaign Token (Meta Ads auto-apply)</Label>
+            <Input
+              id="coupon-campaign-token"
+              value={form.campaignToken}
+              onChange={(e) => setForm((p) => ({ ...p, campaignToken: e.target.value }))}
+              placeholder="e.g. META_AWS_50"
+              className="font-mono"
+            />
+            <p className="text-xs text-muted-foreground">
+              Ad destination URLs can include <code>?ct=&lt;token&gt;</code> to auto-apply this
+              coupon at checkout. Leave blank to disable auto-apply for this coupon.
+            </p>
+            <label className="flex items-center gap-2 text-sm cursor-pointer pt-1">
+              <Checkbox
+                checked={form.autoApply}
+                onCheckedChange={(checked) =>
+                  setForm((p) => ({ ...p, autoApply: Boolean(checked) }))
+                }
+                disabled={!form.campaignToken.trim()}
+              />
+              Auto-apply for visitors carrying this campaign token
+            </label>
           </div>
 
           <div className="space-y-2">
