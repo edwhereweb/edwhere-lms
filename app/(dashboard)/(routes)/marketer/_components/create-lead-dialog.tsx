@@ -11,6 +11,7 @@ import { PlusCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { CampaignCombobox } from './campaign-combobox';
 import {
   Dialog,
   DialogContent,
@@ -47,9 +48,10 @@ const SOURCES = [
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   phone: z.string().min(7, 'Enter a valid phone number').max(20),
-  email: z.string().email('Enter a valid email'),
+  email: z.string().email('Enter a valid email').optional().or(z.literal('')),
   message: z.string().min(1, 'Add a note or message'),
-  source: z.string().min(1, 'Select a source')
+  source: z.string().min(1, 'Select a source'),
+  campaignId: z.string().nullable().optional()
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -65,7 +67,8 @@ export function CreateLeadDialog() {
       phone: '',
       email: '',
       message: '',
-      source: 'MANUAL_ENTRY'
+      source: 'MANUAL_ENTRY',
+      campaignId: null
     }
   });
 
@@ -132,7 +135,7 @@ export function CreateLeadDialog() {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>Email (Optional)</FormLabel>
                   <FormControl>
                     <Input type="email" placeholder="john@example.com" {...field} />
                   </FormControl>
@@ -161,6 +164,18 @@ export function CreateLeadDialog() {
                       ))}
                     </SelectContent>
                   </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="campaignId"
+              render={({ field }) => (
+                <FormItem className="flex flex-col mt-2">
+                  <FormLabel>Campaign (Optional)</FormLabel>
+                  <CampaignCombobox value={field.value} onChange={field.onChange} />
                   <FormMessage />
                 </FormItem>
               )}

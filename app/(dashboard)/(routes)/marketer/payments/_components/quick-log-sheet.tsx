@@ -41,6 +41,7 @@ export function QuickLogSheet({ lead, open, onClose, onSaved }: QuickLogSheetPro
   const [label, setLabel] = useState('');
   const [note, setNote] = useState('');
   const [dueDate, setDueDate] = useState('');
+  const [transactionId, setTransactionId] = useState('');
   const [saving, setSaving] = useState(false);
 
   const outstanding = Math.max(0, lead.outstanding);
@@ -52,6 +53,7 @@ export function QuickLogSheet({ lead, open, onClose, onSaved }: QuickLogSheetPro
     setLabel('');
     setNote('');
     setDueDate('');
+    setTransactionId('');
   };
 
   const handleSave = async () => {
@@ -77,7 +79,9 @@ export function QuickLogSheet({ lead, open, onClose, onSaved }: QuickLogSheetPro
       const entries = refreshed.data.lead.paymentEntries;
       const newEntry = entries[entries.length - 1];
 
-      await axios.post(`/api/leads/${lead.id}/payments/${newEntry.id}/mark-paid`, {});
+      await axios.post(`/api/leads/${lead.id}/payments/${newEntry.id}/mark-paid`, {
+        transactionId: transactionId.trim() || undefined
+      });
 
       const finalData = await axios.get(`/api/leads/${lead.id}/payments`);
       const updatedLead = finalData.data;
@@ -199,6 +203,16 @@ export function QuickLogSheet({ lead, open, onClose, onSaved }: QuickLogSheetPro
                   placeholder="e.g. Registration fee, Module 2…"
                   value={label}
                   onChange={(e) => setLabel(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 block mb-1.5">
+                  TRANSACTION ID (optional)
+                </label>
+                <Input
+                  placeholder="e.g. UTR / Ref Number"
+                  value={transactionId}
+                  onChange={(e) => setTransactionId(e.target.value)}
                 />
               </div>
               <div>

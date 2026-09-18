@@ -3,6 +3,13 @@
 import { useState, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 import { LeadPaymentCard } from './lead-payment-card';
 import type { LeadWithPayments } from '../page';
 
@@ -10,6 +17,7 @@ type FilterTab = 'ALL' | 'OVERDUE' | 'UPCOMING' | 'PAID';
 
 interface PaymentTrackerShellProps {
   leads: LeadWithPayments[];
+  campaigns: { id: string; name: string }[];
 }
 
 const fmt = (n: number) =>
@@ -19,23 +27,29 @@ const fmt = (n: number) =>
     maximumFractionDigits: 0
   }).format(n);
 
-export function PaymentTrackerShell({ leads: initialLeads }: PaymentTrackerShellProps) {
+export function PaymentTrackerShell({ leads: initialLeads, campaigns }: PaymentTrackerShellProps) {
   const [leads, setLeads] = useState(initialLeads);
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterTab>('ALL');
+  const [campaignFilter, setCampaignFilter] = useState('ALL');
   const [paidExpanded, setPaidExpanded] = useState(false);
 
   const filtered = useMemo(() => {
+    let result = leads;
+    if (campaignFilter !== 'ALL') {
+      result = result.filter((l) => l.campaign?.id === campaignFilter);
+    }
     const q = search.toLowerCase();
-    if (!q) return leads;
-    return leads.filter(
+    if (!q) return result;
+    return result.filter(
       (l) =>
         l.name.toLowerCase().includes(q) ||
-        l.email.toLowerCase().includes(q) ||
+        (l.email || '').toLowerCase().includes(q) ||
         l.phone.toLowerCase().includes(q) ||
+        (l.campaign?.name || '').toLowerCase().includes(q) ||
         (l.courseInterest ?? '').toLowerCase().includes(q)
     );
-  }, [leads, search]);
+  }, [leads, search, campaignFilter]);
 
   const needsAttention = filtered.filter(
     (l) =>
@@ -165,15 +179,31 @@ export function PaymentTrackerShell({ leads: initialLeads }: PaymentTrackerShell
         </span>
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
-        <Input
-          className="pl-9"
-          placeholder="Search leads, courses, phone…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      {/* Search and Filters */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+          <Input
+            className="pl-9"
+            placeholder="Search leads, campaigns, phone…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+
+        <Select value={campaignFilter} onValueChange={setCampaignFilter}>
+          <SelectTrigger className="w-full sm:w-48">
+            <SelectValue placeholder="All Campaigns" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All Campaigns</SelectItem>
+            {campaigns.map((c) => (
+              <SelectItem key={c.id} value={c.id}>
+                {c.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Filter tabs */}

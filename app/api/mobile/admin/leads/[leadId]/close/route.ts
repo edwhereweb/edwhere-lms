@@ -34,7 +34,7 @@ export async function POST(req: Request, { params }: Params) {
         closureStatus: result.data.closureStatus,
         closureNote: result.data.closureNote,
         agreedAmount: result.data.agreedAmount,
-        courseInterest: result.data.courseInterest,
+        campaignId: result.data.campaignId,
         closedAt: new Date(),
         closedBy: userId
       }

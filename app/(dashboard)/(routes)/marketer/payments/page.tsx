@@ -11,7 +11,7 @@ export type LeadWithPayments = {
   id: string;
   name: string;
   phone: string;
-  email: string;
+  email: string | null;
   courseInterest: string | null;
   agreedAmount: number | null;
   closureNote: string | null;
@@ -22,6 +22,7 @@ export type LeadWithPayments = {
   totalWaived: number;
   outstanding: number;
   overallStatus: 'PENDING' | 'PARTIAL' | 'PAID' | 'OVERDUE' | 'DEFAULTED';
+  campaign: { id: string; name: string } | null;
 };
 
 function computeStatus(lead: {
@@ -58,8 +59,15 @@ export default async function PaymentTrackerPage() {
 
   const rawLeads = await db.lead.findMany({
     where: { closureStatus: 'WON' },
-    include: { paymentEntries: { orderBy: { createdAt: 'asc' } } },
+    include: {
+      paymentEntries: { orderBy: { createdAt: 'asc' } },
+      campaign: true
+    },
     orderBy: { closedAt: 'desc' }
+  });
+
+  const campaigns = await db.leadCampaign.findMany({
+    orderBy: { name: 'asc' }
   });
 
   const leads: LeadWithPayments[] = rawLeads.map((lead) => {
@@ -84,9 +92,10 @@ export default async function PaymentTrackerPage() {
       totalPaid,
       totalWaived,
       outstanding,
-      overallStatus: computeStatus(lead)
+      overallStatus: computeStatus(lead),
+      campaign: lead.campaign
     };
   });
 
-  return <PaymentTrackerShell leads={leads} />;
+  return <PaymentTrackerShell leads={leads} campaigns={campaigns} />;
 }

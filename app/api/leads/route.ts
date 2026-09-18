@@ -10,6 +10,9 @@ export async function GET() {
     if (!authorized) return apiError('Forbidden', 403);
 
     const leads = await db.lead.findMany({
+      include: {
+        campaign: true
+      },
       orderBy: { createdAt: 'desc' }
     });
 

@@ -32,7 +32,8 @@ export async function POST(req: Request, { params }: Params) {
       where: { id: entryId },
       data: {
         status: 'PAID',
-        paidAt: result.data.paidAt ? new Date(result.data.paidAt) : new Date()
+        paidAt: result.data.paidAt ? new Date(result.data.paidAt) : new Date(),
+        transactionId: result.data.transactionId
       }
     });
 

@@ -53,7 +53,7 @@ export async function POST(req: Request, { params }: { params: { leadId: string 
     const validation = validateBody(createPaymentEntrySchema, body);
     if (!validation.success) return validation.response;
 
-    const { label, amount, mode, dueDate, note } = validation.data;
+    const { label, amount, mode, dueDate, transactionId, note } = validation.data;
 
     if (lead.agreedAmount !== null) {
       const existingTotal = lead.paymentEntries
@@ -75,6 +75,7 @@ export async function POST(req: Request, { params }: { params: { leadId: string 
         amount,
         mode,
         dueDate: dueDate ? new Date(dueDate) : undefined,
+        transactionId,
         note,
         recordedBy: userId
       }

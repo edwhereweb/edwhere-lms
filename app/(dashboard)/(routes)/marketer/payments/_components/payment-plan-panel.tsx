@@ -101,6 +101,7 @@ function AddEntryForm({ leadId, entryCount, maxAmount, onAdded }: AddEntryFormPr
   const [amount, setAmount] = useState('');
   const [mode, setMode] = useState<PaymentMode>('CASH');
   const [dueDate, setDueDate] = useState('');
+  const [transactionId, setTransactionId] = useState('');
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -124,6 +125,7 @@ function AddEntryForm({ leadId, entryCount, maxAmount, onAdded }: AddEntryFormPr
         amount: parsedAmt,
         mode,
         dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
+        transactionId: transactionId.trim() || undefined,
         note: note || undefined
       });
       toast.success('Entry added');
@@ -131,6 +133,7 @@ function AddEntryForm({ leadId, entryCount, maxAmount, onAdded }: AddEntryFormPr
       setAmount('');
       setMode('CASH');
       setDueDate('');
+      setTransactionId('');
       setNote('');
       onAdded();
     } catch (err) {
@@ -197,12 +200,20 @@ function AddEntryForm({ leadId, entryCount, maxAmount, onAdded }: AddEntryFormPr
           </button>
         ))}
       </div>
+      <div className="grid grid-cols-2 gap-2">
+        <Input
+          placeholder="Transaction ID (optional)"
+          value={transactionId}
+          onChange={(e) => setTransactionId(e.target.value)}
+          className="col-span-2 text-xs"
+        />
+      </div>
       <Textarea
         placeholder="Note (optional)"
         rows={1}
         value={note}
         onChange={(e) => setNote(e.target.value)}
-        className="text-xs"
+        className="text-xs mt-2"
       />
       <Button
         size="sm"
@@ -232,6 +243,7 @@ function EditEntryForm({ entry, leadId, maxAmount, onDone }: EditEntryFormProps)
   const [dueDate, setDueDate] = useState(
     entry.dueDate ? format(new Date(entry.dueDate), 'yyyy-MM-dd') : ''
   );
+  const [transactionId, setTransactionId] = useState(entry.transactionId ?? '');
   const [saving, setSaving] = useState(false);
 
   const parsedAmt = parseFloat(amount);
@@ -254,6 +266,7 @@ function EditEntryForm({ entry, leadId, maxAmount, onDone }: EditEntryFormProps)
         note: note || null,
         mode,
         dueDate: !isPaid && dueDate ? new Date(dueDate).toISOString() : undefined,
+        transactionId: transactionId.trim() || null,
         amount: !isPaid ? parsedAmt : undefined
       });
       toast.success('Entry updated');
@@ -319,12 +332,20 @@ function EditEntryForm({ entry, leadId, maxAmount, onDone }: EditEntryFormProps)
           ))}
         </div>
       )}
+      <div className="grid grid-cols-2 gap-2 mt-2">
+        <Input
+          placeholder="Transaction ID (optional)"
+          value={transactionId}
+          onChange={(e) => setTransactionId(e.target.value)}
+          className="col-span-2 text-xs"
+        />
+      </div>
       <Textarea
         placeholder="Note (optional)"
         rows={1}
         value={note}
         onChange={(e) => setNote(e.target.value)}
-        className="text-xs"
+        className="text-xs mt-2"
       />
       <div className="flex gap-2">
         <Button size="sm" variant="outline" onClick={onDone} className="flex-1">

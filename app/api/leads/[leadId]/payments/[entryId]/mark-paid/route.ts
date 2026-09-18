@@ -32,7 +32,8 @@ export async function POST(
       where: { id: params.entryId },
       data: {
         status: 'PAID',
-        paidAt: validation.data.paidAt ? new Date(validation.data.paidAt) : new Date()
+        paidAt: validation.data.paidAt ? new Date(validation.data.paidAt) : new Date(),
+        transactionId: validation.data.transactionId
       }
     });
 

@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import {
   Select,
   SelectContent,
@@ -16,8 +16,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { format } from 'date-fns';
-import { Phone, Mail, MessageSquare, Calendar, Tag, Search, X, TrophyIcon } from 'lucide-react';
+import { MessageSquare, Calendar, Tag, Search, X, TrophyIcon } from 'lucide-react';
 import { CloseLeadDialog } from './close-lead-dialog';
+import { CampaignCombobox } from './campaign-combobox';
 
 /* ─── Constants ─── */
 export const STATUS_OPTIONS = [
@@ -45,6 +46,11 @@ export const STATUS_OPTIONS = [
     value: 'PAYMENT_PENDING',
     label: 'Payment Pending',
     color: 'bg-neutral-100 text-neutral-800 dark:bg-neutral-900/30 dark:text-neutral-300'
+  },
+  {
+    value: 'ENROLMENT_PENDING',
+    label: 'Enrolment Pending',
+    color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
   },
   {
     value: 'NOT_INTERESTED',
@@ -89,16 +95,20 @@ interface Lead {
   id: string;
   name: string;
   phone: string;
-  email: string;
+  email: string | null;
   message: string;
   source: string;
   status: string;
   notes: string | null;
+  campaignId: string | null;
+  campaign?: { id: string; name: string } | null;
   createdAt: Date | string;
 }
 
 interface LeadsTableProps {
   leads: Lead[];
+  page: number;
+  totalPages: number;
 }
 
 /* ─── Status Badge ─── */
@@ -123,8 +133,13 @@ function LeadDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const [name, setName] = useState(lead.name);
+  const [phone, setPhone] = useState(lead.phone);
+  const [email, setEmail] = useState(lead.email || '');
+  const [message, setMessage] = useState(lead.message);
   const [status, setStatus] = useState<Status>(lead.status as Status);
   const [notes, setNotes] = useState(lead.notes ?? '');
+  const [campaignId, setCampaignId] = useState<string | null>(lead.campaignId);
   const [saving, setSaving] = useState(false);
   const [showClose, setShowClose] = useState(false);
 
@@ -133,7 +148,15 @@ function LeadDialog({
   const handleSave = async () => {
     setSaving(true);
     try {
-      await axios.patch(`/api/leads/${lead.id}`, { status, notes });
+      await axios.patch(`/api/leads/${lead.id}`, {
+        name,
+        phone,
+        email,
+        message,
+        status,
+        notes,
+        campaignId
+      });
       toast.success('Lead updated');
       onSaved();
       onClose();
@@ -150,6 +173,7 @@ function LeadDialog({
         <CloseLeadDialog
           leadId={lead.id}
           leadName={lead.name}
+          initialCampaignId={lead.campaign?.id}
           open={showClose}
           onClose={() => setShowClose(false)}
         />
@@ -160,100 +184,139 @@ function LeadDialog({
           if (!open) onClose();
         }}
       >
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>{lead.name}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="grid grid-cols-1 gap-2 text-sm">
-              <div className="flex items-center gap-2 text-neutral-600 dark:text-neutral-400">
-                <Phone className="h-3.5 w-3.5" />
-                <a href={`tel:${lead.phone}`} className="hover:underline">
-                  {lead.phone}
-                </a>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-2 overflow-y-auto px-1 flex-1">
+            {/* Left Column - Details */}
+            <div className="space-y-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-neutral-500 dark:text-neutral-400">
+                  NAME
+                </label>
+                <Input value={name} onChange={(e) => setName(e.target.value)} disabled={isClosed} />
               </div>
-              <div className="flex items-center gap-2 text-neutral-600 dark:text-neutral-400">
-                <Mail className="h-3.5 w-3.5" />
-                <a href={`mailto:${lead.email}`} className="hover:underline">
-                  {lead.email}
-                </a>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-neutral-500 dark:text-neutral-400">
+                  PHONE
+                </label>
+                <Input
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  disabled={isClosed}
+                />
               </div>
-              <div className="flex items-center gap-2 text-neutral-600 dark:text-neutral-400">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-neutral-500 dark:text-neutral-400">
+                  EMAIL
+                </label>
+                <Input
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={isClosed}
+                  type="email"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 text-neutral-600 dark:text-neutral-400 text-sm">
                 <Tag className="h-3.5 w-3.5" />
                 <span>{SOURCE_LABELS[lead.source] ?? lead.source.replace(/_/g, ' ')}</span>
               </div>
-              <div className="flex items-center gap-2 text-neutral-600 dark:text-neutral-400">
+              <div className="flex flex-col gap-1.5 mt-2">
+                <label className="text-xs font-semibold text-neutral-500 dark:text-neutral-400">
+                  CAMPAIGN
+                </label>
+                {isClosed ? (
+                  <div className="text-sm font-medium text-neutral-800 dark:text-neutral-200">
+                    {lead.campaign?.name || 'None'}
+                  </div>
+                ) : (
+                  <CampaignCombobox value={campaignId} onChange={setCampaignId} />
+                )}
+              </div>
+              <div className="flex items-center gap-2 text-neutral-600 dark:text-neutral-400 text-sm">
                 <Calendar className="h-3.5 w-3.5" />
                 <span>{format(new Date(lead.createdAt), 'dd MMM yyyy, hh:mm a')}</span>
               </div>
             </div>
 
-            <div>
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-1.5">
-                <MessageSquare className="h-3.5 w-3.5" /> ENQUIRY
+            {/* Right Column - Enquiries, Notes, Status */}
+            <div className="space-y-5 flex flex-col h-full">
+              <div>
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-1.5">
+                  <MessageSquare className="h-3.5 w-3.5" /> ENQUIRY
+                </div>
+                <Textarea
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  disabled={isClosed}
+                  rows={4}
+                  className="text-sm bg-neutral-50 dark:bg-neutral-900 leading-relaxed resize-none"
+                />
               </div>
-              <p className="text-sm bg-neutral-50 dark:bg-neutral-900 rounded-lg p-3 text-neutral-700 dark:text-neutral-300 leading-relaxed">
-                {lead.message}
-              </p>
-            </div>
 
-            {!isClosed ? (
-              <>
-                <div>
-                  <label className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 block mb-1.5">
-                    STATUS
-                  </label>
-                  <Select value={status} onValueChange={(v) => setStatus(v as Status)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {STATUS_OPTIONS.filter(
-                        (o) => o.value !== 'CLOSED_WON' && o.value !== 'CLOSED_LOST'
-                      ).map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              {!isClosed ? (
+                <>
+                  <div>
+                    <label className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 block mb-1.5">
+                      STATUS
+                    </label>
+                    <Select value={status} onValueChange={(v) => setStatus(v as Status)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {STATUS_OPTIONS.filter(
+                          (o) => o.value !== 'CLOSED_WON' && o.value !== 'CLOSED_LOST'
+                        ).map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                <div>
-                  <label className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 block mb-1.5">
-                    NOTES
-                  </label>
-                  <Textarea
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Add notes about this lead…"
-                    rows={4}
-                  />
-                </div>
+                  <div className="flex-1 flex flex-col">
+                    <label className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 block mb-1.5">
+                      NOTES
+                    </label>
+                    <Textarea
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder="Add notes about this lead…"
+                      className="flex-1 min-h-[120px] resize-none"
+                    />
+                  </div>
 
-                <div className="flex gap-2">
-                  <Button onClick={handleSave} disabled={saving} className="flex-1">
-                    {saving ? 'Saving…' : 'Save Changes'}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowClose(true)}
-                    className="gap-1.5 text-emerald-700 border-emerald-300 hover:bg-emerald-50 dark:text-emerald-400 dark:border-emerald-800 dark:hover:bg-emerald-950/30"
+                  <div className="flex gap-2 pt-2 mt-auto">
+                    <Button onClick={handleSave} disabled={saving} className="flex-1">
+                      {saving ? 'Saving…' : 'Save Changes'}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowClose(true)}
+                      className="gap-1.5 text-emerald-700 border-emerald-300 hover:bg-emerald-50 dark:text-emerald-400 dark:border-emerald-800 dark:hover:bg-emerald-950/30"
+                    >
+                      <TrophyIcon className="h-3.5 w-3.5" />
+                      Close Lead
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <div className="rounded-lg border bg-neutral-50 dark:bg-neutral-900 p-4 text-sm text-neutral-500 dark:text-neutral-400 mt-auto">
+                  This lead has been closed. View payment details in the{' '}
+                  <a
+                    href="/marketer/payments"
+                    className="text-[#F80602] hover:underline font-medium"
                   >
-                    <TrophyIcon className="h-3.5 w-3.5" />
-                    Close Lead
-                  </Button>
+                    Payment Tracker
+                  </a>
+                  .
                 </div>
-              </>
-            ) : (
-              <div className="rounded-lg border bg-neutral-50 dark:bg-neutral-900 p-3 text-sm text-neutral-500 dark:text-neutral-400">
-                This lead has been closed. View payment details in the{' '}
-                <a href="/marketer/payments" className="text-[#F80602] hover:underline font-medium">
-                  Payment Tracker
-                </a>
-                .
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
@@ -262,46 +325,59 @@ function LeadDialog({
 }
 
 /* ─── Main Leads Table ─── */
-export function LeadsTable({ leads }: LeadsTableProps) {
+export function LeadsTable({ leads, page, totalPages }: LeadsTableProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const [selected, setSelected] = useState<Lead | null>(null);
 
-  // Search state
-  const [search, setSearch] = useState('');
+  // URL-driven filter states
+  const statusFilter = searchParams.get('status') || 'ALL';
+  const sourceFilter = searchParams.get('source') || 'ALL';
 
-  // Filter state — "ALL" means no filter applied
-  const [statusFilter, setStatusFilter] = useState('ALL');
-  const [sourceFilter, setSourceFilter] = useState('ALL');
+  // Local state for debounced search
+  const [search, setSearch] = useState(searchParams.get('q') || '');
 
-  // Unique sources from the current leads list
+  const updateFilter = useCallback(
+    (key: string, value: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (value && value !== 'ALL') {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+
+      // reset to page 1 on filter change
+      if (key !== 'page') {
+        params.set('page', '1');
+      }
+
+      router.push(`${pathname}?${params.toString()}`);
+    },
+    [searchParams, pathname, router]
+  );
+
+  // Debounce search update
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (search !== (searchParams.get('q') || '')) {
+        updateFilter('q', search);
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search, searchParams, updateFilter]);
+
+  // Unique sources from the known list
   const sources = useMemo(() => {
-    const set = new Set(leads.map((l) => l.source));
-    return Array.from(set).sort();
-  }, [leads]);
-
-  // Filtered + searched leads
-  const filtered = useMemo(() => {
-    const q = search.toLowerCase();
-    return leads.filter((l) => {
-      const matchSearch =
-        !q ||
-        l.name.toLowerCase().includes(q) ||
-        l.email.toLowerCase().includes(q) ||
-        l.phone.toLowerCase().includes(q);
-
-      const matchStatus = statusFilter === 'ALL' || l.status === statusFilter;
-      const matchSource = sourceFilter === 'ALL' || l.source === sourceFilter;
-
-      return matchSearch && matchStatus && matchSource;
-    });
-  }, [leads, search, statusFilter, sourceFilter]);
+    return Object.keys(SOURCE_LABELS).sort();
+  }, []);
 
   const hasFilters = search || statusFilter !== 'ALL' || sourceFilter !== 'ALL';
 
   const clearFilters = () => {
     setSearch('');
-    setStatusFilter('ALL');
-    setSourceFilter('ALL');
+    router.push(pathname);
   };
 
   return (
@@ -328,7 +404,7 @@ export function LeadsTable({ leads }: LeadsTableProps) {
         </div>
 
         {/* Status filter */}
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select value={statusFilter} onValueChange={(v) => updateFilter('status', v)}>
           <SelectTrigger className="w-full sm:w-48">
             <SelectValue placeholder="All statuses" />
           </SelectTrigger>
@@ -343,7 +419,7 @@ export function LeadsTable({ leads }: LeadsTableProps) {
         </Select>
 
         {/* Source filter */}
-        <Select value={sourceFilter} onValueChange={setSourceFilter}>
+        <Select value={sourceFilter} onValueChange={(v) => updateFilter('source', v)}>
           <SelectTrigger className="w-full sm:w-48">
             <SelectValue placeholder="All sources" />
           </SelectTrigger>
@@ -374,20 +450,21 @@ export function LeadsTable({ leads }: LeadsTableProps) {
               <th className="text-left px-4 py-3">Phone</th>
               <th className="text-left px-4 py-3">Email</th>
               <th className="text-left px-4 py-3">Source</th>
+              <th className="text-left px-4 py-3">Campaign</th>
               <th className="text-left px-4 py-3">Status</th>
               <th className="text-left px-4 py-3">Received</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
-            {filtered.length === 0 && (
+            {leads.length === 0 && (
               <tr>
-                <td colSpan={7} className="text-center py-12 text-neutral-400">
+                <td colSpan={8} className="text-center py-12 text-neutral-400">
                   {hasFilters ? 'No leads match your search or filters.' : 'No leads yet.'}
                 </td>
               </tr>
             )}
-            {filtered.map((lead) => (
+            {leads.map((lead) => (
               <tr
                 key={lead.id}
                 className="hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-colors cursor-pointer"
@@ -417,6 +494,9 @@ export function LeadsTable({ leads }: LeadsTableProps) {
                 <td className="px-4 py-3 text-neutral-500 dark:text-neutral-400 text-xs">
                   {SOURCE_LABELS[lead.source] ?? lead.source.replace(/_/g, ' ')}
                 </td>
+                <td className="px-4 py-3 text-neutral-500 dark:text-neutral-400 text-xs">
+                  {lead.campaign?.name || '-'}
+                </td>
                 <td className="px-4 py-3">
                   <StatusBadge status={lead.status} />
                 </td>
@@ -440,9 +520,36 @@ export function LeadsTable({ leads }: LeadsTableProps) {
             ))}
           </tbody>
         </table>
-        {filtered.length > 0 && (
+        {leads.length > 0 && (
           <div className="px-4 py-2 border-t text-xs text-neutral-400">
-            Showing {filtered.length} of {leads.length} lead{leads.length !== 1 ? 's' : ''}
+            Showing {leads.length} lead{leads.length !== 1 ? 's' : ''}
+          </div>
+        )}
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-4 py-3 border-t bg-white dark:bg-neutral-900">
+            <p className="text-sm text-neutral-500">
+              Page {page} of {totalPages}
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page <= 1}
+                onClick={() => updateFilter('page', String(page - 1))}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page >= totalPages}
+                onClick={() => updateFilter('page', String(page + 1))}
+              >
+                Next
+              </Button>
+            </div>
           </div>
         )}
       </div>

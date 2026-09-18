@@ -15,19 +15,27 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { TrophyIcon, XCircle } from 'lucide-react';
+import { CampaignCombobox } from './campaign-combobox';
 
 interface CloseLeadDialogProps {
   leadId: string;
   leadName: string;
+  initialCampaignId?: string | null;
   open: boolean;
   onClose: () => void;
 }
 
-export function CloseLeadDialog({ leadId, leadName, open, onClose }: CloseLeadDialogProps) {
+export function CloseLeadDialog({
+  leadId,
+  leadName,
+  initialCampaignId,
+  open,
+  onClose
+}: CloseLeadDialogProps) {
   const router = useRouter();
   const [mode, setMode] = useState<'WON' | 'LOST'>('WON');
   const [agreedAmount, setAgreedAmount] = useState('');
-  const [courseInterest, setCourseInterest] = useState('');
+  const [campaignId, setCampaignId] = useState<string | null>(initialCampaignId || null);
   const [closureNote, setClosureNote] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -42,7 +50,7 @@ export function CloseLeadDialog({ leadId, leadName, open, onClose }: CloseLeadDi
         closureStatus: mode,
         closureNote: closureNote || undefined,
         agreedAmount: agreedAmount ? parseFloat(agreedAmount) : undefined,
-        courseInterest: courseInterest || undefined
+        campaignId
       });
       toast.success(
         mode === 'WON' ? 'Lead closed as Won! View in Payment Tracker.' : 'Lead marked as Lost.'
@@ -120,13 +128,9 @@ export function CloseLeadDialog({ leadId, leadName, open, onClose }: CloseLeadDi
               </div>
               <div>
                 <label className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 block mb-1.5">
-                  COURSE INTEREST
+                  CAMPAIGN
                 </label>
-                <Input
-                  placeholder="Which course are they enrolling in?"
-                  value={courseInterest}
-                  onChange={(e) => setCourseInterest(e.target.value)}
-                />
+                <CampaignCombobox value={campaignId} onChange={setCampaignId} disabled={saving} />
               </div>
             </>
           )}

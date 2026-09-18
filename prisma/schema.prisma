@@ -439,16 +439,26 @@ enum PaymentEntryStatus {
   DELETION_REQUESTED
 }
 
+model LeadCampaign {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String   @unique
+  leads     Lead[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model Lead {
   id             String             @id @default(auto()) @map("_id") @db.ObjectId
   name           String
   phone          String
-  email          String
+  email          String?
   message        String
   source         String             @default("GENERAL_WEBSITE_ENQUIRY")
   status         String             @default("DECISION_PENDING")
   notes          String?
   assignedTo     String?
+  campaignId     String?            @db.ObjectId
+  campaign       LeadCampaign?      @relation(fields: [campaignId], references: [id])
 
   // Closure tracking
   closureStatus  LeadClosureStatus?
@@ -482,6 +492,7 @@ model LeadPaymentEntry {
   paidAt      DateTime?
 
   receiptUrl  String?            // R2 key (optional)
+  transactionId String?
   note        String?
 
   recordedBy  String             // Clerk userId

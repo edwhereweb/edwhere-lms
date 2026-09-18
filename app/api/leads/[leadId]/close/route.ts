@@ -24,7 +24,7 @@ export async function POST(req: Request, { params }: { params: { leadId: string 
     const validation = validateBody(closeLeadSchema, body);
     if (!validation.success) return validation.response;
 
-    const { closureStatus, closureNote, agreedAmount, courseInterest } = validation.data;
+    const { closureStatus, closureNote, agreedAmount, campaignId } = validation.data;
 
     const updated = await db.lead.update({
       where: { id: params.leadId },
@@ -32,7 +32,7 @@ export async function POST(req: Request, { params }: { params: { leadId: string 
         closureStatus,
         closureNote,
         agreedAmount,
-        courseInterest,
+        campaignId,
         closedAt: new Date(),
         closedBy: userId,
         status: closureStatus === 'WON' ? 'CLOSED_WON' : 'CLOSED_LOST'

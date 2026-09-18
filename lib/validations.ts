@@ -277,9 +277,10 @@ export const contactSchema = z.object({
 export const createLeadSchema = z.object({
   name: z.string().min(2).max(100),
   phone: z.string().min(7).max(20),
-  email: z.string().email(),
+  email: z.string().email('Enter a valid email').optional().or(z.literal('')),
   message: z.string().min(1).max(5000),
-  source: z.string().default('MANUAL_ENTRY')
+  source: z.string().default('MANUAL_ENTRY'),
+  campaignId: z.string().nullable().optional()
 });
 
 const VALID_LEAD_STATUSES = [
@@ -288,14 +289,20 @@ const VALID_LEAD_STATUSES = [
   'RNR1',
   'RNR2',
   'PAYMENT_PENDING',
+  'ENROLMENT_PENDING',
   'NOT_INTERESTED',
   'OFFLINE_INTERESTED',
   'FUTURE_OPTIONS'
 ] as const;
 
 export const updateLeadSchema = z.object({
+  name: z.string().min(2).max(100).optional(),
+  phone: z.string().min(7).max(20).optional(),
+  email: z.string().email().optional().or(z.literal('')),
+  message: z.string().min(1).max(5000).optional(),
   status: z.enum(VALID_LEAD_STATUSES).optional(),
-  notes: z.string().max(10000).optional()
+  notes: z.string().max(10000).optional(),
+  campaignId: z.string().nullable().optional()
 });
 
 // ── Message schemas ─────────────────────────────────────────────────────
@@ -659,7 +666,7 @@ export const closeLeadSchema = z.object({
   closureStatus: z.enum(['WON', 'LOST']),
   closureNote: z.string().max(5000).optional(),
   agreedAmount: z.number().min(0).optional(),
-  courseInterest: z.string().max(300).optional()
+  campaignId: z.string().nullable().optional()
 });
 
 export const createPaymentEntrySchema = z.object({
@@ -667,6 +674,7 @@ export const createPaymentEntrySchema = z.object({
   amount: z.number().min(0, 'Amount must be 0 or more'),
   mode: z.enum(['CASH', 'UPI', 'BANK_TRANSFER', 'RAZORPAY', 'CHEQUE', 'OTHER']).default('CASH'),
   dueDate: z.string().datetime({ offset: true }).optional(),
+  transactionId: z.string().max(150).optional(),
   note: z.string().max(2000).optional()
 });
 
@@ -678,11 +686,13 @@ export const updatePaymentEntrySchema = z.object({
   receiptUrl: z.string().max(1000).nullable().optional(),
   // amount editable only on PENDING/OVERDUE entries (enforced server-side)
   amount: z.number().min(0).optional(),
-  status: z.enum(['OVERDUE', 'WAIVED']).optional()
+  status: z.enum(['OVERDUE', 'WAIVED']).optional(),
+  transactionId: z.string().max(150).nullable().optional()
 });
 
 export const markEntryPaidSchema = z.object({
-  paidAt: z.string().datetime({ offset: true }).optional()
+  paidAt: z.string().datetime({ offset: true }).optional(),
+  transactionId: z.string().max(150).optional()
 });
 
 export const mobileCreatePaymentEntrySchema = z.object({

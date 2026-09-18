@@ -32,13 +32,15 @@ interface MarkPaidDialogProps {
 
 export function MarkPaidDialog({ entry, leadId, open, onClose, onDone }: MarkPaidDialogProps) {
   const [paidAt, setPaidAt] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [transactionId, setTransactionId] = useState('');
   const [saving, setSaving] = useState(false);
 
   const handleConfirm = async () => {
     setSaving(true);
     try {
       await axios.post(`/api/leads/${leadId}/payments/${entry.id}/mark-paid`, {
-        paidAt: new Date(paidAt).toISOString()
+        paidAt: new Date(paidAt).toISOString(),
+        transactionId: transactionId.trim() || undefined
       });
       toast.success('Marked as received!');
       onDone();
@@ -67,11 +69,23 @@ export function MarkPaidDialog({ entry, leadId, open, onClose, onDone }: MarkPai
             for &ldquo;{entry.label}&rdquo;.
           </DialogDescription>
         </DialogHeader>
-        <div>
-          <label className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 block mb-1.5">
-            PAID ON
-          </label>
-          <Input type="date" value={paidAt} onChange={(e) => setPaidAt(e.target.value)} />
+        <div className="space-y-4">
+          <div>
+            <label className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 block mb-1.5">
+              PAID ON
+            </label>
+            <Input type="date" value={paidAt} onChange={(e) => setPaidAt(e.target.value)} />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 block mb-1.5">
+              TRANSACTION ID (OPTIONAL)
+            </label>
+            <Input
+              placeholder="e.g. UTR / Ref Number"
+              value={transactionId}
+              onChange={(e) => setTransactionId(e.target.value)}
+            />
+          </div>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={onClose} className="flex-1" disabled={saving}>

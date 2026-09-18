@@ -94,11 +94,15 @@ export function LeadPaymentCard({ lead, onUpdated }: LeadPaymentCardProps) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <p className="font-semibold text-neutral-800 dark:text-neutral-100">{lead.name}</p>
-            {lead.courseInterest && (
+            {lead.campaign ? (
+              <span className="text-xs text-neutral-400 dark:text-neutral-500 truncate">
+                · {lead.campaign.name}
+              </span>
+            ) : lead.courseInterest ? (
               <span className="text-xs text-neutral-400 dark:text-neutral-500 truncate">
                 · {lead.courseInterest}
               </span>
-            )}
+            ) : null}
             <span
               className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${cfg.classes}`}
             >

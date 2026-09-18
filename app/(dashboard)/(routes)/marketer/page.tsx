@@ -1,21 +1,58 @@
 import { db } from '@/lib/db';
+import { Prisma } from '@prisma/client';
 import { LeadsTable } from './_components/leads-table';
 import { CreateLeadDialog } from './_components/create-lead-dialog';
+import { ExportLeadsButton } from './_components/export-leads-button';
+import { currentProfile } from '@/lib/current-profile';
 import { Users, TrendingUp, Clock, CheckCircle2 } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
-export default async function MarketerPage() {
-  const leads = await db.lead.findMany({
-    orderBy: { createdAt: 'desc' }
-  });
+export default async function MarketerPage({
+  searchParams
+}: {
+  searchParams: { [key: string]: string | string[] | undefined };
+}) {
+  const page = parseInt((searchParams.page as string) || '1', 10);
+  const pageSize = 50;
+  const q = ((searchParams.q as string) || '').trim();
+  const statusFilter = (searchParams.status as string) || 'ALL';
+  const sourceFilter = (searchParams.source as string) || 'ALL';
 
-  type Lead = (typeof leads)[number];
+  const where: Prisma.LeadWhereInput = {};
+  if (q) {
+    where.OR = [
+      { name: { contains: q, mode: 'insensitive' } },
+      { email: { contains: q, mode: 'insensitive' } },
+      { phone: { contains: q, mode: 'insensitive' } }
+    ];
+  }
+  if (statusFilter !== 'ALL') {
+    where.status = statusFilter;
+  }
+  if (sourceFilter !== 'ALL') {
+    where.source = sourceFilter;
+  }
 
-  const total = leads.length;
-  const newLeads = leads.filter((l: Lead) => l.status === 'NEW_LEAD').length;
-  const paymentPending = leads.filter((l: Lead) => l.status === 'PAYMENT_PENDING').length;
-  const notInterested = leads.filter((l: Lead) => l.status === 'NOT_INTERESTED').length;
+  const profile = await currentProfile();
+  const isAdmin = profile?.role === 'ADMIN';
+
+  const [total, newLeads, paymentPending, notInterested, filteredTotal, leads] = await Promise.all([
+    db.lead.count(),
+    db.lead.count({ where: { status: 'NEW_LEAD' } }),
+    db.lead.count({ where: { status: 'PAYMENT_PENDING' } }),
+    db.lead.count({ where: { status: 'NOT_INTERESTED' } }),
+    db.lead.count({ where }),
+    db.lead.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      include: { campaign: true }
+    })
+  ]);
+
+  const totalPages = Math.ceil(filteredTotal / pageSize);
 
   const stats = [
     {
@@ -53,7 +90,10 @@ export default async function MarketerPage() {
             All enquiries submitted through the contact form and other sources.
           </p>
         </div>
-        <CreateLeadDialog />
+        <div className="flex items-center gap-2">
+          {isAdmin && <ExportLeadsButton />}
+          <CreateLeadDialog />
+        </div>
       </div>
 
       {/* Stats row */}
@@ -77,7 +117,7 @@ export default async function MarketerPage() {
       </div>
 
       {/* Leads table */}
-      <LeadsTable leads={leads} />
+      <LeadsTable leads={leads} page={page} totalPages={totalPages} />
     </div>
   );
 }
