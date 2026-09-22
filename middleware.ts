@@ -30,7 +30,9 @@ export const isPublicRoute = createRouteMatcher([
   '/api/mobile/placement/companies',
   '/api/mobile/placement/companies/(.*)',
   '/api/mobile/placement/jobs',
-  '/api/mobile/placement/jobs/(.*)'
+  '/api/mobile/placement/jobs/(.*)',
+  '/webinars(.*)',
+  '/api/webinars(.*)'
 ]);
 
 const MOBILE_CORS_HEADERS = {
