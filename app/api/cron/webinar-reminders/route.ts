@@ -1,10 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import {
-  sendWebinarReminderWhatsApp,
-  sendWebinarReminder1hWhatsApp,
-  sendWebinarReminder0mWhatsApp
-} from '@/lib/wacrm';
+import { sendWebinarReminderWhatsApp } from '@/lib/wacrm';
 import { logError } from '@/lib/debug';
 
 export async function GET(request: Request) {
@@ -18,8 +14,6 @@ export async function GET(request: Request) {
 
   try {
     const now = new Date();
-    // For 0m window, we look back 1 hour to catch any that just started (prevent infinite historical sending)
-    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
     // For 24h window
     const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
@@ -28,7 +22,7 @@ export async function GET(request: Request) {
       where: {
         isPublished: true,
         scheduledAt: {
-          gt: oneHourAgo,
+          gt: now,
           lte: tomorrow
         }
       },
@@ -45,16 +39,12 @@ export async function GET(request: Request) {
     }
 
     let total24h = 0;
-    let total1h = 0;
-    let total0m = 0;
 
     for (const webinar of upcomingWebinars) {
       // Determine which threshold this webinar currently meets
       const timeUntilStart = webinar.scheduledAt.getTime() - now.getTime();
 
       const meets24h = timeUntilStart > 0 && timeUntilStart <= 24 * 60 * 60 * 1000;
-      const meets1h = timeUntilStart > 0 && timeUntilStart <= 60 * 60 * 1000;
-      const meets0m = timeUntilStart <= 0 && timeUntilStart > -60 * 60 * 1000; // between now and 1 hr ago
 
       // Find all registrations for this webinar
       const registrations = await db.webinarRegistration.findMany({
@@ -64,9 +54,7 @@ export async function GET(request: Request) {
           name: true,
           phone: true,
           countryCode: true,
-          reminder24hSent: true,
-          reminder1hSent: true,
-          reminder0mSent: true
+          reminder24hSent: true
         }
       });
 
@@ -84,8 +72,6 @@ export async function GET(request: Request) {
 
         const updates: Partial<{
           reminder24hSent: boolean;
-          reminder1hSent: boolean;
-          reminder0mSent: boolean;
         }> = {};
 
         // 24-hour reminder check
@@ -93,20 +79,6 @@ export async function GET(request: Request) {
           await sendWebinarReminderWhatsApp(wacrmOpts);
           updates.reminder24hSent = true;
           total24h++;
-        }
-
-        // 1-hour reminder check
-        if (meets1h && !reg.reminder1hSent) {
-          await sendWebinarReminder1hWhatsApp(wacrmOpts);
-          updates.reminder1hSent = true;
-          total1h++;
-        }
-
-        // 0-minute (live) reminder check
-        if (meets0m && !reg.reminder0mSent) {
-          await sendWebinarReminder0mWhatsApp(wacrmOpts);
-          updates.reminder0mSent = true;
-          total0m++;
         }
 
         if (Object.keys(updates).length > 0) {
@@ -120,7 +92,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: `Processed ${upcomingWebinars.length} webinars. Sent ${total24h} 24h reminders, ${total1h} 1h reminders, and ${total0m} 0m reminders.`
+      message: `Processed ${upcomingWebinars.length} webinars. Sent ${total24h} 24h reminders.`
     });
   } catch (error) {
     logError('CRON_WEBINAR_REMINDERS', error);
