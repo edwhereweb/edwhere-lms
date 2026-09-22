@@ -86,7 +86,7 @@ export const ImageForm = ({ initialData, blogId }: ImageFormProps) => {
           <>
             <div className="relative aspect-video mt-2 overflow-hidden rounded-md border border-slate-200 dark:border-slate-800">
               <Image
-                alt={initialData.imageAlt || 'Blog cover'}
+                unoptimizedalt={initialData.imageAlt || 'Blog cover'}
                 fill
                 className="object-cover"
                 src={initialData.imageUrl}

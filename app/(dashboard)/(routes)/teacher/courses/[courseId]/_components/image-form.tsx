@@ -92,7 +92,7 @@ export const ImageForm = ({ initialData, courseId }: ImageFormProps) => {
           <>
             <div className="relative aspect-video mt-2">
               <Image
-                alt={initialData.imageAlt || 'Course image'}
+                unoptimizedalt={initialData.imageAlt || 'Course image'}
                 fill
                 className="object-cover rounded-md"
                 src={initialData.imageUrl}

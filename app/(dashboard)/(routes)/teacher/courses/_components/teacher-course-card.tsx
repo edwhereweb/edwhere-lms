@@ -31,7 +31,7 @@ export const TeacherCourseCard = ({
     <div className="group border rounded-lg p-3 h-full flex flex-col bg-neutral-50 dark:bg-neutral-900">
       <div className="relative w-full aspect-video rounded-md overflow-hidden bg-neutral-200 dark:bg-neutral-800">
         {imageUrl ? (
-          <Image fill className="object-cover" alt={title} src={imageUrl} />
+          <Image unoptimizedfill className="object-cover" alt={title} src={imageUrl} />
         ) : (
           <div className="flex items-center justify-center h-full w-full text-neutral-400">
             No Image
