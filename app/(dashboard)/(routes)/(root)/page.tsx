@@ -146,7 +146,7 @@ export default async function LandingPage() {
             {/* Left: text content */}
             <div className="flex-1 w-full md:w-[60%] md:pr-10 flex flex-col items-center text-center md:text-left md:justify-center">
               <Image
-                unoptimizedsrc="/images/hero-logo-56586a.png"
+                src="/images/hero-logo-56586a.png"
                 alt="Edwhere Learning"
                 width={86}
                 height={86}
@@ -174,7 +174,7 @@ export default async function LandingPage() {
               <div className="mt-14 flex items-center justify-center md:justify-start gap-10">
                 <div className="flex flex-col items-center gap-4">
                   <Image
-                    unoptimizedsrc="/images/accreditation-badge.png"
+                    src="/images/accreditation-badge.png"
                     alt="Accredited"
                     width={138}
                     height={100}
@@ -186,7 +186,7 @@ export default async function LandingPage() {
                 </div>
                 <div className="flex flex-col items-center gap-4">
                   <Image
-                    unoptimizedsrc="/images/certification-badge-56586a.png"
+                    src="/images/certification-badge-56586a.png"
                     alt="Certified"
                     width={100}
                     height={100}
@@ -200,7 +200,7 @@ export default async function LandingPage() {
             {/* Right: hero illustration — hidden on mobile, fills parent height on md+ */}
             <div className="hidden md:block md:w-[35%] relative">
               <Image
-                unoptimizedsrc="/images/hero-illustration.jpg"
+                src="/images/hero-illustration.jpg"
                 alt="Edwhere illustration"
                 fill
                 className="object-cover object-center"
@@ -235,7 +235,7 @@ export default async function LandingPage() {
                 <Link href="/search" className="block">
                   <div className="relative h-60 overflow-hidden rounded-2xl">
                     <Image
-                      unoptimizedsrc={course.image}
+                      src={course.image}
                       alt={course.title}
                       fill
                       className="object-cover transition-transform duration-300 group-hover:scale-105"
@@ -269,7 +269,7 @@ export default async function LandingPage() {
           <div className="flex flex-col md:flex-row items-center gap-10">
             <div className="w-full md:w-auto flex justify-center shrink-0">
               <Image
-                unoptimizedsrc="/images/app-screenshot-55c38c.png"
+                src="/images/app-screenshot-55c38c.png"
                 alt="Edwhere Mobile App"
                 width={240}
                 height={443}
@@ -290,7 +290,7 @@ export default async function LandingPage() {
                 </p>
                 <Link href="#" className="inline-block w-fit transition-transform hover:scale-105">
                   <Image
-                    unoptimizedsrc="/images/playstore-badge-56586a.png"
+                    src="/images/playstore-badge-56586a.png"
                     alt="Get it on Google Play"
                     width={136}
                     height={40}
@@ -345,7 +345,7 @@ export default async function LandingPage() {
                     className="block relative aspect-video overflow-hidden rounded-2xl mb-4"
                   >
                     <Image
-                      unoptimizedsrc={blog.imageUrl || '/images/course-cybersecurity-56586a.png'}
+                      src={blog.imageUrl || '/images/course-cybersecurity-56586a.png'}
                       alt={(blog as { imageAlt?: string | null }).imageAlt || blog.title}
                       fill
                       className="object-cover transition-transform duration-300 group-hover:scale-105"
@@ -373,7 +373,7 @@ export default async function LandingPage() {
                     <div className="mt-auto flex items-center gap-x-2">
                       <div className="relative h-6 w-6 rounded-full overflow-hidden">
                         <Image
-                          unoptimizedsrc={
+                          src={
                             blog.author.imageUrl ||
                             'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200'
                           }
@@ -408,7 +408,7 @@ export default async function LandingPage() {
                 </h4>
                 <div className="relative w-full aspect-video overflow-hidden rounded-lg mb-4">
                   <Image
-                    unoptimizedsrc={video.image}
+                    src={video.image}
                     alt={video.title}
                     fill
                     className="object-cover transition-transform duration-300 group-hover:scale-105"
@@ -441,7 +441,7 @@ export default async function LandingPage() {
                 <p className="font-poppins text-lg text-black leading-[2em] mb-4">{card.text}</p>
                 <div className="relative w-full aspect-[4/3] overflow-hidden rounded-lg mb-6">
                   <Image
-                    unoptimizedsrc={card.image}
+                    src={card.image}
                     alt={card.cta}
                     fill
                     className="object-cover transition-transform duration-300 group-hover:scale-105"

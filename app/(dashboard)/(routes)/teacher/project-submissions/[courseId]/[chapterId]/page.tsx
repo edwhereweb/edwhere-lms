@@ -92,7 +92,7 @@ export default async function ProjectSubmissionsChapterPage({ params }: Props) {
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     {student?.imageUrl ? (
                       <Image
-                        unoptimizedsrc={student.imageUrl}
+                        src={student.imageUrl}
                         alt={student.name}
                         width={40}
                         height={40}

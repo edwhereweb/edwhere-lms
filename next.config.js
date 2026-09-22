@@ -2,6 +2,7 @@
 const nextConfig = {
     poweredByHeader: false,
     images: {
+        unoptimized: true,
         remotePatterns: [
             {
                 // Legacy UploadThing URLs still stored in DB

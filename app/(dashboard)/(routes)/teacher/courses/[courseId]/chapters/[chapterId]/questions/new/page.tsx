@@ -187,7 +187,7 @@ export default function NewQuestionPage({
                 ) : (
                   <div className="relative aspect-video mt-2 bg-slate-100 rounded-md flex items-center justify-center overflow-hidden border">
                     <Image
-                      unoptimizedalt="Question Image"
+                      alt="Question Image"
                       fill
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       className="object-contain"

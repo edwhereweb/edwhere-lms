@@ -150,6 +150,7 @@ const BlogPostPage = async ({ params }: BlogPostPageProps) => {
               fill
               className="object-cover"
               priority
+              sizes="(max-width: 768px) 100vw, 750px"
             />
           </div>
         </div>

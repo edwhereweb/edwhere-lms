@@ -44,7 +44,7 @@ function CategoryTile({ category }: { category: OnboardingCategory }) {
           >
             <div className="relative w-full aspect-video bg-muted">
               <Image
-                unoptimizedsrc={course.imageUrl ?? '/images/course-placeholder.png'}
+                src={course.imageUrl ?? '/images/course-placeholder.png'}
                 alt={course.title}
                 fill
                 className="object-cover transition-transform duration-300 group-hover:scale-105"

@@ -138,12 +138,13 @@ const WebinarDetailPage = async ({ params }: Props) => {
                 <div className="flex items-start gap-5 bg-card border border-border rounded-2xl p-5">
                   {webinar.presenterPhotoUrl ? (
                     <div className="relative w-20 h-20 rounded-full overflow-hidden shrink-0 border-2 border-border">
-                      <Image
-                        src={webinar.presenterPhotoUrl}
-                        alt={webinar.presenterName}
-                        fill
-                        className="object-cover"
-                      />
+          <Image
+            src={webinar.presenterPhotoUrl}
+            alt={webinar.presenterName}
+            fill
+            className="object-cover"
+            sizes="80px"
+          />
                     </div>
                   ) : (
                     <div className="w-20 h-20 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center shrink-0">

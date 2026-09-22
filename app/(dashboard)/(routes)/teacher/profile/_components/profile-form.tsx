@@ -116,7 +116,7 @@ export const ProfileForm = ({ initialData }: ProfileFormProps) => {
             <div className="relative h-20 w-20 rounded-full overflow-hidden border">
               {initialData?.imageUrl ? (
                 <Image
-                  unoptimizedfill
+                  fill
                   className="object-cover"
                   src={initialData.imageUrl}
                   alt={initialData.name}
@@ -323,7 +323,7 @@ export const ProfileForm = ({ initialData }: ProfileFormProps) => {
                           {field.value && (
                             <div className="relative h-20 w-20 rounded-full overflow-hidden border">
                               <Image
-                                unoptimizedfill
+                                fill
                                 className="object-cover"
                                 src={field.value}
                                 alt="Preview"

@@ -34,6 +34,7 @@ export const AuthorBio = ({ author }: AuthorBioProps) => {
               alt={author.name}
               fill
               className="rounded-full object-cover border-4 border-white dark:border-slate-800 shadow-sm"
+              sizes="96px"
             />
           ) : (
             <div className="h-full w-full rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-400">

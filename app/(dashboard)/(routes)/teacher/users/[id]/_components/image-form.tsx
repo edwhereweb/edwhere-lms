@@ -70,7 +70,7 @@ export const ImageForm = ({ initialData, id }: ImageFormProps) => {
         ) : (
           <div className="relative aspect-video mt-2">
             <Image
-              unoptimizedalt="Upload"
+              alt="Upload"
               fill
               className="object-cover rounded-md"
               src={initialData.imageUrl}
