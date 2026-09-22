@@ -84,9 +84,11 @@ export async function POST(req: Request, { params }: Params) {
       throw err;
     }
 
-    // Fire-and-forget — WhatsApp confirmation skipped if WACRM env vars are absent
-    const fullPhone = `+${(countryCode ?? '+91').replace('+', '')}${phone}`;
-    void sendWebinarConfirmationWhatsApp({
+    // Await the WhatsApp confirmation. Serverless functions on Vercel will freeze
+    // background promises if the response is returned before they complete.
+    // Errors inside sendWebinarConfirmationWhatsApp are swallowed, so this won't fail the registration.
+    const fullPhone = `${(countryCode ?? '91').replace('+', '')}${phone}`;
+    await sendWebinarConfirmationWhatsApp({
       phone: fullPhone,
       name,
       webinarTitle: webinar.title,

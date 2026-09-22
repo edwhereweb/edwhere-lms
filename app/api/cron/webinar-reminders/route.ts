@@ -61,7 +61,7 @@ export async function GET(request: Request) {
       if (registrations.length === 0) continue;
 
       for (const reg of registrations) {
-        const fullPhone = `+${(reg.countryCode ?? '+91').replace('+', '')}${reg.phone}`;
+        const fullPhone = `${(reg.countryCode ?? '91').replace('+', '')}${reg.phone}`;
         const wacrmOpts = {
           phone: fullPhone,
           name: reg.name,
