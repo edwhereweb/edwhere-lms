@@ -329,7 +329,9 @@ const UPLOAD_TYPE = z.enum([
   'blogPostCover',
   'sessionSlides',
   'sessionNotes',
-  'paymentReceipt'
+  'paymentReceipt',
+  'webinarBanner',
+  'webinarPresenterPhoto'
 ]);
 export type UploadType = z.infer<typeof UPLOAD_TYPE>;
 
@@ -363,7 +365,9 @@ export const ALLOWED_CONTENT_TYPES: Record<UploadType, readonly string[]> = {
   blogPostCover: IMAGE_CONTENT_TYPES,
   sessionSlides: ['application/pdf'],
   sessionNotes: ['application/pdf'],
-  paymentReceipt: [...IMAGE_CONTENT_TYPES, 'application/pdf']
+  paymentReceipt: [...IMAGE_CONTENT_TYPES, 'application/pdf'],
+  webinarBanner: IMAGE_CONTENT_TYPES,
+  webinarPresenterPhoto: IMAGE_CONTENT_TYPES
 };
 
 export const MAX_FILE_SIZES: Record<UploadType, number> = {
@@ -377,7 +381,9 @@ export const MAX_FILE_SIZES: Record<UploadType, number> = {
   blogPostCover: 8 * 1024 * 1024,
   sessionSlides: 32 * 1024 * 1024,
   sessionNotes: 16 * 1024 * 1024,
-  paymentReceipt: 8 * 1024 * 1024
+  paymentReceipt: 8 * 1024 * 1024,
+  webinarBanner: 8 * 1024 * 1024,
+  webinarPresenterPhoto: 4 * 1024 * 1024
 };
 
 export const presignSchema = z.object({
@@ -388,7 +394,8 @@ export const presignSchema = z.object({
   chapterId: z.string().optional(),
   blogId: z.string().optional(),
   sessionId: z.string().optional(),
-  leadId: z.string().optional()
+  leadId: z.string().optional(),
+  webinarId: z.string().optional()
 });
 
 // ── Blog schemas ────────────────────────────────────────────────────────
@@ -836,4 +843,47 @@ export const updateMetaTrackingSettingsSchema = z.object({
 export const testMetaTrackingEventSchema = z.object({
   eventName: z.string().trim().min(1).max(100).optional(),
   testEventCode: z.string().trim().max(100).optional()
+});
+
+// ── Webinar schemas ──────────────────────────────────────────────────────────
+
+export const createWebinarSchema = z.object({
+  title: z.string().min(1, 'Title is required').max(300)
+});
+
+export const updateWebinarSchema = z.object({
+  title: z.string().min(1).max(300).optional(),
+  slug: z
+    .string()
+    .min(1)
+    .max(300)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug must be lowercase letters, numbers, and hyphens')
+    .optional(),
+  description: z.string().max(10000).nullable().optional(),
+  bannerUrl: z.string().nullable().optional(),
+  scheduledAt: z.string().datetime({ offset: true }).optional(),
+  durationMinutes: z.number().int().min(15).max(480).optional(),
+  isPublished: z.boolean().optional(),
+  meetLink: z.string().url('Must be a valid URL').nullable().optional(),
+  takeaways: z.array(z.string().min(1).max(500)).max(20).optional(),
+  presenterName: z.string().max(150).nullable().optional(),
+  presenterPhotoUrl: z.string().nullable().optional(),
+  presenterBio: z.string().max(2000).nullable().optional(),
+  presenterCredentials: z.array(z.string().max(100)).max(10).optional(),
+  metaTitle: z.string().max(200).nullable().optional(),
+  metaDescription: z.string().max(500).nullable().optional()
+});
+
+// Used by the public registration form (no auth required)
+export const webinarRegistrationSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters').max(150),
+  email: z.string().email('Enter a valid email address'),
+  countryCode: z.string().min(1).max(6).default('+91'),
+  phone: z
+    .string()
+    .min(7, 'Phone number too short')
+    .max(15, 'Phone number too long')
+    .regex(/^\d+$/, 'Phone must contain only digits'),
+  // Honeypot — must remain empty; bots that fill it will be silently rejected
+  website: z.string().max(0, 'Bot detected').optional()
 });

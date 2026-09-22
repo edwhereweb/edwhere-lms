@@ -26,7 +26,23 @@ const envSchema = z.object({
   MOBILE_FORCE_UPGRADE: z
     .enum(['true', 'false'])
     .default('false')
-    .transform((v) => v === 'true')
+    .transform((v) => v === 'true'),
+  // WACRM WhatsApp API — optional; webinar confirmations are skipped if unset
+  WACRM_API_URL: z.preprocess((v) => (v === '' ? undefined : v), z.string().url().optional()),
+  WACRM_API_KEY: z.preprocess((v) => (v === '' ? undefined : v), z.string().min(1).optional()),
+  WACRM_TEMPLATE_ID: z.preprocess((v) => (v === '' ? undefined : v), z.string().min(1).optional()),
+  WACRM_REMINDER_TEMPLATE_ID: z.preprocess(
+    (v) => (v === '' ? undefined : v),
+    z.string().min(1).optional()
+  ),
+  WACRM_REMINDER_1H_TEMPLATE_ID: z.preprocess(
+    (v) => (v === '' ? undefined : v),
+    z.string().min(1).optional()
+  ),
+  WACRM_REMINDER_0M_TEMPLATE_ID: z.preprocess(
+    (v) => (v === '' ? undefined : v),
+    z.string().min(1).optional()
+  )
 });
 
 function validateEnv() {

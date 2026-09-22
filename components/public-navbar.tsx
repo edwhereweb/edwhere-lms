@@ -10,6 +10,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 const NAV_LINKS = [
   { label: 'Courses', href: '/courses' },
+  { label: 'Webinars', href: '/webinars' },
   { label: 'About Us', href: 'https://edwhere.com/about-us/' },
   { label: 'Contact Us', href: '/contact' },
   { label: 'Blogs', href: '/blog' }

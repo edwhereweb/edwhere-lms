@@ -1217,3 +1217,66 @@ model MetaTrackingSettings {
   updatedAt                 DateTime         @updatedAt
 }
 
+// -- Webinars ----------------------------------------------------------------
+
+model Webinar {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  title           String
+  slug            String   @unique
+  description     String?
+  bannerUrl       String?
+  scheduledAt     DateTime
+  durationMinutes Int      @default(60)
+  isPublished     Boolean  @default(false)
+
+  // Admin can add/update the meeting link at any time
+  meetLink        String?
+
+  // Key takeaways bullet list
+  takeaways       String[]
+
+  // Presenter info - inline per webinar
+  presenterName        String?
+  presenterPhotoUrl    String?
+  presenterBio         String?
+  presenterCredentials String[]
+
+  metaTitle       String?
+  metaDescription String?
+
+  // Clerk userId of the admin who created this webinar
+  createdBy       String
+
+  registrations   WebinarRegistration[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([isPublished])
+  @@index([scheduledAt])
+  @@fulltext([title])
+}
+
+model WebinarRegistration {
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  webinarId   String  @db.ObjectId
+  webinar     Webinar @relation(fields: [webinarId], references: [id], onDelete: Cascade)
+
+  name        String
+  email       String
+  countryCode String  @default("+91")
+  phone       String
+
+  // Stored for rate-limit audit; never exposed publicly
+  registeredIp String?
+
+  reminder24hSent Boolean @default(false)
+  reminder1hSent  Boolean @default(false)
+  reminder0mSent  Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@unique([webinarId, email])
+  @@index([webinarId])
+  @@index([email])
+}

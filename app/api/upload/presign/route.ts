@@ -25,6 +25,7 @@ function buildKey(
     blogId?: string;
     sessionId?: string;
     leadId?: string;
+    webinarId?: string;
   }
 ): string {
   const uuid = crypto.randomUUID();
@@ -54,6 +55,10 @@ function buildKey(
       return `private/session-uploads/${ids.sessionId}/${uuid}-notes${ext}`;
     case 'paymentReceipt':
       return `private/payment-receipts/${ids.leadId ?? userId}/${uuid}-receipt${ext}`;
+    case 'webinarBanner':
+      return `public/webinar-banners/${ids.webinarId ?? 'general'}/${uuid}${ext}`;
+    case 'webinarPresenterPhoto':
+      return `public/webinar-presenters/${ids.webinarId ?? 'general'}/${uuid}${ext}`;
   }
 }
 
@@ -96,7 +101,8 @@ export async function POST(req: Request) {
       chapterId,
       blogId,
       sessionId,
-      leadId
+      leadId,
+      webinarId
     } = validation.data;
 
     const isBlogUpload = BLOG_UPLOAD_TYPES.includes(type);
@@ -145,11 +151,14 @@ export async function POST(req: Request) {
       chapterId,
       blogId,
       sessionId,
-      leadId
+      leadId,
+      webinarId
     });
     const uploadUrl = await createPresignedPutUrl(key, contentType);
+    // publicUrl is the path used to serve the file through the app's /api/files proxy
+    const publicUrl = `/api/files/${key}`;
 
-    return NextResponse.json({ uploadUrl, key });
+    return NextResponse.json({ uploadUrl, key, publicUrl });
   } catch (error) {
     return handleApiError('UPLOAD_PRESIGN', error);
   }
