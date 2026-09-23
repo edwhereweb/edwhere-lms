@@ -1,6 +1,6 @@
 import { env } from '@/lib/env';
 import { debug, logError } from '@/lib/debug';
-import { format } from 'date-fns';
+import { formatISTDate, formatISTTime } from '@/lib/format';
 
 interface WebinarConfirmationOpts {
   // Full international phone number including country code, digits only (e.g. "918138041614")
@@ -28,8 +28,8 @@ export async function sendWebinarConfirmationWhatsApp(
     return;
   }
 
-  const dateFormatted = format(opts.scheduledAt, 'MMMM d, yyyy');
-  const timeFormatted = format(opts.scheduledAt, 'h:mm a');
+  const dateFormatted = formatISTDate(opts.scheduledAt);
+  const timeFormatted = formatISTTime(opts.scheduledAt);
   const link = opts.meetLink || 'Link will be shared shortly!';
 
   try {
@@ -72,8 +72,8 @@ export async function sendWebinarReminderWhatsApp(opts: WebinarConfirmationOpts)
     return;
   }
 
-  const dateFormatted = format(opts.scheduledAt, 'MMMM d, yyyy');
-  const timeFormatted = format(opts.scheduledAt, 'h:mm a');
+  const dateFormatted = formatISTDate(opts.scheduledAt);
+  const timeFormatted = formatISTTime(opts.scheduledAt);
   const link = opts.meetLink || 'Link will be shared shortly!';
 
   try {

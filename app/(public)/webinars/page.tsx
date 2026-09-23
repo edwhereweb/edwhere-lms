@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import { db } from '@/lib/db';
 import Link from 'next/link';
 import Image from 'next/image';
-import { format } from 'date-fns';
 import { Calendar, Clock, Users, ChevronRight, Video } from 'lucide-react';
+import { formatISTDate, formatISTTime } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 
@@ -156,11 +156,11 @@ function WebinarCard({ webinar, variant }: WebinarCardProps) {
         <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <Calendar className="w-3.5 h-3.5" />
-            {format(webinar.scheduledAt, 'MMM d, yyyy')}
+            {formatISTDate(webinar.scheduledAt)}
           </span>
           <span className="flex items-center gap-1">
             <Clock className="w-3.5 h-3.5" />
-            {format(webinar.scheduledAt, 'h:mm a')} · {webinar.durationMinutes}m
+            {formatISTTime(webinar.scheduledAt)} · {webinar.durationMinutes}m
           </span>
           {webinar._count.registrations > 0 && (
             <span className="flex items-center gap-1">

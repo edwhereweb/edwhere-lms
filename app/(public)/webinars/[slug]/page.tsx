@@ -3,9 +3,9 @@ import { notFound } from 'next/navigation';
 import { cache } from 'react';
 import { db } from '@/lib/db';
 import Image from 'next/image';
-import { format } from 'date-fns';
 import { Calendar, Clock, CheckCircle2, Award, Users, Video, Link as LinkIcon } from 'lucide-react';
 import { WebinarRegistrationForm } from './_components/webinar-registration-form';
+import { formatISTDate, formatISTTime, formatISTDateTime } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 
@@ -84,11 +84,11 @@ const WebinarDetailPage = async ({ params }: Props) => {
             <div className="flex flex-wrap items-center gap-4 text-sm text-slate-300">
               <span className="flex items-center gap-1.5">
                 <Calendar className="w-4 h-4" />
-                {format(webinar.scheduledAt, 'MMMM d, yyyy')}
+                {formatISTDate(webinar.scheduledAt)}
               </span>
               <span className="flex items-center gap-1.5">
                 <Clock className="w-4 h-4" />
-                {format(webinar.scheduledAt, 'h:mm a')} · {webinar.durationMinutes} minutes
+                {formatISTTime(webinar.scheduledAt)} · {webinar.durationMinutes} minutes
               </span>
               {webinar._count.registrations > 0 && (
                 <span className="flex items-center gap-1.5">
@@ -138,13 +138,13 @@ const WebinarDetailPage = async ({ params }: Props) => {
                 <div className="flex items-start gap-5 bg-card border border-border rounded-2xl p-5">
                   {webinar.presenterPhotoUrl ? (
                     <div className="relative w-20 h-20 rounded-full overflow-hidden shrink-0 border-2 border-border">
-          <Image
-            src={webinar.presenterPhotoUrl}
-            alt={webinar.presenterName}
-            fill
-            className="object-cover"
-            sizes="80px"
-          />
+                      <Image
+                        src={webinar.presenterPhotoUrl}
+                        alt={webinar.presenterName}
+                        fill
+                        className="object-cover"
+                        sizes="80px"
+                      />
                     </div>
                   ) : (
                     <div className="w-20 h-20 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center shrink-0">
@@ -217,11 +217,11 @@ const WebinarDetailPage = async ({ params }: Props) => {
                   <div className="space-y-1.5 text-sm">
                     <div className="flex items-center gap-2 text-foreground">
                       <Calendar className="w-4 h-4 text-muted-foreground" />
-                      {format(webinar.scheduledAt, 'EEEE, MMMM d, yyyy')}
+                      {formatISTDateTime(webinar.scheduledAt)}
                     </div>
                     <div className="flex items-center gap-2 text-foreground">
                       <Clock className="w-4 h-4 text-muted-foreground" />
-                      {format(webinar.scheduledAt, 'h:mm a')} ({webinar.durationMinutes} min)
+                      {formatISTTime(webinar.scheduledAt)} ({webinar.durationMinutes} min)
                     </div>
                     <div className="flex items-center gap-2 text-muted-foreground text-xs">
                       <Video className="w-4 h-4" />
