@@ -3,24 +3,7 @@
 import { useState } from 'react';
 import { CheckCircle, Loader2, Phone } from 'lucide-react';
 import toast from 'react-hot-toast';
-
-const COUNTRY_CODES = [
-  { code: '+91', label: 'IN +91' },
-  { code: '+1', label: 'US +1' },
-  { code: '+44', label: 'GB +44' },
-  { code: '+971', label: 'AE +971' },
-  { code: '+974', label: 'QA +974' },
-  { code: '+65', label: 'SG +65' },
-  { code: '+60', label: 'MY +60' },
-  { code: '+61', label: 'AU +61' },
-  { code: '+49', label: 'DE +49' },
-  { code: '+33', label: 'FR +33' },
-  { code: '+966', label: 'SA +966' },
-  { code: '+973', label: 'BH +973' },
-  { code: '+968', label: 'OM +968' },
-  { code: '+961', label: 'LB +961' },
-  { code: '+20', label: 'EG +20' }
-];
+import { COUNTRY_CODES } from '@/lib/countries';
 
 interface Props {
   webinarId: string;
@@ -154,7 +137,7 @@ export function WebinarRegistrationForm({ webinarId, isPast }: Props) {
             className="h-10 text-sm border border-input rounded-lg px-2 bg-background focus:outline-none focus:ring-2 focus:ring-ring shrink-0"
           >
             {COUNTRY_CODES.map((c) => (
-              <option key={c.code} value={c.code}>
+              <option key={c.label} value={c.code}>
                 {c.label}
               </option>
             ))}
