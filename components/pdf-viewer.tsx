@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useMemo } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import {
   FileText,
@@ -61,6 +61,9 @@ export const PdfViewer = ({ url, title = 'PDF Document' }: PdfViewerProps) => {
       await document.exitFullscreen();
     }
   };
+
+  // Memoize file object so it doesn't cause re-renders in react-pdf
+  const fileOptions = useMemo(() => ({ url, withCredentials: true }), [url]);
 
   return (
     <div
@@ -147,7 +150,7 @@ export const PdfViewer = ({ url, title = 'PDF Document' }: PdfViewerProps) => {
         onContextMenu={(e) => e.preventDefault()}
       >
         <Document
-          file={url}
+          file={fileOptions}
           onLoadSuccess={onDocumentLoadSuccess}
           loading={
             <div className="flex flex-col items-center justify-center h-full text-slate-500">
