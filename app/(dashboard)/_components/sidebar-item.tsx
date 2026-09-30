@@ -27,7 +27,7 @@ const SidebarItem = ({ icon: Icon, label, href, nested }: SidebarItemProps) => {
       onClick={onClick}
       type="button"
       className={cn(
-        'flex items-center gap-x-2 text-muted-foreground text-sm font-[500] transition-all hover:text-foreground hover:bg-accent',
+        'flex items-center gap-x-2 text-left text-muted-foreground text-sm font-[500] transition-all hover:text-foreground hover:bg-accent',
         nested ? 'pl-10' : 'pl-6',
         isActive && 'text-foreground bg-accent'
       )}
