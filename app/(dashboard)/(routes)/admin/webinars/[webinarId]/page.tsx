@@ -33,6 +33,7 @@ interface Webinar {
   durationMinutes: number;
   isPublished: boolean;
   meetLink: string | null;
+  recordingUrl: string | null;
   takeaways: string[];
   presenterName: string | null;
   presenterPhotoUrl: string | null;
@@ -68,6 +69,7 @@ export default function AdminWebinarEditorPage() {
   const [scheduledAt, setScheduledAt] = useState('');
   const [durationMinutes, setDurationMinutes] = useState(60);
   const [meetLink, setMeetLink] = useState('');
+  const [recordingUrl, setRecordingUrl] = useState('');
   const [takeaways, setTakeaways] = useState<string[]>([]);
   const [newTakeaway, setNewTakeaway] = useState('');
   const [presenterName, setPresenterName] = useState('');
@@ -88,6 +90,7 @@ export default function AdminWebinarEditorPage() {
         setScheduledAt(toLocalInputValue(data.scheduledAt));
         setDurationMinutes(data.durationMinutes);
         setMeetLink(data.meetLink ?? '');
+        setRecordingUrl(data.recordingUrl ?? '');
         setTakeaways(data.takeaways);
         setPresenterName(data.presenterName ?? '');
         setPresenterBio(data.presenterBio ?? '');
@@ -115,6 +118,7 @@ export default function AdminWebinarEditorPage() {
         scheduledAt: scheduledAt ? new Date(scheduledAt).toISOString() : undefined,
         durationMinutes,
         meetLink: meetLink || null,
+        recordingUrl: recordingUrl || null,
         takeaways,
         presenterName: presenterName || null,
         presenterBio: presenterBio || null,
@@ -371,6 +375,25 @@ export default function AdminWebinarEditorPage() {
               <p className="text-[11px] text-muted-foreground">
                 Can be added/updated at any time. Sent to registrants via WhatsApp before the
                 session.
+              </p>
+            </div>
+            <div className="space-y-1.5">
+              <label
+                htmlFor="w-recording"
+                className="text-sm font-medium flex items-center gap-1.5"
+              >
+                <Video className="w-3.5 h-3.5" />
+                Recording Link
+              </label>
+              <Input
+                id="w-recording"
+                type="url"
+                placeholder="https://youtu.be/..."
+                value={recordingUrl}
+                onChange={(e) => setRecordingUrl(e.target.value)}
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Displayed to registrants instead of the Meet link after the webinar is over.
               </p>
             </div>
           </section>

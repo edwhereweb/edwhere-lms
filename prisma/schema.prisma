@@ -1231,6 +1231,7 @@ model Webinar {
 
   // Admin can add/update the meeting link at any time
   meetLink        String?
+  recordingUrl    String?
 
   // Key takeaways bullet list
   takeaways       String[]

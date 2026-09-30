@@ -180,22 +180,22 @@ const WebinarDetailPage = async ({ params }: Props) => {
               </section>
             )}
 
-            {/* Meet link — shown only if past and link is available */}
-            {isPast && webinar.meetLink && (
+            {/* Recording link — shown only if past and link is available */}
+            {isPast && webinar.recordingUrl && (
               <section>
                 <div className="flex items-center gap-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-2xl p-5">
-                  <LinkIcon className="w-5 h-5 text-blue-500 shrink-0" />
+                  <Video className="w-5 h-5 text-blue-500 shrink-0" />
                   <div>
                     <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">
-                      Session Recording / Link
+                      Session Recording
                     </p>
                     <a
-                      href={webinar.meetLink}
+                      href={webinar.recordingUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-sm text-blue-600 dark:text-blue-400 underline break-all"
                     >
-                      {webinar.meetLink}
+                      {webinar.recordingUrl}
                     </a>
                   </div>
                 </div>

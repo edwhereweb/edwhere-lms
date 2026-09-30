@@ -865,6 +865,7 @@ export const updateWebinarSchema = z.object({
   durationMinutes: z.number().int().min(15).max(480).optional(),
   isPublished: z.boolean().optional(),
   meetLink: z.string().url('Must be a valid URL').nullable().optional(),
+  recordingUrl: z.string().url('Must be a valid URL').nullable().optional(),
   takeaways: z.array(z.string().min(1).max(500)).max(20).optional(),
   presenterName: z.string().max(150).nullable().optional(),
   presenterPhotoUrl: z.string().nullable().optional(),
