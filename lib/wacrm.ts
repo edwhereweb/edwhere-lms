@@ -3,7 +3,7 @@ import { debug, logError } from '@/lib/debug';
 import { formatISTDate, formatISTTime } from '@/lib/format';
 
 interface WebinarConfirmationOpts {
-  // Full international phone number including country code, digits only (e.g. "918138041614")
+  // Full international phone number including country code (e.g. "919447861995" or "+919447861995")
   phone: string;
   name: string;
   webinarTitle: string;
@@ -21,15 +21,21 @@ export interface WacrmResult {
 
 /**
  * Extracts the meeting code from a Google Meet URL for use as the {{1}} button URL variable.
- * e.g. "https://meet.google.com/abc-defg-hij" → "abc-defg-hij"
+ * e.g. "https://meet.google.com/aas-sdsd-sds" → "aas-sdsd-sds"
  */
-function extractMeetCode(meetLink: string): string {
+export function extractMeetCode(meetLink: string): string {
+  if (!meetLink) return '';
+  const trimmed = meetLink.trim();
   try {
-    const url = new URL(meetLink);
-    const code = url.pathname.replace(/^\//, '');
-    return code || meetLink;
+    const withProto =
+      trimmed.startsWith('http://') || trimmed.startsWith('https://')
+        ? trimmed
+        : `https://${trimmed}`;
+    const url = new URL(withProto);
+    const code = url.pathname.replace(/^\/+|\/+$/g, '');
+    return code || trimmed;
   } catch {
-    return meetLink;
+    return trimmed;
   }
 }
 
@@ -61,29 +67,32 @@ async function callWacrm(
 /**
  * Builds the WACRM template payload.
  *
- * WACRM uses its own simplified format:
- *   - Body variables → top-level "params" array (positional, same order as {{1}}…{{N}} in template)
- *   - Button URL variable → separate "button_params" array (one entry per dynamic-URL button)
+ * WACRM's /api/v1/messages endpoint accepts structured params:
+ *   - params.body: string[] (positional values for {{1}}…{{N}} in the template body)
+ *   - params.buttonParams: Record<number, string> (e.g. { 0: meetCode } for dynamic URL button #1)
  *
- * Adjust "button_params" key/structure if your WACRM dashboard shows a different field name.
+ * Phone numbers should follow E.164 (prefixed with '+' if not already present).
  */
 function buildPayload(
   templateName: string,
   phone: string,
   bodyParams: string[],
-  meetCode: string
+  meetCode: string,
+  contactName?: string
 ): Record<string, unknown> {
+  const formattedPhone = phone.startsWith('+') ? phone : `+${phone}`;
+
   return {
-    to: phone,
+    to: formattedPhone,
     type: 'template',
+    ...(contactName ? { name: contactName } : {}),
     template: {
       name: templateName,
       language: 'en_US',
-      params: bodyParams,
-      // Button URL variable — only included when we have an actual meet code.
-      // WACRM wraps the raw WhatsApp button component; the key name here matches
-      // what their API expects. Change to "button_url_params" or similar if needed.
-      ...(meetCode ? { button_params: [meetCode] } : {})
+      params: {
+        body: bodyParams,
+        ...(meetCode ? { buttonParams: { 0: meetCode } } : {})
+      }
     }
   };
 }
@@ -112,13 +121,16 @@ export async function sendWebinarConfirmationWhatsApp(
   const dateFormatted = formatISTDate(opts.scheduledAt);
   const timeFormatted = formatISTTime(opts.scheduledAt);
   const link = opts.meetLink || 'Link will be shared shortly!';
-  const meetCode = opts.meetLink ? extractMeetCode(opts.meetLink) : '';
+  // Meta template has dynamic button URL `https://meet.google.com/{{1}}` which requires
+  // a button param value. If meetLink is missing, fallback to 'edwhere' to pass validation.
+  const meetCode = opts.meetLink ? extractMeetCode(opts.meetLink) : 'edwhere';
 
   const payload = buildPayload(
     WACRM_TEMPLATE_ID,
     opts.phone,
     [opts.name, opts.webinarTitle, dateFormatted, timeFormatted, link],
-    meetCode
+    meetCode,
+    opts.name
   );
 
   debug('WACRM', 'Sending confirmation payload:', JSON.stringify(payload));
@@ -156,7 +168,8 @@ export async function sendWebinarReminderWhatsApp(opts: WebinarConfirmationOpts)
     WACRM_REMINDER_TEMPLATE_ID,
     opts.phone,
     [opts.name, opts.webinarTitle, dateFormatted, timeFormatted, link],
-    meetCode
+    meetCode,
+    opts.name
   );
 
   const result = await callWacrm(WACRM_API_URL, WACRM_API_KEY, payload);
@@ -187,7 +200,8 @@ export async function sendWebinarReminder1hWhatsApp(opts: WebinarConfirmationOpt
     WACRM_REMINDER_1H_TEMPLATE_ID,
     opts.phone,
     [opts.name, opts.webinarTitle, link],
-    meetCode
+    meetCode,
+    opts.name
   );
 
   const result = await callWacrm(WACRM_API_URL, WACRM_API_KEY, payload);
@@ -218,7 +232,8 @@ export async function sendWebinarReminder0mWhatsApp(opts: WebinarConfirmationOpt
     WACRM_REMINDER_0M_TEMPLATE_ID,
     opts.phone,
     [opts.name, opts.webinarTitle, link],
-    meetCode
+    meetCode,
+    opts.name
   );
 
   const result = await callWacrm(WACRM_API_URL, WACRM_API_KEY, payload);

@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { cache } from 'react';
 import { db } from '@/lib/db';
 import Image from 'next/image';
-import { Calendar, Clock, CheckCircle2, Award, Users, Video, Link as LinkIcon } from 'lucide-react';
+import { Calendar, Clock, CheckCircle2, Award, Users, Video } from 'lucide-react';
 import { WebinarRegistrationForm } from './_components/webinar-registration-form';
 import { formatISTDate, formatISTTime, formatISTDateTime } from '@/lib/format';
 
