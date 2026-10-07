@@ -12,6 +12,23 @@ interface WebinarConfirmationOpts {
 }
 
 /**
+ * Extracts the meeting code from a Google Meet URL for use as the {{1}} button URL variable.
+ * e.g. "https://meet.google.com/abc-defg-hij" → "abc-defg-hij"
+ * Returns the raw URL as-is if it doesn't match the expected pattern, so the button
+ * still gets a value rather than being left empty.
+ */
+function extractMeetCode(meetLink: string): string {
+  try {
+    const url = new URL(meetLink);
+    // pathname is "/abc-defg-hij" — strip the leading slash
+    const code = url.pathname.replace(/^\//, '');
+    return code || meetLink;
+  } catch {
+    return meetLink;
+  }
+}
+
+/**
  * Sends a WhatsApp confirmation message via WACRM when a user registers for a webinar.
  * Fire-and-forget — never throws; all errors are logged and swallowed so they don't
  * block the registration response.
@@ -32,6 +49,12 @@ export async function sendWebinarConfirmationWhatsApp(
   const timeFormatted = formatISTTime(opts.scheduledAt);
   const link = opts.meetLink || 'Link will be shared shortly!';
 
+  // The "Join Now" button in the template uses a dynamic URL:
+  //   Base URL:  https://meet.google.com/
+  //   Variable:  {{1}} → the meeting code extracted from meetLink
+  // WhatsApp Business API requires button URL variables in a separate component entry.
+  const meetCode = opts.meetLink ? extractMeetCode(opts.meetLink) : '';
+
   try {
     const res = await fetch(`${WACRM_API_URL}/messages`, {
       method: 'POST',
@@ -45,7 +68,28 @@ export async function sendWebinarConfirmationWhatsApp(
         template: {
           name: WACRM_TEMPLATE_ID,
           language: 'en_US',
-          params: [opts.name, opts.webinarTitle, dateFormatted, timeFormatted, link]
+          components: [
+            {
+              type: 'body',
+              parameters: [
+                { type: 'text', text: opts.name },
+                { type: 'text', text: opts.webinarTitle },
+                { type: 'text', text: dateFormatted },
+                { type: 'text', text: timeFormatted },
+                { type: 'text', text: link }
+              ]
+            },
+            ...(meetCode
+              ? [
+                  {
+                    type: 'button',
+                    sub_type: 'url',
+                    index: '0',
+                    parameters: [{ type: 'text', text: meetCode }]
+                  }
+                ]
+              : [])
+          ]
         }
       })
     });
@@ -75,6 +119,7 @@ export async function sendWebinarReminderWhatsApp(opts: WebinarConfirmationOpts)
   const dateFormatted = formatISTDate(opts.scheduledAt);
   const timeFormatted = formatISTTime(opts.scheduledAt);
   const link = opts.meetLink || 'Link will be shared shortly!';
+  const meetCode = opts.meetLink ? extractMeetCode(opts.meetLink) : '';
 
   try {
     const res = await fetch(`${WACRM_API_URL}/messages`, {
@@ -89,7 +134,28 @@ export async function sendWebinarReminderWhatsApp(opts: WebinarConfirmationOpts)
         template: {
           name: WACRM_REMINDER_TEMPLATE_ID,
           language: 'en_US',
-          params: [opts.name, opts.webinarTitle, dateFormatted, timeFormatted, link]
+          components: [
+            {
+              type: 'body',
+              parameters: [
+                { type: 'text', text: opts.name },
+                { type: 'text', text: opts.webinarTitle },
+                { type: 'text', text: dateFormatted },
+                { type: 'text', text: timeFormatted },
+                { type: 'text', text: link }
+              ]
+            },
+            ...(meetCode
+              ? [
+                  {
+                    type: 'button',
+                    sub_type: 'url',
+                    index: '0',
+                    parameters: [{ type: 'text', text: meetCode }]
+                  }
+                ]
+              : [])
+          ]
         }
       })
     });
@@ -116,6 +182,7 @@ export async function sendWebinarReminder1hWhatsApp(opts: WebinarConfirmationOpt
   }
 
   const link = opts.meetLink || 'Link will be shared shortly!';
+  const meetCode = opts.meetLink ? extractMeetCode(opts.meetLink) : '';
 
   try {
     const res = await fetch(`${WACRM_API_URL}/messages`, {
@@ -130,7 +197,26 @@ export async function sendWebinarReminder1hWhatsApp(opts: WebinarConfirmationOpt
         template: {
           name: WACRM_REMINDER_1H_TEMPLATE_ID,
           language: 'en_US',
-          params: [opts.name, opts.webinarTitle, link]
+          components: [
+            {
+              type: 'body',
+              parameters: [
+                { type: 'text', text: opts.name },
+                { type: 'text', text: opts.webinarTitle },
+                { type: 'text', text: link }
+              ]
+            },
+            ...(meetCode
+              ? [
+                  {
+                    type: 'button',
+                    sub_type: 'url',
+                    index: '0',
+                    parameters: [{ type: 'text', text: meetCode }]
+                  }
+                ]
+              : [])
+          ]
         }
       })
     });
@@ -156,6 +242,7 @@ export async function sendWebinarReminder0mWhatsApp(opts: WebinarConfirmationOpt
   }
 
   const link = opts.meetLink || 'Link will be shared shortly!';
+  const meetCode = opts.meetLink ? extractMeetCode(opts.meetLink) : '';
 
   try {
     const res = await fetch(`${WACRM_API_URL}/messages`, {
@@ -170,7 +257,26 @@ export async function sendWebinarReminder0mWhatsApp(opts: WebinarConfirmationOpt
         template: {
           name: WACRM_REMINDER_0M_TEMPLATE_ID,
           language: 'en_US',
-          params: [opts.name, opts.webinarTitle, link]
+          components: [
+            {
+              type: 'body',
+              parameters: [
+                { type: 'text', text: opts.name },
+                { type: 'text', text: opts.webinarTitle },
+                { type: 'text', text: link }
+              ]
+            },
+            ...(meetCode
+              ? [
+                  {
+                    type: 'button',
+                    sub_type: 'url',
+                    index: '0',
+                    parameters: [{ type: 'text', text: meetCode }]
+                  }
+                ]
+              : [])
+          ]
         }
       })
     });
