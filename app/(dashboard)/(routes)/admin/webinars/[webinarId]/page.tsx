@@ -15,7 +15,9 @@ import {
   EyeOff,
   Image as ImageIcon,
   Link as LinkIcon,
-  Upload
+  Upload,
+  MessageSquare,
+  Send
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -61,6 +63,11 @@ export default function AdminWebinarEditorPage() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const bannerInputRef = useRef<HTMLInputElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
+
+  // Test WhatsApp
+  const [testCountryCode, setTestCountryCode] = useState('+91');
+  const [testPhone, setTestPhone] = useState('');
+  const [sendingTest, setSendingTest] = useState(false);
 
   // Form fields (controlled)
   const [title, setTitle] = useState('');
@@ -136,6 +143,22 @@ export default function AdminWebinarEditorPage() {
       }
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleTestWhatsapp = async () => {
+    if (!testPhone.trim()) return;
+    setSendingTest(true);
+    try {
+      await axios.post(`/api/admin/webinars/${webinarId}/test-whatsapp`, {
+        countryCode: testCountryCode,
+        phone: testPhone.trim()
+      });
+      toast.success(`Test message sent to ${testCountryCode} ${testPhone}`);
+    } catch {
+      toast.error('Failed to send test message — check WACRM config or the number');
+    } finally {
+      setSendingTest(false);
     }
   };
 
@@ -643,10 +666,59 @@ export default function AdminWebinarEditorPage() {
           </section>
         </div>
 
-        {/* Right sidebar — registrations */}
-        <div className="lg:col-span-1">
-          <div className="sticky top-6 bg-card border border-border rounded-xl p-5">
-            <RegistrationsPanel webinarId={webinarId} />
+        {/* Right sidebar — registrations + test message */}
+        <div className="lg:col-span-1 space-y-4">
+          <div className="sticky top-6 space-y-4">
+            <div className="bg-card border border-border rounded-xl p-5">
+              <RegistrationsPanel webinarId={webinarId} />
+            </div>
+
+            {/* Test WhatsApp */}
+            <div className="bg-card border border-border rounded-xl p-5 space-y-3">
+              <h3 className="font-semibold text-sm flex items-center gap-1.5">
+                <MessageSquare className="w-4 h-4 text-green-500" />
+                Test WhatsApp Message
+              </h3>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                Sends the real confirmation template to any number — useful to verify delivery and
+                the Join Now button URL.
+              </p>
+              <div className="flex gap-1.5">
+                <Input
+                  id="test-country-code"
+                  value={testCountryCode}
+                  onChange={(e) => setTestCountryCode(e.target.value)}
+                  className="w-16 text-center px-1 text-sm"
+                  maxLength={6}
+                />
+                <Input
+                  id="test-phone"
+                  type="tel"
+                  placeholder="9876543210"
+                  value={testPhone}
+                  onChange={(e) => setTestPhone(e.target.value.replace(/\D/g, ''))}
+                  maxLength={15}
+                  className="flex-1 text-sm"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleTestWhatsapp();
+                  }}
+                />
+              </div>
+              <Button
+                id="send-test-whatsapp-btn"
+                size="sm"
+                className="w-full gap-1.5 bg-green-600 hover:bg-green-700 text-white"
+                disabled={sendingTest || !testPhone.trim()}
+                onClick={handleTestWhatsapp}
+              >
+                {sendingTest ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Send className="w-3.5 h-3.5" />
+                )}
+                {sendingTest ? 'Sending…' : 'Send Test'}
+              </Button>
+            </div>
           </div>
         </div>
       </div>

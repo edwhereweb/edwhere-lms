@@ -888,3 +888,13 @@ export const webinarRegistrationSchema = z.object({
   // Honeypot — must remain empty; bots that fill it will be silently rejected
   website: z.string().max(0, 'Bot detected').optional()
 });
+
+// Used by the admin test-whatsapp endpoint
+export const testWhatsappSchema = z.object({
+  countryCode: z.string().min(1).max(6).default('+91'),
+  phone: z
+    .string()
+    .min(7, 'Phone number too short')
+    .max(15, 'Phone number too long')
+    .regex(/^\d+$/, 'Phone must contain only digits')
+});
