@@ -29,7 +29,7 @@ export async function POST(req: Request, { params }: Params) {
 
     const fullPhone = `${(countryCode ?? '91').replace('+', '')}${phone}`;
 
-    await sendWebinarConfirmationWhatsApp({
+    const result = await sendWebinarConfirmationWhatsApp({
       phone: fullPhone,
       name: 'Test User',
       webinarTitle: webinar.title,
@@ -37,7 +37,20 @@ export async function POST(req: Request, { params }: Params) {
       meetLink: webinar.meetLink
     });
 
-    return NextResponse.json({ success: true });
+    // Unlike the registration flow (which swallows WACRM errors so users can still register),
+    // the test endpoint surfaces the raw WACRM response so the admin can diagnose problems.
+    if (!result.ok) {
+      return NextResponse.json(
+        {
+          success: false,
+          wacrmStatus: result.status,
+          wacrmBody: result.body
+        },
+        { status: 502 }
+      );
+    }
+
+    return NextResponse.json({ success: true, wacrmBody: result.body });
   } catch (error) {
     return handleApiError('WEBINAR_TEST_WHATSAPP', error);
   }

@@ -155,8 +155,17 @@ export default function AdminWebinarEditorPage() {
         phone: testPhone.trim()
       });
       toast.success(`Test message sent to ${testCountryCode} ${testPhone}`);
-    } catch {
-      toast.error('Failed to send test message — check WACRM config or the number');
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.data) {
+        const { wacrmStatus, wacrmBody } = err.response.data as {
+          wacrmStatus?: number;
+          wacrmBody?: string;
+        };
+        const detail = wacrmBody ? `WACRM ${wacrmStatus}: ${wacrmBody}` : 'Unknown WACRM error';
+        toast.error(`Send failed — ${detail}`, { duration: 8000 });
+      } else {
+        toast.error('Failed to reach the server');
+      }
     } finally {
       setSendingTest(false);
     }

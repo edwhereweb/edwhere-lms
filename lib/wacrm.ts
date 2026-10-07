@@ -11,16 +11,21 @@ interface WebinarConfirmationOpts {
   meetLink: string | null;
 }
 
+export interface WacrmResult {
+  ok: boolean;
+  /** HTTP status returned by WACRM (0 if a network/fetch error occurred) */
+  status: number;
+  /** Raw response body text from WACRM — useful for debugging */
+  body: string;
+}
+
 /**
  * Extracts the meeting code from a Google Meet URL for use as the {{1}} button URL variable.
  * e.g. "https://meet.google.com/abc-defg-hij" → "abc-defg-hij"
- * Returns the raw URL as-is if it doesn't match the expected pattern, so the button
- * still gets a value rather than being left empty.
  */
 function extractMeetCode(meetLink: string): string {
   try {
     const url = new URL(meetLink);
-    // pathname is "/abc-defg-hij" — strip the leading slash
     const code = url.pathname.replace(/^\//, '');
     return code || meetLink;
   } catch {
@@ -29,81 +34,107 @@ function extractMeetCode(meetLink: string): string {
 }
 
 /**
+ * Low-level helper — sends a single WACRM template message and returns the raw result.
+ * Never throws; network errors are returned as { ok: false, status: 0, body: <error message> }.
+ */
+async function callWacrm(
+  apiUrl: string,
+  apiKey: string,
+  payload: Record<string, unknown>
+): Promise<WacrmResult> {
+  try {
+    const res = await fetch(`${apiUrl}/messages`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`
+      },
+      body: JSON.stringify(payload)
+    });
+    const body = await res.text().catch(() => '');
+    return { ok: res.ok, status: res.status, body };
+  } catch (err) {
+    return { ok: false, status: 0, body: String(err) };
+  }
+}
+
+/**
+ * Builds the WACRM template payload.
+ *
+ * WACRM uses its own simplified format:
+ *   - Body variables → top-level "params" array (positional, same order as {{1}}…{{N}} in template)
+ *   - Button URL variable → separate "button_params" array (one entry per dynamic-URL button)
+ *
+ * Adjust "button_params" key/structure if your WACRM dashboard shows a different field name.
+ */
+function buildPayload(
+  templateName: string,
+  phone: string,
+  bodyParams: string[],
+  meetCode: string
+): Record<string, unknown> {
+  return {
+    to: phone,
+    type: 'template',
+    template: {
+      name: templateName,
+      language: 'en_US',
+      params: bodyParams,
+      // Button URL variable — only included when we have an actual meet code.
+      // WACRM wraps the raw WhatsApp button component; the key name here matches
+      // what their API expects. Change to "button_url_params" or similar if needed.
+      ...(meetCode ? { button_params: [meetCode] } : {})
+    }
+  };
+}
+
+// ─── Confirmation ─────────────────────────────────────────────────────────────
+
+/**
  * Sends a WhatsApp confirmation message via WACRM when a user registers for a webinar.
  * Fire-and-forget — never throws; all errors are logged and swallowed so they don't
  * block the registration response.
  *
  * Silently skips if WACRM_API_URL / WACRM_API_KEY / WACRM_TEMPLATE_ID are not configured.
+ *
+ * Returns a WacrmResult so callers (e.g. the admin test endpoint) can inspect the outcome.
  */
 export async function sendWebinarConfirmationWhatsApp(
   opts: WebinarConfirmationOpts
-): Promise<void> {
+): Promise<WacrmResult> {
   const { WACRM_API_URL, WACRM_API_KEY, WACRM_TEMPLATE_ID } = env;
 
   if (!WACRM_API_URL || !WACRM_API_KEY || !WACRM_TEMPLATE_ID) {
     debug('WACRM', 'Skipping WhatsApp confirmation — WACRM env vars not configured');
-    return;
+    return { ok: false, status: 0, body: 'WACRM env vars not configured' };
   }
 
   const dateFormatted = formatISTDate(opts.scheduledAt);
   const timeFormatted = formatISTTime(opts.scheduledAt);
   const link = opts.meetLink || 'Link will be shared shortly!';
-
-  // The "Join Now" button in the template uses a dynamic URL:
-  //   Base URL:  https://meet.google.com/
-  //   Variable:  {{1}} → the meeting code extracted from meetLink
-  // WhatsApp Business API requires button URL variables in a separate component entry.
   const meetCode = opts.meetLink ? extractMeetCode(opts.meetLink) : '';
 
-  try {
-    const res = await fetch(`${WACRM_API_URL}/messages`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${WACRM_API_KEY}`
-      },
-      body: JSON.stringify({
-        to: opts.phone,
-        type: 'template',
-        template: {
-          name: WACRM_TEMPLATE_ID,
-          language: 'en_US',
-          components: [
-            {
-              type: 'body',
-              parameters: [
-                { type: 'text', text: opts.name },
-                { type: 'text', text: opts.webinarTitle },
-                { type: 'text', text: dateFormatted },
-                { type: 'text', text: timeFormatted },
-                { type: 'text', text: link }
-              ]
-            },
-            ...(meetCode
-              ? [
-                  {
-                    type: 'button',
-                    sub_type: 'url',
-                    index: '0',
-                    parameters: [{ type: 'text', text: meetCode }]
-                  }
-                ]
-              : [])
-          ]
-        }
-      })
-    });
+  const payload = buildPayload(
+    WACRM_TEMPLATE_ID,
+    opts.phone,
+    [opts.name, opts.webinarTitle, dateFormatted, timeFormatted, link],
+    meetCode
+  );
 
-    if (!res.ok) {
-      const body = await res.text().catch(() => '');
-      logError('WACRM', `WhatsApp send failed (${res.status}): ${body}`);
-    } else {
-      debug('WACRM', `WhatsApp confirmation sent to ${opts.phone}`);
-    }
-  } catch (err) {
-    logError('WACRM', err);
+  debug('WACRM', 'Sending confirmation payload:', JSON.stringify(payload));
+
+  const result = await callWacrm(WACRM_API_URL, WACRM_API_KEY, payload);
+
+  if (!result.ok) {
+    logError('WACRM', `WhatsApp send failed (${result.status}): ${result.body}`);
+  } else {
+    debug('WACRM', `WhatsApp confirmation sent to ${opts.phone}. Response: ${result.body}`);
   }
+
+  return result;
 }
+
+// ─── 24 h reminder ───────────────────────────────────────────────────────────
 
 /**
  * Sends a 24h WhatsApp reminder via WACRM for an upcoming webinar.
@@ -121,55 +152,23 @@ export async function sendWebinarReminderWhatsApp(opts: WebinarConfirmationOpts)
   const link = opts.meetLink || 'Link will be shared shortly!';
   const meetCode = opts.meetLink ? extractMeetCode(opts.meetLink) : '';
 
-  try {
-    const res = await fetch(`${WACRM_API_URL}/messages`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${WACRM_API_KEY}`
-      },
-      body: JSON.stringify({
-        to: opts.phone,
-        type: 'template',
-        template: {
-          name: WACRM_REMINDER_TEMPLATE_ID,
-          language: 'en_US',
-          components: [
-            {
-              type: 'body',
-              parameters: [
-                { type: 'text', text: opts.name },
-                { type: 'text', text: opts.webinarTitle },
-                { type: 'text', text: dateFormatted },
-                { type: 'text', text: timeFormatted },
-                { type: 'text', text: link }
-              ]
-            },
-            ...(meetCode
-              ? [
-                  {
-                    type: 'button',
-                    sub_type: 'url',
-                    index: '0',
-                    parameters: [{ type: 'text', text: meetCode }]
-                  }
-                ]
-              : [])
-          ]
-        }
-      })
-    });
+  const payload = buildPayload(
+    WACRM_REMINDER_TEMPLATE_ID,
+    opts.phone,
+    [opts.name, opts.webinarTitle, dateFormatted, timeFormatted, link],
+    meetCode
+  );
 
-    if (!res.ok) {
-      const body = await res.text().catch(() => '');
-      logError('WACRM', `WhatsApp reminder send failed (${res.status}): ${body}`);
-    } else {
-      debug('WACRM', `WhatsApp reminder sent to ${opts.phone}`);
-    }
-  } catch (err) {
-    logError('WACRM', err);
+  const result = await callWacrm(WACRM_API_URL, WACRM_API_KEY, payload);
+
+  if (!result.ok) {
+    logError('WACRM', `WhatsApp reminder send failed (${result.status}): ${result.body}`);
+  } else {
+    debug('WACRM', `WhatsApp reminder sent to ${opts.phone}`);
   }
 }
+
+// ─── 1 h reminder ────────────────────────────────────────────────────────────
 
 /**
  * Sends a 1-hour WhatsApp reminder via WACRM for an upcoming webinar.
@@ -184,52 +183,23 @@ export async function sendWebinarReminder1hWhatsApp(opts: WebinarConfirmationOpt
   const link = opts.meetLink || 'Link will be shared shortly!';
   const meetCode = opts.meetLink ? extractMeetCode(opts.meetLink) : '';
 
-  try {
-    const res = await fetch(`${WACRM_API_URL}/messages`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${WACRM_API_KEY}`
-      },
-      body: JSON.stringify({
-        to: opts.phone,
-        type: 'template',
-        template: {
-          name: WACRM_REMINDER_1H_TEMPLATE_ID,
-          language: 'en_US',
-          components: [
-            {
-              type: 'body',
-              parameters: [
-                { type: 'text', text: opts.name },
-                { type: 'text', text: opts.webinarTitle },
-                { type: 'text', text: link }
-              ]
-            },
-            ...(meetCode
-              ? [
-                  {
-                    type: 'button',
-                    sub_type: 'url',
-                    index: '0',
-                    parameters: [{ type: 'text', text: meetCode }]
-                  }
-                ]
-              : [])
-          ]
-        }
-      })
-    });
+  const payload = buildPayload(
+    WACRM_REMINDER_1H_TEMPLATE_ID,
+    opts.phone,
+    [opts.name, opts.webinarTitle, link],
+    meetCode
+  );
 
-    if (!res.ok) {
-      logError('WACRM', `WhatsApp 1h reminder send failed (${res.status})`);
-    } else {
-      debug('WACRM', `WhatsApp 1h reminder sent to ${opts.phone}`);
-    }
-  } catch (err) {
-    logError('WACRM', err);
+  const result = await callWacrm(WACRM_API_URL, WACRM_API_KEY, payload);
+
+  if (!result.ok) {
+    logError('WACRM', `WhatsApp 1h reminder send failed (${result.status}): ${result.body}`);
+  } else {
+    debug('WACRM', `WhatsApp 1h reminder sent to ${opts.phone}`);
   }
 }
+
+// ─── 0 m reminder ────────────────────────────────────────────────────────────
 
 /**
  * Sends a 0-minute (live) WhatsApp reminder via WACRM for an upcoming webinar.
@@ -244,49 +214,18 @@ export async function sendWebinarReminder0mWhatsApp(opts: WebinarConfirmationOpt
   const link = opts.meetLink || 'Link will be shared shortly!';
   const meetCode = opts.meetLink ? extractMeetCode(opts.meetLink) : '';
 
-  try {
-    const res = await fetch(`${WACRM_API_URL}/messages`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${WACRM_API_KEY}`
-      },
-      body: JSON.stringify({
-        to: opts.phone,
-        type: 'template',
-        template: {
-          name: WACRM_REMINDER_0M_TEMPLATE_ID,
-          language: 'en_US',
-          components: [
-            {
-              type: 'body',
-              parameters: [
-                { type: 'text', text: opts.name },
-                { type: 'text', text: opts.webinarTitle },
-                { type: 'text', text: link }
-              ]
-            },
-            ...(meetCode
-              ? [
-                  {
-                    type: 'button',
-                    sub_type: 'url',
-                    index: '0',
-                    parameters: [{ type: 'text', text: meetCode }]
-                  }
-                ]
-              : [])
-          ]
-        }
-      })
-    });
+  const payload = buildPayload(
+    WACRM_REMINDER_0M_TEMPLATE_ID,
+    opts.phone,
+    [opts.name, opts.webinarTitle, link],
+    meetCode
+  );
 
-    if (!res.ok) {
-      logError('WACRM', `WhatsApp 0m reminder send failed (${res.status})`);
-    } else {
-      debug('WACRM', `WhatsApp 0m reminder sent to ${opts.phone}`);
-    }
-  } catch (err) {
-    logError('WACRM', err);
+  const result = await callWacrm(WACRM_API_URL, WACRM_API_KEY, payload);
+
+  if (!result.ok) {
+    logError('WACRM', `WhatsApp 0m reminder send failed (${result.status}): ${result.body}`);
+  } else {
+    debug('WACRM', `WhatsApp 0m reminder sent to ${opts.phone}`);
   }
 }
