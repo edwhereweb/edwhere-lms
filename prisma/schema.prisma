@@ -304,6 +304,39 @@ model Purchase {
   @@index([courseId])
 }
 
+enum CrmSyncStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+// One row per enrollment (Purchase = userId + courseId). Tracks delivery of the
+// enrollment notification to the WACRM inbox. See docs/CRM-ENROLLMENT-SYNC.md.
+model CrmEnrollmentSync {
+  id                String         @id @default(auto()) @map("_id") @db.ObjectId
+  dedupeKey         String         @unique
+  userId            String
+  courseId          String         @db.ObjectId
+  purchaseId        String?        @db.ObjectId
+  batchId           String?        @db.ObjectId
+  phoneRaw          String?
+  phoneNormalized   String?
+  syncStatus        CrmSyncStatus  @default(PENDING)
+  attempts          Int            @default(0)
+  nextAttemptAt     DateTime?
+  lockedUntil       DateTime?
+  lastAttemptAt     DateTime?
+  lastSuccessAt     DateTime?
+  lastErrorCode     String?
+  lastErrorMessage  String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@index([syncStatus, nextAttemptAt])
+  @@index([userId])
+  @@index([courseId])
+}
+
 model CourseOrder {
   id                 String           @id @default(auto()) @map("_id") @db.ObjectId
   userId             String

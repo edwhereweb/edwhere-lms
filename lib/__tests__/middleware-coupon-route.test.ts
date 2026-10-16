@@ -26,4 +26,8 @@ describe('middleware isPublicRoute', () => {
   it('does not mark unrelated authenticated-only API routes as public', () => {
     expect(isPublicRoute(req('/api/admin/coupons'))).toBe(false);
   });
+
+  it('allows the secret-protected CRM sync cron route to bypass Clerk', () => {
+    expect(isPublicRoute(req('/api/cron/crm-enrollment-sync'))).toBe(true);
+  });
 });

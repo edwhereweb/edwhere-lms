@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { apiError, handleApiError } from '@/lib/api-utils';
 import { sendCapiEvent } from '@/lib/meta-tracking';
+import { enqueueAndProcessEnrollments } from '@/lib/crm-enrollment-sync';
 
 type RazorpayWebhookPayload = {
   event?: string;
@@ -152,6 +153,10 @@ export async function POST(req: Request) {
           // Safe fail-silent: never block webhook response
         }
       })();
+
+      await enqueueAndProcessEnrollments([
+        { userId: existingOrder.userId, courseId: existingOrder.courseId }
+      ]);
     }
 
     if (event === 'payment.failed' && existingOrder.status !== 'PAID') {

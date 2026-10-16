@@ -9,6 +9,7 @@ import {
 import { db } from '@/lib/db';
 import { canEnrollInBatch, hasBatchAccess } from '@/lib/batch-auth';
 import { batchEnrollSchema } from '@/lib/validations';
+import { enqueueAndProcessEnrollments } from '@/lib/crm-enrollment-sync';
 
 type Params = { params: Promise<{ batchId: string }> };
 
@@ -69,6 +70,7 @@ export async function POST(req: Request, { params }: Params) {
     }
 
     if (!studentUserId) return mobileError('VALIDATION', 'Either userId or email is required', 400);
+    const enrolledUserId = studentUserId;
 
     // Verify batch exists
     const batch = await db.batch.findUnique({
@@ -102,6 +104,10 @@ export async function POST(req: Request, { params }: Params) {
         update: {}
       });
     }
+
+    await enqueueAndProcessEnrollments(
+      batch.courses.map((bc) => ({ userId: enrolledUserId, courseId: bc.courseId, batchId }))
+    );
 
     return mobileCreated(enrollment);
   } catch (error) {

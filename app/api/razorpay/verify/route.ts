@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import { auth, currentUser } from '@clerk/nextjs/server';
+import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { razorpayVerifySchema } from '@/lib/validations';
@@ -8,7 +8,7 @@ import { getRazorpay } from '@/lib/razorpay';
 import { isRateLimited } from '@/lib/rate-limit';
 import { debug } from '@/lib/debug';
 import { sendCapiEvent } from '@/lib/meta-tracking';
-import { sendEnrollmentWhatsApp } from '@/lib/wacrm';
+import { enqueueAndProcessEnrollments } from '@/lib/crm-enrollment-sync';
 
 export async function POST(req: Request) {
   try {
@@ -196,23 +196,8 @@ export async function POST(req: Request) {
       }
     })();
 
-    // Enrollment WhatsApp notification via WACRM
-    try {
-      const clerkUser = await currentUser();
-      const rawPhone = clerkUser?.phoneNumbers?.[0]?.phoneNumber?.replace(/^\+/, '');
-      if (clerkUser && rawPhone) {
-        await sendEnrollmentWhatsApp({
-          phone: rawPhone,
-          name: `${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim() || 'Student',
-          type: 'course',
-          title: course.title,
-          appDownloadLink: process.env.NEXT_PUBLIC_APP_URL ?? '',
-          whatsappGroupUrl: course.whatsappGroupUrl
-        });
-      }
-    } catch {
-      // Safe fail-silent: never block payment verification response
-    }
+    // Enrollment → CRM inbox sync (queued; retried by reconcile if delivery fails)
+    await enqueueAndProcessEnrollments([{ userId, courseId: authoritativeCourseId }]);
 
     debug('PAYMENT_SUCCESS', {
       userId,

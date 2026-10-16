@@ -8,6 +8,7 @@ import {
 import { db } from '@/lib/db';
 import { isTeacher } from '@/lib/teacher';
 import { z } from 'zod';
+import { enqueueAndProcessEnrollments } from '@/lib/crm-enrollment-sync';
 
 const enrolSchema = z.object({
   courseId: z.string().min(1, 'courseId is required'),
@@ -49,6 +50,10 @@ export async function POST(req: Request) {
         onboardingSource: 'MANUAL'
       }
     });
+
+    await enqueueAndProcessEnrollments([
+      { userId: studentProfile.userId, courseId, purchaseId: purchase.id }
+    ]);
 
     return mobileCreated(purchase);
   } catch (error) {

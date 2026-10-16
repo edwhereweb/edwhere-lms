@@ -46,14 +46,16 @@ export function extractMeetCode(meetLink: string): string {
 async function callWacrm(
   apiUrl: string,
   apiKey: string,
-  payload: Record<string, unknown>
+  payload: Record<string, unknown>,
+  extraHeaders: Record<string, string> = {}
 ): Promise<WacrmResult> {
   try {
     const res = await fetch(`${apiUrl}/messages`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`
+        Authorization: `Bearer ${apiKey}`,
+        ...extraHeaders
       },
       body: JSON.stringify(payload)
     });
@@ -258,6 +260,12 @@ export interface EnrollmentNotificationOpts {
   appDownloadLink: string;
   /** Optional WhatsApp group link configured on the course/webinar */
   whatsappGroupUrl?: string | null;
+  /** Stable per-enrollment key forwarded as an Idempotency-Key header */
+  idempotencyKey?: string;
+}
+
+export function isEnrollmentCrmConfigured(): boolean {
+  return Boolean(env.WACRM_API_URL && env.WACRM_API_KEY && env.WACRM_ENROLLMENT_TEMPLATE_ID);
 }
 
 /**
@@ -265,14 +273,17 @@ export interface EnrollmentNotificationOpts {
  * a WhatsApp message with course details and an optional WhatsApp group invite.
  *
  * Uses WACRM_ENROLLMENT_TEMPLATE_ID. Silently skips if env vars are not set.
- * Never throws — all errors are logged.
+ * Never throws — all errors are logged. Returns the raw WacrmResult so the enrollment
+ * sync worker can record the outcome.
  */
-export async function sendEnrollmentWhatsApp(opts: EnrollmentNotificationOpts): Promise<void> {
+export async function sendEnrollmentWhatsApp(
+  opts: EnrollmentNotificationOpts
+): Promise<WacrmResult> {
   const { WACRM_API_URL, WACRM_API_KEY, WACRM_ENROLLMENT_TEMPLATE_ID } = env;
 
   if (!WACRM_API_URL || !WACRM_API_KEY || !WACRM_ENROLLMENT_TEMPLATE_ID) {
     debug('WACRM', 'Skipping enrollment WhatsApp — WACRM_ENROLLMENT_TEMPLATE_ID not configured');
-    return;
+    return { ok: false, status: 0, body: 'WACRM env vars not configured' };
   }
 
   const groupLink = opts.whatsappGroupUrl || 'N/A';
@@ -284,11 +295,18 @@ export async function sendEnrollmentWhatsApp(opts: EnrollmentNotificationOpts): 
     opts.name
   );
 
-  const result = await callWacrm(WACRM_API_URL, WACRM_API_KEY, payload);
+  const result = await callWacrm(
+    WACRM_API_URL,
+    WACRM_API_KEY,
+    payload,
+    opts.idempotencyKey ? { 'Idempotency-Key': opts.idempotencyKey } : {}
+  );
 
   if (!result.ok) {
     logError('WACRM', `Enrollment WhatsApp failed (${result.status}): ${result.body}`);
   } else {
     debug('WACRM', `Enrollment WhatsApp sent to ${opts.phone} for "${opts.title}"`);
   }
+
+  return result;
 }
