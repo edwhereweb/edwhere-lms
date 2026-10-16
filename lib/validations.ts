@@ -27,7 +27,8 @@ export const updateCourseSchema = z.object({
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug must be lowercase letters, numbers, and hyphens')
     .optional(),
   metaTitle: z.string().max(200).optional(),
-  metaDescription: z.string().max(500).optional()
+  metaDescription: z.string().max(500).optional(),
+  whatsappGroupUrl: z.string().url('Must be a valid URL').nullable().optional()
 });
 
 export const updateChapterSchema = z.object({
@@ -872,7 +873,8 @@ export const updateWebinarSchema = z.object({
   presenterBio: z.string().max(2000).nullable().optional(),
   presenterCredentials: z.array(z.string().max(100)).max(10).optional(),
   metaTitle: z.string().max(200).nullable().optional(),
-  metaDescription: z.string().max(500).nullable().optional()
+  metaDescription: z.string().max(500).nullable().optional(),
+  whatsappGroupUrl: z.string().url('Must be a valid URL').nullable().optional()
 });
 
 // Used by the public registration form (no auth required)
@@ -897,4 +899,17 @@ export const testWhatsappSchema = z.object({
     .min(7, 'Phone number too short')
     .max(15, 'Phone number too long')
     .regex(/^\d+$/, 'Phone must contain only digits')
+});
+
+// ── External API Key management ────────────────────────────────────────────────
+
+export const createApiKeySchema = z.object({
+  name: z.string().min(1, 'Name is required').max(100),
+  scopes: z.string().min(1).max(500).default('contacts:read')
+});
+
+export const updateApiKeySchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  scopes: z.string().min(1).max(500).optional(),
+  isActive: z.boolean().optional()
 });

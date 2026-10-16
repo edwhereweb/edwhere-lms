@@ -244,3 +244,51 @@ export async function sendWebinarReminder0mWhatsApp(opts: WebinarConfirmationOpt
     debug('WACRM', `WhatsApp 0m reminder sent to ${opts.phone}`);
   }
 }
+
+// ─── Enrollment notification ─────────────────────────────────────────────────
+
+export interface EnrollmentNotificationOpts {
+  /** Full E.164 phone number including country code (digits only, no '+') */
+  phone: string;
+  name: string;
+  /** Either "course" or "webinar" */
+  type: 'course' | 'webinar';
+  title: string;
+  /** Deep-link or store URL for the Edwhere app */
+  appDownloadLink: string;
+  /** Optional WhatsApp group link configured on the course/webinar */
+  whatsappGroupUrl?: string | null;
+}
+
+/**
+ * Fires an outgoing enrollment notification to WACRM so it can send the user
+ * a WhatsApp message with course details and an optional WhatsApp group invite.
+ *
+ * Uses WACRM_ENROLLMENT_TEMPLATE_ID. Silently skips if env vars are not set.
+ * Never throws — all errors are logged.
+ */
+export async function sendEnrollmentWhatsApp(opts: EnrollmentNotificationOpts): Promise<void> {
+  const { WACRM_API_URL, WACRM_API_KEY, WACRM_ENROLLMENT_TEMPLATE_ID } = env;
+
+  if (!WACRM_API_URL || !WACRM_API_KEY || !WACRM_ENROLLMENT_TEMPLATE_ID) {
+    debug('WACRM', 'Skipping enrollment WhatsApp — WACRM_ENROLLMENT_TEMPLATE_ID not configured');
+    return;
+  }
+
+  const groupLink = opts.whatsappGroupUrl || 'N/A';
+  const payload = buildPayload(
+    WACRM_ENROLLMENT_TEMPLATE_ID,
+    opts.phone,
+    [opts.name, opts.title, opts.appDownloadLink, groupLink],
+    '',
+    opts.name
+  );
+
+  const result = await callWacrm(WACRM_API_URL, WACRM_API_KEY, payload);
+
+  if (!result.ok) {
+    logError('WACRM', `Enrollment WhatsApp failed (${result.status}): ${result.body}`);
+  } else {
+    debug('WACRM', `Enrollment WhatsApp sent to ${opts.phone} for "${opts.title}"`);
+  }
+}

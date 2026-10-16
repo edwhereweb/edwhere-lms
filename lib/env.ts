@@ -42,6 +42,11 @@ const envSchema = z.object({
   WACRM_REMINDER_0M_TEMPLATE_ID: z.preprocess(
     (v) => (v === '' ? undefined : v),
     z.string().min(1).optional()
+  ),
+  // Template for post-enrollment notifications (course/webinar join confirmation)
+  WACRM_ENROLLMENT_TEMPLATE_ID: z.preprocess(
+    (v) => (v === '' ? undefined : v),
+    z.string().min(1).optional()
   )
 });
 

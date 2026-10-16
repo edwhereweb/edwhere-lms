@@ -27,6 +27,7 @@ import {
   Percent,
   Activity,
   Video,
+  Key,
   type LucideIcon
 } from 'lucide-react';
 import SidebarItem from './sidebar-item';
@@ -120,6 +121,7 @@ const teacherSections: SidebarSectionDef[] = [
       { icon: Percent, label: 'Coupons', href: '/admin/coupons', adminOnly: true },
       { icon: Video, label: 'Webinars', href: '/admin/webinars', adminOnly: true },
       { icon: Activity, label: 'Meta Tracking', href: '/admin/meta-tracking', adminOnly: true },
+      { icon: Key, label: 'API Keys', href: '/admin/api-keys', adminOnly: true },
       {
         icon: Wallet,
         label: 'Payment Deletions',

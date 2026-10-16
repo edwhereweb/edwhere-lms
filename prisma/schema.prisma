@@ -65,6 +65,7 @@ model Course {
   slug            String?
   metaTitle       String?
   metaDescription String?
+  whatsappGroupUrl String?
 
   // Admin-only toggle: permits offline sessions to be scheduled on the same day
   allowSameDayOfflineSession Boolean @default(false)
@@ -606,6 +607,7 @@ model BlogPost {
   
   metaTitle       String?
   metaDescription String?
+  whatsappGroupUrl String?
   tags            String[]     // For dynamic course mapping
 
   courseIds       String[]     @db.ObjectId
@@ -1244,6 +1246,7 @@ model Webinar {
 
   metaTitle       String?
   metaDescription String?
+  whatsappGroupUrl String?
 
   // Clerk userId of the admin who created this webinar
   createdBy       String
@@ -1280,4 +1283,23 @@ model WebinarRegistration {
   @@unique([webinarId, email])
   @@index([webinarId])
   @@index([email])
+}
+
+// ── External API Keys (e.g. WACRM integration) ────────────────────────────────
+
+model ApiKey {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  // SHA-256 hex digest of the raw key — raw key is shown once at creation and never stored
+  keyHash     String   @unique
+  // Comma-separated scopes, e.g. "contacts:read,enrollments:read"
+  scopes      String   @default("contacts:read")
+  isActive    Boolean  @default(true)
+  createdBy   String   // Clerk userId of the admin who created the key
+  lastUsedAt  DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive])
 }

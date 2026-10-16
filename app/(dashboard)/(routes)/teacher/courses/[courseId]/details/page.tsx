@@ -1,7 +1,15 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { CircleDollarSign, File, LayoutDashboard, Users, ArrowLeft, Globe } from 'lucide-react';
+import {
+  CircleDollarSign,
+  File,
+  LayoutDashboard,
+  Users,
+  ArrowLeft,
+  Globe,
+  MessageCircle
+} from 'lucide-react';
 
 import { db } from '@/lib/db';
 import { canEditCourse } from '@/lib/course-auth';
@@ -18,6 +26,7 @@ import { AttachmentForm } from '../_components/attachment-form';
 import { Actions } from '../_components/actions';
 import { CourseInstructorsForm } from '../_components/course-instructors-form';
 import { SeoForm } from '../_components/seo-form';
+import { WhatsAppGroupForm } from '../_components/whatsapp-group-form';
 
 const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
   const { userId } = await auth();
@@ -135,6 +144,13 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
               <h2 className="text-xl">SEO & URL</h2>
             </div>
             <SeoForm initialData={course} courseId={course.id} />
+
+            {/* WhatsApp Group Link */}
+            <div className="flex items-center gap-x-2 mt-6">
+              <IconBadge icon={MessageCircle} />
+              <h2 className="text-xl">WhatsApp Group</h2>
+            </div>
+            <WhatsAppGroupForm initialData={course} courseId={course.id} />
           </div>
           <div className="space-y-6">
             <div>

@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { apiError, validateBody, handleApiError } from '@/lib/api-utils';
 import { webinarRegistrationSchema } from '@/lib/validations';
 import { isRateLimited } from '@/lib/rate-limit';
-import { sendWebinarConfirmationWhatsApp } from '@/lib/wacrm';
+import { sendWebinarConfirmationWhatsApp, sendEnrollmentWhatsApp } from '@/lib/wacrm';
 
 interface Params {
   params: { webinarId: string };
@@ -43,7 +43,7 @@ export async function POST(req: Request, { params }: Params) {
     // Ensure the webinar exists and is published
     const webinar = await db.webinar.findUnique({
       where: { id: params.webinarId, isPublished: true },
-      select: { id: true, title: true, scheduledAt: true, meetLink: true }
+      select: { id: true, title: true, scheduledAt: true, meetLink: true, whatsappGroupUrl: true }
     });
 
     if (!webinar) return apiError('Webinar not found', 404);
@@ -95,6 +95,20 @@ export async function POST(req: Request, { params }: Params) {
       scheduledAt: webinar.scheduledAt,
       meetLink: webinar.meetLink
     });
+
+    // Enrollment notification (includes WhatsApp group link if configured)
+    try {
+      await sendEnrollmentWhatsApp({
+        phone: fullPhone,
+        name,
+        type: 'webinar',
+        title: webinar.title,
+        appDownloadLink: process.env.NEXT_PUBLIC_APP_URL ?? '',
+        whatsappGroupUrl: webinar.whatsappGroupUrl
+      });
+    } catch {
+      // Safe fail-silent: never block registration response
+    }
 
     return NextResponse.json({ success: true }, { status: 201 });
   } catch (error) {

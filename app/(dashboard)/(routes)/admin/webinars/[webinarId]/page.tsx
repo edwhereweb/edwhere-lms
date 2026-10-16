@@ -17,7 +17,8 @@ import {
   Link as LinkIcon,
   Upload,
   MessageSquare,
-  Send
+  Send,
+  MessageCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,6 +44,7 @@ interface Webinar {
   presenterCredentials: string[];
   metaTitle: string | null;
   metaDescription: string | null;
+  whatsappGroupUrl: string | null;
   _count: { registrations: number };
 }
 
@@ -85,6 +87,7 @@ export default function AdminWebinarEditorPage() {
   const [newCredential, setNewCredential] = useState('');
   const [metaTitle, setMetaTitle] = useState('');
   const [metaDescription, setMetaDescription] = useState('');
+  const [whatsappGroupUrl, setWhatsappGroupUrl] = useState('');
 
   useEffect(() => {
     const load = async () => {
@@ -104,6 +107,7 @@ export default function AdminWebinarEditorPage() {
         setPresenterCredentials(data.presenterCredentials);
         setMetaTitle(data.metaTitle ?? '');
         setMetaDescription(data.metaDescription ?? '');
+        setWhatsappGroupUrl(data.whatsappGroupUrl ?? '');
       } catch {
         toast.error('Failed to load webinar');
         router.push('/admin/webinars');
@@ -126,6 +130,7 @@ export default function AdminWebinarEditorPage() {
         durationMinutes,
         meetLink: meetLink || null,
         recordingUrl: recordingUrl || null,
+        whatsappGroupUrl: whatsappGroupUrl || null,
         takeaways,
         presenterName: presenterName || null,
         presenterBio: presenterBio || null,
@@ -426,6 +431,26 @@ export default function AdminWebinarEditorPage() {
               />
               <p className="text-[11px] text-muted-foreground">
                 Displayed to registrants instead of the Meet link after the webinar is over.
+              </p>
+            </div>
+            <div className="space-y-1.5">
+              <label
+                htmlFor="w-whatsapp-group"
+                className="text-sm font-medium flex items-center gap-1.5"
+              >
+                <MessageCircle className="w-3.5 h-3.5 text-green-600" />
+                WhatsApp Group Invite Link
+              </label>
+              <Input
+                id="w-whatsapp-group"
+                type="url"
+                placeholder="https://chat.whatsapp.com/..."
+                value={whatsappGroupUrl}
+                onChange={(e) => setWhatsappGroupUrl(e.target.value)}
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Invite link to WhatsApp group for registered attendees. Sent in the registration
+                confirmation message.
               </p>
             </div>
           </section>

@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import { auth } from '@clerk/nextjs/server';
+import { auth, currentUser } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { razorpayVerifySchema } from '@/lib/validations';
@@ -8,6 +8,7 @@ import { getRazorpay } from '@/lib/razorpay';
 import { isRateLimited } from '@/lib/rate-limit';
 import { debug } from '@/lib/debug';
 import { sendCapiEvent } from '@/lib/meta-tracking';
+import { sendEnrollmentWhatsApp } from '@/lib/wacrm';
 
 export async function POST(req: Request) {
   try {
@@ -90,7 +91,7 @@ export async function POST(req: Request) {
     // Step 3: Cross-check the paid amount.
     const course = await db.course.findUnique({
       where: { id: authoritativeCourseId },
-      select: { price: true, title: true }
+      select: { price: true, title: true, whatsappGroupUrl: true }
     });
 
     if (!course || !course.price) {
@@ -194,6 +195,24 @@ export async function POST(req: Request) {
         // Safe fail-silent: never block payment verification response
       }
     })();
+
+    // Enrollment WhatsApp notification via WACRM
+    try {
+      const clerkUser = await currentUser();
+      const rawPhone = clerkUser?.phoneNumbers?.[0]?.phoneNumber?.replace(/^\+/, '');
+      if (clerkUser && rawPhone) {
+        await sendEnrollmentWhatsApp({
+          phone: rawPhone,
+          name: `${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim() || 'Student',
+          type: 'course',
+          title: course.title,
+          appDownloadLink: process.env.NEXT_PUBLIC_APP_URL ?? '',
+          whatsappGroupUrl: course.whatsappGroupUrl
+        });
+      }
+    } catch {
+      // Safe fail-silent: never block payment verification response
+    }
 
     debug('PAYMENT_SUCCESS', {
       userId,
