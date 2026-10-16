@@ -98,16 +98,46 @@ export async function GET(req: Request) {
       // Clerk lookup errors should not break response — fall through to DB lookup
     }
 
-    // 3. Fall back to Profile table lookup if Clerk lookup didn't yield clerkUserId
-    if (!clerkUserId && email) {
-      const profile = await db.profile.findFirst({
-        where: { email: { equals: email, mode: 'insensitive' } },
-        select: { userId: true, name: true, email: true }
-      });
-      if (profile) {
-        clerkUserId = profile.userId;
-        if (!contactName) contactName = profile.name;
-        if (!contactEmail) contactEmail = profile.email;
+    // 3. Fall back to Profile table lookup by phone or email
+    if (!clerkUserId) {
+      const profileConditions = [];
+      if (email) {
+        profileConditions.push({ email: { equals: email, mode: 'insensitive' as const } });
+      }
+      if (phone) {
+        const cleanPhone = phone.replace(/[\s\-().]/g, '');
+        const digits = cleanPhone.replace(/\D/g, '');
+        const last10 = digits.slice(-10);
+
+        profileConditions.push(
+          { phoneNumber: cleanPhone },
+          { phoneNumber: digits },
+          { phoneNumber: `+${digits}` }
+        );
+        if (last10) {
+          profileConditions.push(
+            { phoneNumber: last10 },
+            { phoneNumber: `+91${last10}` },
+            { phoneNumber: `91${last10}` },
+            { phoneNumber: `0${last10}` },
+            { phoneNumber: { endsWith: last10 } }
+          );
+        }
+      }
+
+      if (profileConditions.length > 0) {
+        const profile = await db.profile.findFirst({
+          where: { OR: profileConditions },
+          select: { userId: true, name: true, email: true, phoneNumber: true }
+        });
+        if (profile) {
+          clerkUserId = profile.userId;
+          if (!contactName) contactName = profile.name;
+          if (!contactEmail) contactEmail = profile.email;
+          if (!contactPhone && profile.phoneNumber) {
+            contactPhone = profile.phoneNumber.replace(/^\+/, '');
+          }
+        }
       }
     }
 
@@ -115,20 +145,27 @@ export async function GET(req: Request) {
     // Attendees can register without a Clerk user account, so we query registrations
     // by email and/or phone directly.
     const webinarConditions = [];
-    if (email || contactEmail) {
-      const queryEmail = email || contactEmail;
-      webinarConditions.push({ email: { equals: queryEmail, mode: 'insensitive' as const } });
+    const candidateEmails = [email, contactEmail].filter((e): e is string => Boolean(e?.trim()));
+    for (const em of candidateEmails) {
+      webinarConditions.push({ email: { equals: em, mode: 'insensitive' as const } });
     }
-    if (phone) {
-      const rawDigits = phone.replace(/\D/g, '');
+    if (phone || contactPhone) {
+      const raw = (phone || contactPhone).replace(/[\s\-().]/g, '');
+      const rawDigits = raw.replace(/\D/g, '');
       const last10 = rawDigits.slice(-10);
-      webinarConditions.push({ phone }, { phone: rawDigits }, { phone: `+${rawDigits}` });
-      if (last10 && last10 !== rawDigits) {
-        webinarConditions.push({ phone: { endsWith: last10 } });
+      webinarConditions.push({ phone: raw }, { phone: rawDigits }, { phone: `+${rawDigits}` });
+      if (last10) {
+        webinarConditions.push(
+          { phone: last10 },
+          { phone: `+91${last10}` },
+          { phone: `91${last10}` },
+          { phone: `0${last10}` },
+          { phone: { endsWith: last10 } }
+        );
       }
     }
 
-    const [purchases, registrations] = await Promise.all([
+    const [purchases, batchEnrollments, registrations] = await Promise.all([
       // Courses via purchases (requires clerkUserId)
       clerkUserId
         ? db.purchase.findMany({
@@ -136,6 +173,27 @@ export async function GET(req: Request) {
             include: {
               course: {
                 select: { id: true, title: true, whatsappGroupUrl: true, isPublished: true }
+              }
+            },
+            orderBy: { createdAt: 'desc' }
+          })
+        : Promise.resolve([]),
+
+      // Courses via batch enrollments
+      clerkUserId
+        ? db.batchEnrollment.findMany({
+            where: { userId: clerkUserId },
+            include: {
+              batch: {
+                include: {
+                  courses: {
+                    include: {
+                      course: {
+                        select: { id: true, title: true, whatsappGroupUrl: true, isPublished: true }
+                      }
+                    }
+                  }
+                }
               }
             },
             orderBy: { createdAt: 'desc' }
@@ -169,13 +227,40 @@ export async function GET(req: Request) {
       if (!contactPhone) contactPhone = registrations[0].phone;
     }
 
-    const coursesPayload = purchases.map((p) => ({
-      id: p.course.id,
-      title: p.course.title,
-      enrolledAt: p.createdAt.toISOString(),
-      status: p.course.isPublished ? 'active' : 'inactive',
-      whatsappGroupUrl: p.course.whatsappGroupUrl ?? null
-    }));
+    const seenCourses = new Set<string>();
+    const coursesPayload: Array<{
+      id: string;
+      title: string;
+      enrolledAt: string;
+      status: string;
+      whatsappGroupUrl: string | null;
+    }> = [];
+
+    for (const p of purchases) {
+      if (!p.course || seenCourses.has(p.course.id)) continue;
+      seenCourses.add(p.course.id);
+      coursesPayload.push({
+        id: p.course.id,
+        title: p.course.title,
+        enrolledAt: p.createdAt.toISOString(),
+        status: p.course.isPublished ? 'active' : 'inactive',
+        whatsappGroupUrl: p.course.whatsappGroupUrl ?? null
+      });
+    }
+
+    for (const b of batchEnrollments) {
+      for (const bc of b.batch?.courses ?? []) {
+        if (!bc.course || seenCourses.has(bc.course.id)) continue;
+        seenCourses.add(bc.course.id);
+        coursesPayload.push({
+          id: bc.course.id,
+          title: `${bc.course.title} (${b.batch.title})`,
+          enrolledAt: b.createdAt.toISOString(),
+          status: bc.course.isPublished ? 'active' : 'inactive',
+          whatsappGroupUrl: bc.course.whatsappGroupUrl ?? null
+        });
+      }
+    }
 
     // Deduplicate webinars by webinar ID in case of multiple registration rows
     const seenWebinars = new Set<string>();
