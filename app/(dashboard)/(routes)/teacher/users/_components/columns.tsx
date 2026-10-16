@@ -43,6 +43,24 @@ export const columns: ColumnDef<Profile, keyof Profile>[] = [
     }
   },
   {
+    accessorKey: 'phoneNumber',
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        >
+          Phone
+          {column.getIsSorted() === 'asc' ? <ArrowUpDown className="h-4 w-4 ml-2" /> : null}
+        </Button>
+      );
+    },
+    cell: ({ row }) => {
+      const phone = row.getValue('phoneNumber') as string | null | undefined;
+      return <span className="font-mono text-xs text-muted-foreground">{phone || '—'}</span>;
+    }
+  },
+  {
     accessorKey: 'role',
     header: ({ column }) => {
       return (

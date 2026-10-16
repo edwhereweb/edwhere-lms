@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { db } from '@/lib/db';
 import { MemberRoleForm } from './_components/member-role-form';
 import { PlacementAccessForm } from './_components/placement-access-form';
+import { PhoneNumberForm } from './_components/phone-number-form';
 import getSafeProfile from '@/actions/get-safe-profile';
 
 interface ProfileIdPageProps {
@@ -50,6 +51,20 @@ const ProfileIdPage: React.FC<ProfileIdPageProps> = async ({ params }) => {
           <h3 className="font-medium text-lg mb-4">User Details</h3>
           <div className="space-y-3 text-sm">
             <div className="flex justify-between items-center border-b pb-2 border-slate-200 dark:border-gray-700">
+              <span className="text-slate-500 dark:text-slate-400">Name:</span>
+              <span className="font-medium">{targetProfile.name}</span>
+            </div>
+            <div className="flex justify-between items-center border-b pb-2 border-slate-200 dark:border-gray-700">
+              <span className="text-slate-500 dark:text-slate-400">Email:</span>
+              <span className="font-medium">{targetProfile.email}</span>
+            </div>
+            <div className="flex justify-between items-center border-b pb-2 border-slate-200 dark:border-gray-700">
+              <span className="text-slate-500 dark:text-slate-400">Phone Number:</span>
+              <span className="font-medium font-mono">
+                {targetProfile.phoneNumber || 'Not provided'}
+              </span>
+            </div>
+            <div className="flex justify-between items-center border-b pb-2 border-slate-200 dark:border-gray-700">
               <span className="text-slate-500 dark:text-slate-400">Last Login:</span>
               <span className="font-medium">
                 {targetProfile.lastLoginAt
@@ -70,7 +85,8 @@ const ProfileIdPage: React.FC<ProfileIdPageProps> = async ({ params }) => {
           )}
         </div>
 
-        <div>
+        <div className="space-y-6">
+          <PhoneNumberForm initialData={targetProfile} id={targetProfile.id} isAdmin={isAdmin} />
           <MemberRoleForm initialData={targetProfile} id={targetProfile.id} isAdmin={isAdmin} />
         </div>
       </div>

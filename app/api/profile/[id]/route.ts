@@ -1,4 +1,4 @@
-import { auth } from '@clerk/nextjs/server';
+import { auth, clerkClient } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
 import { NextResponse } from 'next/server';
 import { currentProfile } from '@/lib/current-profile';
@@ -57,6 +57,19 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       where: { id: params.id },
       data: updateData
     });
+
+    if (validation.data.phoneNumber && updatedProfile.userId) {
+      try {
+        const client = await clerkClient();
+        await client.phoneNumbers.createPhoneNumber({
+          userId: updatedProfile.userId,
+          phoneNumber: validation.data.phoneNumber,
+          verified: true
+        });
+      } catch {
+        // Safe fail-silent
+      }
+    }
 
     return NextResponse.json(updatedProfile);
   } catch (error) {

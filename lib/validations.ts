@@ -213,6 +213,7 @@ export const funnelEventSchema = z.object({
 export const profileUpdateSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   imageUrl: fileUrl.optional(),
+  phoneNumber: z.string().max(20).nullable().optional(),
   role: z.enum(['ADMIN', 'TEACHER', 'STUDENT', 'MARKETER', 'BLOGGER']).optional()
 });
 
