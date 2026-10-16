@@ -36,6 +36,7 @@ export default async function getSafeProfile() {
         name: true,
         imageUrl: true,
         email: true,
+        phoneNumber: true,
         role: true,
         createdAt: true,
         updatedAt: true,
@@ -53,6 +54,7 @@ export default async function getSafeProfile() {
         `${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim() ||
         clerkUser.username ||
         'User';
+      const userPhone = clerkUser.phoneNumbers?.[0]?.phoneNumber ?? null;
 
       currentProfile = await db.profile.create({
         data: {
@@ -60,6 +62,7 @@ export default async function getSafeProfile() {
           name: userName,
           imageUrl: clerkUser.imageUrl ?? '',
           email: userEmail,
+          phoneNumber: userPhone,
           lastLoginAt: new Date(),
           lastLoginIp: clientIp
         },
@@ -69,6 +72,7 @@ export default async function getSafeProfile() {
           name: true,
           imageUrl: true,
           email: true,
+          phoneNumber: true,
           role: true,
           createdAt: true,
           updatedAt: true,
@@ -95,6 +99,35 @@ export default async function getSafeProfile() {
         // Fail-safe: never block profile creation
       });
     } else {
+      // Sync phone number from Clerk if missing in profile
+      if (!currentProfile.phoneNumber) {
+        try {
+          const clerkUser = await currentUser();
+          const clerkPhone = clerkUser?.phoneNumbers?.[0]?.phoneNumber;
+          if (clerkPhone) {
+            currentProfile = await db.profile.update({
+              where: { id: currentProfile.id },
+              data: { phoneNumber: clerkPhone },
+              select: {
+                id: true,
+                userId: true,
+                name: true,
+                imageUrl: true,
+                email: true,
+                phoneNumber: true,
+                role: true,
+                createdAt: true,
+                updatedAt: true,
+                lastLoginAt: true,
+                lastLoginIp: true
+              }
+            });
+          }
+        } catch {
+          // Safe fail-silent
+        }
+      }
+
       // Logic to conditionally update the login timestamp and IP
       const anHourAgo = new Date(Date.now() - 60 * 60 * 1000);
       const isStaleLogin = !currentProfile.lastLoginAt || currentProfile.lastLoginAt < anHourAgo;
@@ -124,6 +157,7 @@ export default async function getSafeProfile() {
             name: true,
             imageUrl: true,
             email: true,
+            phoneNumber: true,
             role: true,
             createdAt: true,
             updatedAt: true,

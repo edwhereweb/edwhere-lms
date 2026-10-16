@@ -4,6 +4,7 @@ import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import getSafeProfile from '@/actions/get-safe-profile';
 import { studentHasBatchEnrollment } from '@/actions/get-batches';
+import { PhoneNumberPromptModal } from '@/components/modals/phone-number-prompt-modal';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,6 +29,7 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div className="h-full bg-background">
+      <PhoneNumberPromptModal isOpen={!safeProfile.phoneNumber} userName={safeProfile.name} />
       <div className="h-[80px] md:pl-56 fixed inset-y-0 w-full z-50">
         <Navbar currentProfile={safeProfile} hasBatchEnrollment={hasBatchEnrollment} />
       </div>

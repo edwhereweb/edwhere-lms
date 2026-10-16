@@ -10,6 +10,7 @@ import { getProgress } from '@/actions/get-progress';
 import { CourseSidebar } from './_components/course-sidebar';
 import { CourseNavbar } from './_components/course-navbar';
 import getSafeProfile from '@/actions/get-safe-profile';
+import { PhoneNumberPromptModal } from '@/components/modals/phone-number-prompt-modal';
 
 const CourseLayout = async ({
   children,
@@ -93,6 +94,7 @@ const CourseLayout = async ({
 
   return (
     <>
+      <PhoneNumberPromptModal isOpen={!safeProfile.phoneNumber} userName={safeProfile.name} />
       {/* Fixed top navbar */}
       <div className="h-[80px] md:pl-80 fixed inset-x-0 top-0 w-full z-50">
         <CourseNavbar

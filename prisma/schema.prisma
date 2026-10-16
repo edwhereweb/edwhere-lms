@@ -41,6 +41,7 @@ model Profile {
   name String
   imageUrl String?  
   email String  
+  phoneNumber String?
 
   role MemberRole @default(STUDENT)
   lastLoginAt DateTime?

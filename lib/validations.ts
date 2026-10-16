@@ -913,3 +913,16 @@ export const updateApiKeySchema = z.object({
   scopes: z.string().min(1).max(500).optional(),
   isActive: z.boolean().optional()
 });
+
+export const updateProfilePhoneSchema = z.object({
+  countryCode: z
+    .string()
+    .min(1, 'Country code is required')
+    .max(6)
+    .regex(/^\+\d{1,5}$/, 'Country code must start with + followed by digits'),
+  phone: z
+    .string()
+    .min(7, 'Phone number must be at least 7 digits')
+    .max(15, 'Phone number must be at most 15 digits')
+    .regex(/^\d+$/, 'Phone number must contain digits only')
+});
