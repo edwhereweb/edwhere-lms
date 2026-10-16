@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { logError } from '@/lib/debug';
+import { enqueueAndProcessEnrollments } from '@/lib/crm-enrollment-sync';
 
 /**
  * Enrolls a student into a batch and grants access to every course in that batch.
@@ -53,6 +54,10 @@ export async function enrollStudentInBatch(
           update: {}
         })
       )
+    );
+
+    await enqueueAndProcessEnrollments(
+      batch.courses.map(({ courseId }) => ({ userId: studentUserId, courseId, batchId }))
     );
 
     return { enrolled: true };

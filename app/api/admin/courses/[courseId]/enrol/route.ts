@@ -5,6 +5,7 @@ import { clerkClient } from '@clerk/nextjs/server';
 import { validateBody, apiError, handleApiError } from '@/lib/api-utils';
 import { adminEnrolSchema } from '@/lib/validations';
 import { isRateLimited } from '@/lib/rate-limit';
+import { enqueueAndProcessEnrollments } from '@/lib/crm-enrollment-sync';
 
 export async function POST(req: Request, { params }: { params: { courseId: string } }) {
   try {
@@ -112,13 +113,17 @@ export async function POST(req: Request, { params }: { params: { courseId: strin
         const onboardingData: Record<string, string> = {
           onboardingSource: student.onboardingSource ?? onboardingSource ?? 'MANUAL'
         };
-        await db.purchase.create({
+        const purchase = await db.purchase.create({
           data: {
             userId: targetUserId,
             courseId: courseId,
             ...onboardingData
           }
         });
+
+        await enqueueAndProcessEnrollments([
+          { userId: targetUserId, courseId, purchaseId: purchase.id }
+        ]);
 
         results.successful.push(student.email);
       } catch (studentError) {

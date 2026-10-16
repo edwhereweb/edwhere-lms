@@ -8,6 +8,7 @@ import {
 import { db } from '@/lib/db';
 import { canEnrollInBatch } from '@/lib/batch-auth';
 import { batchBulkEnrollSchema } from '@/lib/validations';
+import { enqueueAndProcessEnrollments } from '@/lib/crm-enrollment-sync';
 
 type Params = { params: Promise<{ batchId: string }> };
 
@@ -84,6 +85,15 @@ export async function POST(req: Request, { params }: Params) {
           update: {}
         });
       }
+
+      const enrolledUserId = profile.userId;
+      await enqueueAndProcessEnrollments(
+        batch.courses.map((bc) => ({
+          userId: enrolledUserId,
+          courseId: bc.courseId,
+          batchId
+        }))
+      );
 
       enrolled.push(email);
     }

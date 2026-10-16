@@ -47,7 +47,21 @@ const envSchema = z.object({
   WACRM_ENROLLMENT_TEMPLATE_ID: z.preprocess(
     (v) => (v === '' ? undefined : v),
     z.string().min(1).optional()
-  )
+  ),
+  // LMS → CRM enrollment sync (see docs/CRM-ENROLLMENT-SYNC.md)
+  CRM_SYNC_MAX_ATTEMPTS: z.preprocess(
+    (v) => (v === '' ? undefined : v),
+    z.coerce.number().int().min(1).optional()
+  ),
+  CRM_SYNC_BACKOFF_BASE_SECONDS: z.preprocess(
+    (v) => (v === '' ? undefined : v),
+    z.coerce.number().int().min(1).optional()
+  ),
+  CRM_SYNC_BATCH_SIZE: z.preprocess(
+    (v) => (v === '' ? undefined : v),
+    z.coerce.number().int().min(1).optional()
+  ),
+  CRM_SYNC_SECRET: z.preprocess((v) => (v === '' ? undefined : v), z.string().min(16).optional())
 });
 
 function validateEnv() {
