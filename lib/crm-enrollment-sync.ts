@@ -361,7 +361,13 @@ export async function reconcileEnrollmentSync(
     if (!dryRun) {
       await db.crmEnrollmentSync.update({
         where: { id: job.id },
-        data: { syncStatus: 'PENDING', attempts: 0, nextAttemptAt: null, lastErrorMessage: null }
+        data: {
+          syncStatus: 'PENDING',
+          attempts: 0,
+          nextAttemptAt: null,
+          lastErrorCode: null,
+          lastErrorMessage: null
+        }
       });
     }
   }
