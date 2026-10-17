@@ -13,7 +13,8 @@ import {
   CheckCircle2,
   Code2,
   ClipboardList,
-  ListChecks
+  ListChecks,
+  Radio
 } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
@@ -33,7 +34,8 @@ type ContentType =
   | 'HTML_EMBED'
   | 'PDF_DOCUMENT'
   | 'HANDS_ON_PROJECT'
-  | 'EVALUATION';
+  | 'EVALUATION'
+  | 'LIVE_SESSION';
 
 interface ContentTypeOption {
   value: ContentType;
@@ -88,6 +90,13 @@ const CONTENT_TYPES: ContentTypeOption[] = [
     description:
       'Create a graded or practice MCQ quiz with timers, randomized questions, and CSV bulk import.',
     icon: ListChecks
+  },
+  {
+    value: 'LIVE_SESSION',
+    label: 'Live Session',
+    description:
+      'Schedule or start a live Google Meet class. Learners join, and later find recordings and transcripts, right inside this module.',
+    icon: Radio
   }
 ];
 

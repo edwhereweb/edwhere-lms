@@ -9,6 +9,7 @@ export type SessionArtifactType = 'RECORDING' | 'TRANSCRIPT' | 'NOTES';
 export interface LiveSessionItem {
   id: string;
   courseId: string;
+  chapterId?: string | null;
   title: string;
   mode: LiveSessionMode;
   status: LiveSessionStatus;
@@ -44,10 +45,20 @@ export interface SessionArtifactsResponse {
 
 export interface CreateLiveSessionPayload {
   courseId: string;
+  chapterId?: string;
   title: string;
   mode: LiveSessionMode;
   startsAt?: string;
   endsAt?: string;
+  enableAutoRecording?: boolean;
+}
+
+/** Module context shows only the sessions attached to that content item; no chapterId = all. */
+export function filterSessionsForChapter<T extends { chapterId?: string | null }>(
+  sessions: T[],
+  chapterId?: string
+): T[] {
+  return chapterId ? sessions.filter((s) => s.chapterId === chapterId) : sessions;
 }
 
 export const liveSessionKeys = {
@@ -135,13 +146,12 @@ export function getLearnerJoinState(
   return { kind: 'unavailable', message: 'The join link is currently unavailable.' };
 }
 
-/** Learners only see artifacts once sync is READY; instructors always see whatever exists. */
+/** Learners and instructors see artifacts as soon as recordings or transcripts exist. */
 export function shouldShowArtifacts(
   data: Pick<SessionArtifactsResponse, 'artifactSyncStatus' | 'artifacts'>,
-  isInstructor: boolean
+  _isInstructor?: boolean
 ): boolean {
-  if (isInstructor) return data.artifacts.length > 0;
-  return data.artifactSyncStatus === 'READY' && data.artifacts.length > 0;
+  return data.artifacts.length > 0;
 }
 
 export function getArtifactsEmptyMessage(

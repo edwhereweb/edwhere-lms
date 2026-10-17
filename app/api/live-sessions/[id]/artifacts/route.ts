@@ -49,7 +49,8 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
 
     triggerOpportunisticReconcile();
 
-    const visible = access.isInstructor || session.artifactSyncStatus === 'READY';
+    const visible =
+      access.isInstructor || session.artifacts.length > 0 || session.artifactSyncStatus === 'READY';
     return NextResponse.json({
       id: session.id,
       status: session.status,

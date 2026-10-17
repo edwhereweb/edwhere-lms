@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { debug } from '@/lib/debug';
 import { env } from '@/lib/env';
 import { isGoogleMeetEnabled } from '@/lib/integrations/google/auth';
-import { shareFileWithUser } from '@/lib/integrations/google/drive';
+import { makeFileLinkReadable, shareFileWithUser } from '@/lib/integrations/google/drive';
 import { listSpaceArtifacts } from '@/lib/integrations/google/meet';
 import { computeBackoffMs, hasExhaustedRetries, type BackoffConfig } from './backoff';
 
@@ -35,12 +35,20 @@ async function acquireLease(id: string, now: Date): Promise<boolean> {
 
 async function syncArtifacts(session: LiveSession): Promise<number> {
   if (!session.meetSpaceName) return 0;
-  const meetingCode = session.meetSpaceName.replace(/^spaces\//, '');
-  const artifacts = await listSpaceArtifacts(meetingCode);
+  const artifacts = await listSpaceArtifacts(session.meetSpaceName);
 
   for (const artifact of artifacts) {
     if (artifact.driveFileId && artifact.type === 'RECORDING') {
-      await shareFileWithUser(artifact.driveFileId, session.instructorEmail);
+      try {
+        await shareFileWithUser(artifact.driveFileId, session.instructorEmail);
+      } catch (err) {
+        debug('DRIVE_SHARE_INSTRUCTOR_FAILED', artifact.driveFileId, err);
+      }
+      try {
+        await makeFileLinkReadable(artifact.driveFileId);
+      } catch (err) {
+        debug('DRIVE_SHARE_ANYONE_FAILED', artifact.driveFileId, err);
+      }
     }
     await db.sessionArtifact.upsert({
       where: {

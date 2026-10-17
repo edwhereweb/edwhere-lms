@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useCourseLiveSessions } from '@/hooks/use-live-sessions';
 import {
   STATUS_LABELS,
+  filterSessionsForChapter,
   formatISTDateTimeShort,
   getLearnerJoinState,
   sessionStatusTone
@@ -16,10 +17,15 @@ import { StatusBadge } from './status-badge';
 
 interface LearnerLiveSessionsProps {
   courseId: string;
+  chapterId?: string;
   hasAccess: boolean;
 }
 
-export const LearnerLiveSessions = ({ courseId, hasAccess }: LearnerLiveSessionsProps) => {
+export const LearnerLiveSessions = ({
+  courseId,
+  chapterId,
+  hasAccess
+}: LearnerLiveSessionsProps) => {
   const { data, error, isLoading, refetch } = useCourseLiveSessions(courseId, hasAccess);
   const [openArtifacts, setOpenArtifacts] = useState<string | null>(null);
 
@@ -55,17 +61,21 @@ export const LearnerLiveSessions = ({ courseId, hasAccess }: LearnerLiveSessions
     );
   }
 
-  if (data.length === 0) {
+  const sessions = filterSessionsForChapter(data, chapterId);
+
+  if (sessions.length === 0) {
     return (
       <div className="rounded-md border p-6 text-center text-sm text-muted-foreground">
-        No live sessions have been scheduled for this course yet.
+        {chapterId
+          ? 'Your instructor has not scheduled this live session yet.'
+          : 'No live sessions have been scheduled for this course yet.'}
       </div>
     );
   }
 
   return (
     <ul className="space-y-4" aria-label="Live sessions">
-      {data.map((session) => {
+      {sessions.map((session) => {
         const join = getLearnerJoinState(session);
         const showArtifacts = openArtifacts === session.id;
         return (
@@ -99,7 +109,9 @@ export const LearnerLiveSessions = ({ courseId, hasAccess }: LearnerLiveSessions
               ) : (
                 <p className="text-sm text-muted-foreground">{join.message}</p>
               )}
-              {session.status === 'ENDED' && (
+              {(session.status === 'ENDED' ||
+                session.artifactSyncStatus === 'READY' ||
+                new Date(session.endsAt).getTime() <= Date.now()) && (
                 <Button
                   variant="outline"
                   size="sm"

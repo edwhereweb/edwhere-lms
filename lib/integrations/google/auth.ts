@@ -22,15 +22,6 @@ export function isGoogleMeetEnabled(): boolean {
   return process.env.GOOGLE_MEET_ENABLED === 'true';
 }
 
-export function getWorkspaceDomain(): string | undefined {
-  return process.env.GOOGLE_WORKSPACE_DOMAIN?.toLowerCase() || undefined;
-}
-
-export function isWorkspaceEmail(email: string): boolean {
-  const domain = getWorkspaceDomain();
-  return !!domain && email.toLowerCase().endsWith(`@${domain}`);
-}
-
 const clients = new Map<string, JWT>();
 
 /** Lazily builds a service-account client that impersonates GOOGLE_DELEGATED_SUBJECT. */
@@ -73,8 +64,13 @@ export async function googleRequest<T>(opts: {
     });
     return res.data;
   } catch (error) {
-    const status = (error as { response?: { status?: number } }).response?.status;
-    const message = error instanceof Error ? error.message : 'Google API request failed';
+    const res = (
+      error as { response?: { status?: number; data?: { error?: { message?: string } } } }
+    ).response;
+    const status = res?.status;
+    const gMessage = res?.data?.error?.message;
+    const message =
+      gMessage || (error instanceof Error ? error.message : 'Google API request failed');
     throw new GoogleApiError(message, status);
   }
 }

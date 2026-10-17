@@ -68,7 +68,8 @@ export const createChapterSchema = z.object({
       'HTML_EMBED',
       'PDF_DOCUMENT',
       'HANDS_ON_PROJECT',
-      'EVALUATION'
+      'EVALUATION',
+      'LIVE_SESSION'
     ])
     .optional()
 });
@@ -940,10 +941,12 @@ export const courseIdParamSchema = z.object({ courseId: objectIdString });
 export const createLiveSessionSchema = z
   .object({
     courseId: objectIdString,
+    chapterId: objectIdString.optional(),
     title: z.string().trim().min(1, 'Title is required').max(200),
     mode: z.enum(['SCHEDULED', 'INSTANT']).default('SCHEDULED'),
     startsAt: z.coerce.date().optional(),
-    endsAt: z.coerce.date().optional()
+    endsAt: z.coerce.date().optional(),
+    enableAutoRecording: z.boolean().default(true)
   })
   .superRefine((v, ctx) => {
     if (v.mode === 'SCHEDULED') {

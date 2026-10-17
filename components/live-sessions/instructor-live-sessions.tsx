@@ -2,15 +2,17 @@
 
 import { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
-import { Loader2, Zap } from 'lucide-react';
+import { Loader2, Trash2, Video, Zap } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ConfirmModal } from '@/components/modals/confirm-modal';
 import {
   useCourseLiveSessions,
   useCreateLiveSession,
+  useDeleteLiveSession,
   useEndLiveSession
 } from '@/hooks/use-live-sessions';
 import { getApiErrorMessage } from '@/lib/live-sessions/client';
@@ -20,6 +22,7 @@ import {
   STATUS_LABELS,
   artifactSyncTone,
   canEndSession,
+  filterSessionsForChapter,
   formatISTDateTimeShort,
   hostConfigTone,
   istLocalToIso,
@@ -32,11 +35,13 @@ import { StatusBadge } from './status-badge';
 
 interface InstructorLiveSessionsProps {
   courseId: string;
+  chapterId?: string;
   meetAvailable: boolean;
 }
 
 export const InstructorLiveSessions = ({
   courseId,
+  chapterId,
   meetAvailable
 }: InstructorLiveSessionsProps) => {
   const { data, error, isLoading, refetch, setData } = useCourseLiveSessions(
@@ -61,9 +66,26 @@ export const InstructorLiveSessions = ({
   );
   const end = useEndLiveSession(courseId, applyOptimistic);
 
+  const applyOptimisticDelete = useCallback(
+    (sessionId: string) => {
+      let previous: LiveSessionItem[] | undefined;
+      setData((current) => {
+        previous = current;
+        return current?.filter((s) => s.id !== sessionId);
+      });
+      return () => {
+        setData(() => previous);
+        void refetch();
+      };
+    },
+    [setData, refetch]
+  );
+  const deleteSession = useDeleteLiveSession(courseId, applyOptimisticDelete);
+
   const [title, setTitle] = useState('');
   const [startsAt, setStartsAt] = useState('');
   const [endsAt, setEndsAt] = useState('');
+  const [autoRecord, setAutoRecord] = useState(true);
   const [formError, setFormError] = useState<string | null>(null);
   const [openArtifacts, setOpenArtifacts] = useState<string | null>(null);
 
@@ -77,6 +99,7 @@ export const InstructorLiveSessions = ({
   }
 
   const trimmedTitle = title.trim();
+  const sessions = filterSessionsForChapter(data ?? [], chapterId);
 
   const onSchedule = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -86,10 +109,12 @@ export const InstructorLiveSessions = ({
     if (timeError) return setFormError(timeError);
     try {
       await create.mutate({
+        chapterId,
         title: trimmedTitle,
         mode: 'SCHEDULED',
         startsAt: istLocalToIso(startsAt),
-        endsAt: istLocalToIso(endsAt)
+        endsAt: istLocalToIso(endsAt),
+        enableAutoRecording: autoRecord
       });
       toast.success('Live session scheduled');
       setTitle('');
@@ -106,9 +131,17 @@ export const InstructorLiveSessions = ({
     setFormError(null);
     if (!trimmedTitle) return setFormError('Title is required');
     try {
-      await create.mutate({ title: trimmedTitle, mode: 'INSTANT' });
+      const created = await create.mutate({
+        chapterId,
+        title: trimmedTitle,
+        mode: 'INSTANT',
+        enableAutoRecording: autoRecord
+      });
       toast.success('Instant session started');
       setTitle('');
+      if (created?.joinUrl) {
+        window.open(created.joinUrl, '_blank', 'noopener,noreferrer');
+      }
     } catch (e) {
       const message = getApiErrorMessage(e);
       setFormError(message);
@@ -122,6 +155,15 @@ export const InstructorLiveSessions = ({
       toast.success('Session ended');
     } catch (e) {
       toast.error(getApiErrorMessage(e, 'Failed to end session'));
+    }
+  };
+
+  const onDelete = async (session: LiveSessionItem) => {
+    try {
+      await deleteSession.mutate(session.id);
+      toast.success('Live session deleted');
+    } catch (e) {
+      toast.error(getApiErrorMessage(e, 'Failed to delete live session'));
     }
   };
 
@@ -174,6 +216,17 @@ export const InstructorLiveSessions = ({
             {formError}
           </p>
         )}
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="live-session-auto-record"
+            checked={autoRecord}
+            onCheckedChange={(checked) => setAutoRecord(checked === true)}
+            disabled={create.isPending}
+          />
+          <Label htmlFor="live-session-auto-record" className="cursor-pointer font-normal">
+            Enable auto-recording
+          </Label>
+        </div>
         <div className="flex flex-wrap gap-3">
           <Button type="submit" disabled={create.isPending}>
             {create.isPending && (
@@ -204,11 +257,11 @@ export const InstructorLiveSessions = ({
               Try again
             </Button>
           </div>
-        ) : data.length === 0 ? (
+        ) : sessions.length === 0 ? (
           <p className="text-sm text-muted-foreground">No live sessions yet.</p>
         ) : (
           <ul className="space-y-4">
-            {data.map((session) => {
+            {sessions.map((session) => {
               const showArtifacts = openArtifacts === session.id;
               return (
                 <li key={session.id} className="rounded-md border p-4 space-y-3">
@@ -252,13 +305,27 @@ export const InstructorLiveSessions = ({
                     </p>
                   )}
                   <div className="flex flex-wrap items-center gap-2">
-                    {session.joinUrl && (
-                      <Button asChild size="sm" variant="outline">
+                    {session.joinUrl &&
+                    session.status !== 'ENDED' &&
+                    session.status !== 'CANCELLED' ? (
+                      <Button
+                        asChild
+                        size="sm"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-sm"
+                      >
                         <a href={session.joinUrl} target="_blank" rel="noopener noreferrer">
-                          Open Meet<span className="sr-only"> for {session.title}</span>
+                          <Video className="h-4 w-4 mr-1.5" aria-hidden="true" />
+                          Join as Instructor<span className="sr-only"> for {session.title}</span>
                         </a>
                       </Button>
-                    )}
+                    ) : session.joinUrl ? (
+                      <Button asChild size="sm" variant="outline">
+                        <a href={session.joinUrl} target="_blank" rel="noopener noreferrer">
+                          <Video className="h-4 w-4 mr-1.5" aria-hidden="true" />
+                          Meet link<span className="sr-only"> for {session.title}</span>
+                        </a>
+                      </Button>
+                    ) : null}
                     {canEndSession(session) && (
                       <ConfirmModal
                         title="End this live session?"
@@ -286,6 +353,26 @@ export const InstructorLiveSessions = ({
                     >
                       {showArtifacts ? 'Hide' : 'View'} artifacts
                     </Button>
+                    <ConfirmModal
+                      title="Delete this live session?"
+                      description="This will permanently delete the live session and remove the scheduled Google Calendar event. This action cannot be undone."
+                      confirmText="Delete session"
+                      onConfirm={() => void onDelete(session)}
+                    >
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20"
+                        disabled={deleteSession.pendingId === session.id}
+                      >
+                        {deleteSession.pendingId === session.id ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" aria-hidden="true" />
+                        ) : (
+                          <Trash2 className="h-4 w-4 mr-1" aria-hidden="true" />
+                        )}
+                        Delete<span className="sr-only"> {session.title}</span>
+                      </Button>
+                    </ConfirmModal>
                   </div>
                   {showArtifacts && <SessionArtifacts sessionId={session.id} isInstructor />}
                 </li>

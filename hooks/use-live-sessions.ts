@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   createLiveSessionRequest,
+  deleteLiveSessionRequest,
   endLiveSessionRequest,
   fetchCourseLiveSessions,
   fetchSessionArtifacts,
@@ -151,6 +152,34 @@ export function useEndLiveSession(
         invalidateLiveSessions(liveSessionKeys.list(courseId));
         invalidateLiveSessions(liveSessionKeys.artifacts(sessionId));
         return ended;
+      } catch (e) {
+        rollback?.();
+        throw e;
+      } finally {
+        setPendingId(null);
+      }
+    },
+    [courseId, applyOptimistic]
+  );
+
+  return { mutate, pendingId };
+}
+
+export function useDeleteLiveSession(
+  courseId: string,
+  applyOptimistic?: (sessionId: string) => () => void
+) {
+  const [pendingId, setPendingId] = useState<string | null>(null);
+
+  const mutate = useCallback(
+    async (sessionId: string) => {
+      setPendingId(sessionId);
+      const rollback = applyOptimistic?.(sessionId);
+      try {
+        const deleted = await deleteLiveSessionRequest(sessionId);
+        invalidateLiveSessions(liveSessionKeys.list(courseId));
+        invalidateLiveSessions(liveSessionKeys.artifacts(sessionId));
+        return deleted;
       } catch (e) {
         rollback?.();
         throw e;

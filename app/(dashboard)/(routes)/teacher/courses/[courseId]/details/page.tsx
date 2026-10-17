@@ -166,12 +166,10 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
               globallyEnabled={isGoogleMeetEnabled()}
             />
             {course.googleMeetEnabled && (
-              <Link
-                href={`/teacher/courses/${course.id}/live-sessions`}
-                className="inline-block mt-3 text-sm text-sky-700 dark:text-sky-400 hover:underline"
-              >
-                Manage live sessions →
-              </Link>
+              <p className="mt-3 text-sm text-muted-foreground">
+                Add a <strong>Live Session</strong> content item to any module in the course
+                structure to schedule and manage sessions.
+              </p>
             )}
           </div>
           <div className="space-y-6">
