@@ -2,9 +2,10 @@ import { auth } from '@clerk/nextjs/server';
 import { type Chapter, type Course, type UserProgress } from '@prisma/client';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { MessageCircle } from 'lucide-react';
+import { MessageCircle, Video } from 'lucide-react';
 
 import { db } from '@/lib/db';
+import { canUseMeet } from '@/lib/live-sessions/access';
 import { CourseProgress } from '@/components/course-progress';
 import { CourseSidebarItem } from './course-sidebar-item';
 
@@ -107,6 +108,15 @@ export const CourseSidebar = async ({
 
       {/* Mentor Connect — pinned at bottom */}
       <div className="border-t shrink-0">
+        {canUseMeet(course) && (
+          <Link
+            href={`/courses/${course.id}/live-sessions`}
+            className="flex items-center gap-x-2 pl-6 py-4 text-sm font-[500] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors w-full border-b"
+          >
+            <Video size={20} aria-hidden="true" />
+            Live sessions
+          </Link>
+        )}
         <Link
           href={`/courses/${course.id}/chat`}
           className="flex items-center gap-x-2 pl-6 py-4 text-sm font-[500] text-[#F80602] dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors w-full"

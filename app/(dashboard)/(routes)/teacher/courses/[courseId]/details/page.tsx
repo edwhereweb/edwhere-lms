@@ -8,11 +8,13 @@ import {
   Users,
   ArrowLeft,
   Globe,
-  MessageCircle
+  MessageCircle,
+  Video
 } from 'lucide-react';
 
 import { db } from '@/lib/db';
 import { canEditCourse } from '@/lib/course-auth';
+import { isGoogleMeetEnabled } from '@/lib/integrations/google/auth';
 import { IconBadge } from '@/components/icon-badge';
 import { Banner } from '@/components/banner';
 
@@ -27,6 +29,7 @@ import { Actions } from '../_components/actions';
 import { CourseInstructorsForm } from '../_components/course-instructors-form';
 import { SeoForm } from '../_components/seo-form';
 import { WhatsAppGroupForm } from '../_components/whatsapp-group-form';
+import { GoogleMeetForm } from '../_components/google-meet-form';
 
 const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
   const { userId } = await auth();
@@ -151,6 +154,25 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
               <h2 className="text-xl">WhatsApp Group</h2>
             </div>
             <WhatsAppGroupForm initialData={course} courseId={course.id} />
+
+            {/* Google Meet live sessions */}
+            <div className="flex items-center gap-x-2 mt-6">
+              <IconBadge icon={Video} />
+              <h2 className="text-xl">Live sessions</h2>
+            </div>
+            <GoogleMeetForm
+              courseId={course.id}
+              initialEnabled={course.googleMeetEnabled}
+              globallyEnabled={isGoogleMeetEnabled()}
+            />
+            {course.googleMeetEnabled && (
+              <Link
+                href={`/teacher/courses/${course.id}/live-sessions`}
+                className="inline-block mt-3 text-sm text-sky-700 dark:text-sky-400 hover:underline"
+              >
+                Manage live sessions →
+              </Link>
+            )}
           </div>
           <div className="space-y-6">
             <div>
