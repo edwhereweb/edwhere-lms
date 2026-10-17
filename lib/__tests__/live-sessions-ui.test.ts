@@ -1,3 +1,4 @@
+import { getApiErrorMessage } from '../live-sessions/client';
 import {
   canEndSession,
   getArtifactsEmptyMessage,
@@ -104,5 +105,16 @@ describe('query keys', () => {
   it('scopes keys by course and session', () => {
     expect(liveSessionKeys.list('c1')).toEqual(['live-sessions', 'course', 'c1']);
     expect(liveSessionKeys.artifacts('s1')).toEqual(['live-sessions', 'artifacts', 's1']);
+  });
+});
+
+describe('getApiErrorMessage', () => {
+  it('extracts API error messages and falls back', () => {
+    const axiosErr = (data: unknown) =>
+      Object.assign(new Error('x'), { isAxiosError: true, response: { data } });
+    expect(getApiErrorMessage(axiosErr({ error: 'Forbidden' }))).toBe('Forbidden');
+    expect(getApiErrorMessage(axiosErr('Plain text'))).toBe('Plain text');
+    expect(getApiErrorMessage(axiosErr({}))).toBe('Something went wrong');
+    expect(getApiErrorMessage(new Error('boom'), 'Fallback')).toBe('Fallback');
   });
 });

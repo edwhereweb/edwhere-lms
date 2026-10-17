@@ -57,23 +57,34 @@ function useLiveQuery<T>(
   fetcherRef.current = fetcher;
   const cacheKey = keyOf(key);
 
+  const requestId = useRef(0);
+
   const refetch = useCallback(async () => {
+    const id = ++requestId.current;
     try {
       const result = await fetcherRef.current();
+      if (id !== requestId.current) return;
       setDataState(result);
       setError(null);
     } catch (e) {
+      if (id !== requestId.current) return;
       setError(getApiErrorMessage(e, 'Failed to load'));
     } finally {
-      setIsLoading(false);
+      if (id === requestId.current) setIsLoading(false);
     }
   }, []);
 
   useEffect(() => {
     if (!enabled) return;
+    setDataState(undefined);
+    setError(null);
     setIsLoading(true);
     void refetch();
-    return subscribe(cacheKey.split('|'), () => void refetch());
+    const unsubscribe = subscribe(cacheKey.split('|'), () => void refetch());
+    return () => {
+      requestId.current++;
+      unsubscribe();
+    };
   }, [cacheKey, enabled, refetch]);
 
   const setData = useCallback(

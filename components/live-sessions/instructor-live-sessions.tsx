@@ -47,10 +47,15 @@ export const InstructorLiveSessions = ({
 
   const applyOptimistic = useCallback(
     (sessionId: string) => {
-      setData((current) =>
-        current?.map((s) => (s.id === sessionId ? { ...s, status: 'ENDED' as const } : s))
-      );
-      return () => void refetch();
+      let previous: LiveSessionItem[] | undefined;
+      setData((current) => {
+        previous = current;
+        return current?.map((s) => (s.id === sessionId ? { ...s, status: 'ENDED' as const } : s));
+      });
+      return () => {
+        setData(() => previous);
+        void refetch();
+      };
     },
     [setData, refetch]
   );
