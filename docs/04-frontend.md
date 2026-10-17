@@ -274,3 +274,17 @@ When adding a new component:
 - **Loading states:** the codebase relies heavily on `useState(isLoading)` in client components. There's no global loading provider. Keep buttons `disabled` while loading and surface the state with a spinner or skeleton.
 - **Error UX:** every catch should at minimum show a `toast.error('Something went wrong')`. Per `AGENTS.md`, never swallow with `.catch(() => {})`.
 - **Hydration mismatches:** dates/times displayed in dashboards should be formatted server-side (use `date-fns`) or wrapped in a client-only component to avoid timezone drift.
+
+## 15. Google Meet live sessions UI
+
+Requires `GOOGLE_MEET_ENABLED=true` (plus the credentials in `.env.example`) **and** the per-course `googleMeetEnabled` flag.
+
+| Who | Where |
+| --- | --- |
+| Instructor — enable Meet | Teacher → course → **Details** → "Live sessions" checkbox (`_components/google-meet-form.tsx`). Shows a warning when the platform flag is off. |
+| Instructor — manage | `/teacher/courses/[courseId]/live-sessions`: schedule (IST times), "Start instant session", end session (with confirmation), host/artifact status badges, per-session artifacts with retry diagnostics. |
+| Learner | `/courses/[courseId]/live-sessions` (sidebar link "Live sessions"): list, "Join live session" only when the API returns `joinUrl`, artifacts for ended sessions once sync is `READY`. Non-enrolled users see a locked state. |
+
+Code: `components/live-sessions/`, hooks in `hooks/use-live-sessions.ts` (fetch + invalidation after create/end; optimistic "ended" on end), typed client in `lib/live-sessions/client.ts`, pure view logic (labels, join rules, IST helpers, query keys) in `lib/live-sessions/ui.ts` (unit-tested in `lib/__tests__/live-sessions-ui.test.ts`). The repo has no React Query/SWR, so the hooks are a small `useState`/`useEffect` layer.
+
+Note: the create API has no description field, so the form only collects title and times.
