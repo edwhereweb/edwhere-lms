@@ -144,7 +144,9 @@ export async function reconcileDueSessions(
 
   for (const session of due) {
     if (!(await acquireLease(session.id, now))) continue;
-    const outcome = await processSession(session, now);
+    const fresh = await db.liveSession.findUnique({ where: { id: session.id } });
+    if (!fresh) continue;
+    const outcome = await processSession(fresh, now);
     result.processed += 1;
     if (outcome === 'READY') result.ready += 1;
     else if (outcome === 'FAILED_TIMEOUT') result.failedTimeout += 1;

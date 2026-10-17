@@ -89,6 +89,7 @@ function durationSec(start?: string, end?: string): number | null {
 
 /** Lists finished recordings/transcripts for every conference held in the space. */
 export async function listSpaceArtifacts(meetingCode: string): Promise<MeetArtifact[]> {
+  if (!/^[a-z0-9-]+$/i.test(meetingCode)) throw new Error('Invalid meeting code');
   const scopes = [GOOGLE_SCOPES.meetReadonly];
   const records = await googleRequest<{ conferenceRecords?: ConferenceRecord[] }>({
     url: `${MEET_V2}/conferenceRecords`,
