@@ -10,3 +10,14 @@ export async function shareFileWithUser(fileId: string, email: string): Promise<
     data: { type: 'user', role: 'reader', emailAddress: email }
   });
 }
+
+/** Grants read-only access to anyone with the link so learners in the course can watch the recording. */
+export async function makeFileLinkReadable(fileId: string): Promise<void> {
+  await googleRequest<unknown>({
+    url: `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}/permissions`,
+    method: 'POST',
+    scopes: [GOOGLE_SCOPES.drive],
+    params: { supportsAllDrives: true },
+    data: { type: 'anyone', role: 'reader' }
+  });
+}

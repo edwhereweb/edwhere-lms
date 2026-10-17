@@ -945,7 +945,8 @@ export const createLiveSessionSchema = z
     title: z.string().trim().min(1, 'Title is required').max(200),
     mode: z.enum(['SCHEDULED', 'INSTANT']).default('SCHEDULED'),
     startsAt: z.coerce.date().optional(),
-    endsAt: z.coerce.date().optional()
+    endsAt: z.coerce.date().optional(),
+    enableAutoRecording: z.boolean().default(true)
   })
   .superRefine((v, ctx) => {
     if (v.mode === 'SCHEDULED') {

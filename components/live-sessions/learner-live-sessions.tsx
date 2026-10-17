@@ -109,7 +109,9 @@ export const LearnerLiveSessions = ({
               ) : (
                 <p className="text-sm text-muted-foreground">{join.message}</p>
               )}
-              {session.status === 'ENDED' && (
+              {(session.status === 'ENDED' ||
+                session.artifactSyncStatus === 'READY' ||
+                new Date(session.endsAt).getTime() <= Date.now()) && (
                 <Button
                   variant="outline"
                   size="sm"

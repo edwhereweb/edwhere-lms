@@ -50,6 +50,7 @@ export interface CreateLiveSessionPayload {
   mode: LiveSessionMode;
   startsAt?: string;
   endsAt?: string;
+  enableAutoRecording?: boolean;
 }
 
 /** Module context shows only the sessions attached to that content item; no chapterId = all. */
@@ -145,13 +146,12 @@ export function getLearnerJoinState(
   return { kind: 'unavailable', message: 'The join link is currently unavailable.' };
 }
 
-/** Learners only see artifacts once sync is READY; instructors always see whatever exists. */
+/** Learners and instructors see artifacts as soon as recordings or transcripts exist. */
 export function shouldShowArtifacts(
   data: Pick<SessionArtifactsResponse, 'artifactSyncStatus' | 'artifacts'>,
-  isInstructor: boolean
+  _isInstructor?: boolean
 ): boolean {
-  if (isInstructor) return data.artifacts.length > 0;
-  return data.artifactSyncStatus === 'READY' && data.artifacts.length > 0;
+  return data.artifacts.length > 0;
 }
 
 export function getArtifactsEmptyMessage(

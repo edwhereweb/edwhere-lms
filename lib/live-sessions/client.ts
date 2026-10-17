@@ -34,3 +34,8 @@ export async function endLiveSessionRequest(sessionId: string) {
   const { data } = await axios.post<LiveSessionItem>(`/api/live-sessions/${sessionId}/end`, {});
   return data;
 }
+
+export async function deleteLiveSessionRequest(sessionId: string) {
+  const { data } = await axios.delete<LiveSessionItem>(`/api/live-sessions/${sessionId}`);
+  return data;
+}

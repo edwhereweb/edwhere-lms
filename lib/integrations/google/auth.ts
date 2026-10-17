@@ -64,8 +64,13 @@ export async function googleRequest<T>(opts: {
     });
     return res.data;
   } catch (error) {
-    const status = (error as { response?: { status?: number } }).response?.status;
-    const message = error instanceof Error ? error.message : 'Google API request failed';
+    const res = (
+      error as { response?: { status?: number; data?: { error?: { message?: string } } } }
+    ).response;
+    const status = res?.status;
+    const gMessage = res?.data?.error?.message;
+    const message =
+      gMessage || (error instanceof Error ? error.message : 'Google API request failed');
     throw new GoogleApiError(message, status);
   }
 }
