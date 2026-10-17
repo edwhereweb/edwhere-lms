@@ -1379,6 +1379,8 @@ enum SessionArtifactType {
 model LiveSession {
   id       String @id @default(auto()) @map("_id") @db.ObjectId
   courseId String @db.ObjectId
+  // Set when the session is authored as a LIVE_SESSION module content item
+  chapterId String? @db.ObjectId
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   createdByUserId  String
@@ -1419,6 +1421,7 @@ model LiveSession {
   updatedAt DateTime @updatedAt
 
   @@index([courseId, startsAt])
+  @@index([chapterId])
   @@index([status, startsAt])
   @@index([instructorUserId])
   @@index([artifactSyncStatus, artifactNextRetryAt])

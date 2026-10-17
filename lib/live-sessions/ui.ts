@@ -9,6 +9,7 @@ export type SessionArtifactType = 'RECORDING' | 'TRANSCRIPT' | 'NOTES';
 export interface LiveSessionItem {
   id: string;
   courseId: string;
+  chapterId?: string | null;
   title: string;
   mode: LiveSessionMode;
   status: LiveSessionStatus;
@@ -44,10 +45,19 @@ export interface SessionArtifactsResponse {
 
 export interface CreateLiveSessionPayload {
   courseId: string;
+  chapterId?: string;
   title: string;
   mode: LiveSessionMode;
   startsAt?: string;
   endsAt?: string;
+}
+
+/** Module context shows only the sessions attached to that content item; no chapterId = all. */
+export function filterSessionsForChapter<T extends { chapterId?: string | null }>(
+  sessions: T[],
+  chapterId?: string
+): T[] {
+  return chapterId ? sessions.filter((s) => s.chapterId === chapterId) : sessions;
 }
 
 export const liveSessionKeys = {

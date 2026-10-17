@@ -9,7 +9,8 @@ import {
   FileText,
   Gamepad2,
   GraduationCap,
-  FolderKanban
+  FolderKanban,
+  Video
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 
@@ -23,7 +24,8 @@ const CONTENT_TYPE_ICONS: Record<string, React.ElementType> = {
   PDF_DOCUMENT: FileText,
   HTML_EMBED: Gamepad2,
   EVALUATION: GraduationCap,
-  HANDS_ON_PROJECT: FolderKanban
+  HANDS_ON_PROJECT: FolderKanban,
+  LIVE_SESSION: Video
 };
 
 interface CourseSidebarItemProps {

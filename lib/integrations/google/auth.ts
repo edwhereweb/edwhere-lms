@@ -22,15 +22,6 @@ export function isGoogleMeetEnabled(): boolean {
   return process.env.GOOGLE_MEET_ENABLED === 'true';
 }
 
-export function getWorkspaceDomain(): string | undefined {
-  return process.env.GOOGLE_WORKSPACE_DOMAIN?.toLowerCase() || undefined;
-}
-
-export function isWorkspaceEmail(email: string): boolean {
-  const domain = getWorkspaceDomain();
-  return !!domain && email.toLowerCase().endsWith(`@${domain}`);
-}
-
 const clients = new Map<string, JWT>();
 
 /** Lazily builds a service-account client that impersonates GOOGLE_DELEGATED_SUBJECT. */

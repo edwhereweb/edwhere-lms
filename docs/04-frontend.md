@@ -279,11 +279,15 @@ When adding a new component:
 
 Requires `GOOGLE_MEET_ENABLED=true` (plus the credentials in `.env.example`) **and** the per-course `googleMeetEnabled` flag.
 
+Live sessions are a **module content type** (`LIVE_SESSION`), authored and consumed in the normal module flow. The old standalone pages remain as a course-wide overview but are no longer linked from the sidebar or course details.
+
 | Who | Where |
 | --- | --- |
 | Instructor — enable Meet | Teacher → course → **Details** → "Live sessions" checkbox (`_components/google-meet-form.tsx`). Shows a warning when the platform flag is off. |
-| Instructor — manage | `/teacher/courses/[courseId]/live-sessions`: schedule (IST times), "Start instant session", end session (with confirmation), host/artifact status badges, per-session artifacts with retry diagnostics. |
-| Learner | `/courses/[courseId]/live-sessions` (sidebar link "Live sessions"): list, "Join live session" only when the API returns `joinUrl`, artifacts for ended sessions once sync is `READY`. Non-enrolled users see a locked state. |
+| Instructor — author/manage | Add a **Live Session** content item to a module (course structure → add chapter). Its editor page embeds schedule (IST times), "Start instant session", end session (with confirmation), host/artifact status badges and per-session artifacts. Sessions are linked via `LiveSession.chapterId`. |
+| Learner | Open the Live Session item in the module sidebar: "Join live session" only when the API returns `joinUrl`, artifacts for ended sessions once sync is `READY`. Non-enrolled users see a locked state. |
+
+Access is governed by LMS roles (course instructor/admin, enrolled learner) and backend rules only. The instructor's LMS login does **not** need to be a Google Workspace account; sessions are created by the platform's delegated service account. If Google-side setup (e.g. cohost assignment) fails, the API returns an actionable error and nothing is persisted, so the instructor can simply retry.
 
 Code: `components/live-sessions/`, hooks in `hooks/use-live-sessions.ts` (fetch + invalidation after create/end; optimistic "ended" on end), typed client in `lib/live-sessions/client.ts`, pure view logic (labels, join rules, IST helpers, query keys) in `lib/live-sessions/ui.ts` (unit-tested in `lib/__tests__/live-sessions-ui.test.ts`). The repo has no React Query/SWR, so the hooks are a small `useState`/`useEffect` layer.
 

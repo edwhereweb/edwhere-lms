@@ -8,6 +8,7 @@ import {
   validateScheduledTimes,
   formatISTDateTimeShort,
   formatDuration,
+  filterSessionsForChapter,
   liveSessionKeys
 } from '../live-sessions/ui';
 
@@ -116,5 +117,23 @@ describe('getApiErrorMessage', () => {
     expect(getApiErrorMessage(axiosErr('Plain text'))).toBe('Plain text');
     expect(getApiErrorMessage(axiosErr({}))).toBe('Something went wrong');
     expect(getApiErrorMessage(new Error('boom'), 'Fallback')).toBe('Fallback');
+  });
+});
+
+describe('filterSessionsForChapter', () => {
+  const sessions = [
+    { id: '1', chapterId: 'c1' },
+    { id: '2', chapterId: 'c2' },
+    { id: '3', chapterId: null },
+    { id: '4' }
+  ];
+
+  it('returns only the sessions attached to the module item', () => {
+    expect(filterSessionsForChapter(sessions, 'c1').map((s) => s.id)).toEqual(['1']);
+    expect(filterSessionsForChapter(sessions, 'missing')).toEqual([]);
+  });
+
+  it('returns everything when no chapter is given', () => {
+    expect(filterSessionsForChapter(sessions)).toHaveLength(4);
   });
 });

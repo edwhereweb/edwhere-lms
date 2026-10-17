@@ -51,6 +51,8 @@ export async function PATCH(
       if (!chapter.description || !(chapter as unknown as { pdfUrl?: string }).pdfUrl) {
         return apiError('Missing required fields', 400);
       }
+    } else if (contentType === 'LIVE_SESSION') {
+      // Title-only: sessions are scheduled after the item exists, so nothing else gates publishing.
     } else if (contentType === 'EVALUATION') {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const quizWithQuestions = await (db as any).quiz.findUnique({

@@ -20,6 +20,7 @@ import {
   STATUS_LABELS,
   artifactSyncTone,
   canEndSession,
+  filterSessionsForChapter,
   formatISTDateTimeShort,
   hostConfigTone,
   istLocalToIso,
@@ -32,11 +33,13 @@ import { StatusBadge } from './status-badge';
 
 interface InstructorLiveSessionsProps {
   courseId: string;
+  chapterId?: string;
   meetAvailable: boolean;
 }
 
 export const InstructorLiveSessions = ({
   courseId,
+  chapterId,
   meetAvailable
 }: InstructorLiveSessionsProps) => {
   const { data, error, isLoading, refetch, setData } = useCourseLiveSessions(
@@ -77,6 +80,7 @@ export const InstructorLiveSessions = ({
   }
 
   const trimmedTitle = title.trim();
+  const sessions = filterSessionsForChapter(data ?? [], chapterId);
 
   const onSchedule = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -86,6 +90,7 @@ export const InstructorLiveSessions = ({
     if (timeError) return setFormError(timeError);
     try {
       await create.mutate({
+        chapterId,
         title: trimmedTitle,
         mode: 'SCHEDULED',
         startsAt: istLocalToIso(startsAt),
@@ -106,7 +111,7 @@ export const InstructorLiveSessions = ({
     setFormError(null);
     if (!trimmedTitle) return setFormError('Title is required');
     try {
-      await create.mutate({ title: trimmedTitle, mode: 'INSTANT' });
+      await create.mutate({ chapterId, title: trimmedTitle, mode: 'INSTANT' });
       toast.success('Instant session started');
       setTitle('');
     } catch (e) {
@@ -204,11 +209,11 @@ export const InstructorLiveSessions = ({
               Try again
             </Button>
           </div>
-        ) : data.length === 0 ? (
+        ) : sessions.length === 0 ? (
           <p className="text-sm text-muted-foreground">No live sessions yet.</p>
         ) : (
           <ul className="space-y-4">
-            {data.map((session) => {
+            {sessions.map((session) => {
               const showArtifacts = openArtifacts === session.id;
               return (
                 <li key={session.id} className="rounded-md border p-4 space-y-3">

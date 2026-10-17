@@ -29,6 +29,7 @@ export async function GET(_req: Request, { params }: { params: { courseId: strin
       select: {
         id: true,
         courseId: true,
+        chapterId: true,
         title: true,
         mode: true,
         status: true,

@@ -11,6 +11,7 @@ import {
   ClipboardList,
   Code2,
   Eye,
+  Radio,
   LayoutDashboard,
   Video,
   Youtube,
@@ -31,6 +32,8 @@ import { ChapterPdfForm } from './_components/chapter-pdf-form';
 import { ChapterProjectForm } from './_components/chapter-project-form';
 import { Banner } from '@/components/banner';
 import { ChapterActions } from './_components/chapter-actions';
+import { InstructorLiveSessions } from '@/components/live-sessions/instructor-live-sessions';
+import { canUseMeet } from '@/lib/live-sessions/access';
 import { AssetLibraryPicker } from './_components/asset-library-picker';
 
 interface ChapterIdPageProps {
@@ -68,6 +71,11 @@ const CONTENT_TYPE_LABELS: Record<
     label: 'PDF Document',
     icon: AlignLeft,
     color: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300'
+  },
+  LIVE_SESSION: {
+    label: 'Live Session',
+    icon: Radio,
+    color: 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300'
   },
   HANDS_ON_PROJECT: {
     label: 'Hands-on Project',
@@ -114,7 +122,7 @@ const ChapterIdPage: React.FC<ChapterIdPageProps> = async ({ params }) => {
 
   // Required fields vary by content type
   const hasVideo = !!(chapter.videoUrl || chapter.youtubeVideoId);
-  const requiredFields =
+  const typeRequiredFields =
     contentType === 'TEXT'
       ? [chapter.title, chapter.description, chapter.content]
       : contentType === 'HTML_EMBED'
@@ -140,6 +148,17 @@ const ChapterIdPage: React.FC<ChapterIdPageProps> = async ({ params }) => {
                     : false
                 ]
               : [chapter.title, chapter.description, hasVideo];
+
+  const requiredFields = contentType === 'LIVE_SESSION' ? [chapter.title] : typeRequiredFields;
+
+  const liveCourse =
+    contentType === 'LIVE_SESSION'
+      ? await db.course.findUnique({
+          where: { id: params.courseId },
+          select: { googleMeetEnabled: true }
+        })
+      : null;
+  const meetAvailable = !!liveCourse && canUseMeet(liveCourse);
 
   const totalFields = requiredFields.length;
   const completedFields = requiredFields.filter(Boolean).length;
@@ -316,6 +335,23 @@ const ChapterIdPage: React.FC<ChapterIdPageProps> = async ({ params }) => {
                     </div>
                   </div>
                 )}
+              </>
+            )}
+
+            {contentType === 'LIVE_SESSION' && (
+              <>
+                <div className="flex items-center gap-x-2">
+                  <IconBadge icon={Radio} />
+                  <h2 className="text-xl font-medium">Live Sessions</h2>
+                </div>
+                <p className="text-sm text-muted-foreground -mt-2">
+                  Schedule or start sessions here. Learners see and join them in this module.
+                </p>
+                <InstructorLiveSessions
+                  courseId={params.courseId}
+                  chapterId={params.chapterId}
+                  meetAvailable={meetAvailable}
+                />
               </>
             )}
 

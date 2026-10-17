@@ -1,7 +1,6 @@
 import { db } from '@/lib/db';
 import { debug } from '@/lib/debug';
 import { canEditCourse } from '@/lib/course-auth';
-import { isWorkspaceEmail } from '@/lib/integrations/google/auth';
 import { createScheduledMeetEvent, deleteCalendarEvent } from '@/lib/integrations/google/calendar';
 import { addCohost, createInstantSpace, enableAutoRecording } from '@/lib/integrations/google/meet';
 import { canUseMeet } from './access';
@@ -11,6 +10,7 @@ const INSTANT_DEFAULT_DURATION_MS = 60 * 60 * 1000;
 
 export interface CreateLiveSessionInput {
   courseId: string;
+  chapterId?: string;
   title: string;
   mode?: 'SCHEDULED' | 'INSTANT';
   startsAt?: Date;
@@ -39,9 +39,6 @@ async function resolveInstructor(userId: string, courseId: string) {
     select: { email: true }
   });
   if (!profile?.email) throw new LiveSessionError('Instructor has no email on file', 400);
-  if (!isWorkspaceEmail(profile.email)) {
-    throw new LiveSessionError('Instructor must use a Google Workspace account', 400);
-  }
   return { instructorUserId, instructorEmail: profile.email };
 }
 
@@ -56,6 +53,17 @@ export async function createLiveSession(userId: string, input: CreateLiveSession
     throw new LiveSessionError('Forbidden', 403);
   }
   const { instructorUserId, instructorEmail } = await resolveInstructor(userId, input.courseId);
+
+  if (input.chapterId) {
+    const chapter = await db.chapter.findFirst({
+      where: { id: input.chapterId, courseId: input.courseId },
+      select: { contentType: true }
+    });
+    if (!chapter) throw new LiveSessionError('Module content not found', 404);
+    if (chapter.contentType !== 'LIVE_SESSION') {
+      throw new LiveSessionError('This content item is not a live session', 400);
+    }
+  }
 
   const startsAt = mode === 'INSTANT' ? new Date() : input.startsAt!;
   const endsAt =
@@ -88,7 +96,10 @@ export async function createLiveSession(userId: string, input: CreateLiveSession
       await addCohost(spaceName, instructorEmail);
     } catch (error) {
       debug('LIVE_SESSION_COHOST_FAILED', spaceName, error);
-      throw new LiveSessionError('Could not assign the instructor as cohost', 502);
+      throw new LiveSessionError(
+        "Could not set up the instructor as cohost in Google Meet. Check that the instructor's email is correct and try again.",
+        502
+      );
     }
 
     try {
@@ -100,6 +111,7 @@ export async function createLiveSession(userId: string, input: CreateLiveSession
     return await db.liveSession.create({
       data: {
         courseId: input.courseId,
+        chapterId: input.chapterId,
         createdByUserId: userId,
         instructorUserId,
         instructorEmail,

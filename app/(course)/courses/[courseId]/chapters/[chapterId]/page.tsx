@@ -16,6 +16,10 @@ import { ResumeTracker } from './_components/resume-tracker';
 import { WelcomeBackBanner } from './_components/welcome-back-banner';
 import { ScrollTrackerWithPanel } from './_components/scroll-tracker-with-panel';
 import { db } from '@/lib/db';
+import { canEditCourse } from '@/lib/course-auth';
+import { canUseMeet } from '@/lib/live-sessions/access';
+import { LearnerLiveSessions } from '@/components/live-sessions/learner-live-sessions';
+import { InstructorLiveSessions } from '@/components/live-sessions/instructor-live-sessions';
 
 const HtmlEmbedPreview = dynamic(
   () => import('@/components/html-embed-preview').then((m) => m.HtmlEmbedPreview),
@@ -480,6 +484,67 @@ const ChapterIdPage = async ({ params }: { params: { courseId: string; chapterId
           )}
 
           {!isLocked && <div className="mt-8 flex justify-end">{progressOrEnrollButton}</div>}
+        </div>
+      </div>
+    );
+  }
+
+  /* ── LIVE_SESSION chapter layout ────────────────────────────────────── */
+  if (chapter.contentType === 'LIVE_SESSION') {
+    const liveCourse = await db.course.findUnique({
+      where: { id: params.courseId },
+      select: { googleMeetEnabled: true }
+    });
+    const meetAvailable = !!liveCourse && canUseMeet(liveCourse);
+    const isInstructor = await canEditCourse(userId, params.courseId);
+    const hasLiveAccess = !!purchase || isInstructor;
+    return (
+      <div>
+        {continuityHeader}
+        {userProgress?.isCompleted && (
+          <Banner variant="success" label="You already completed this chapter." />
+        )}
+        {!purchase && !isInstructor && (
+          <Banner
+            variant="warning"
+            label="You need to purchase this course to access this chapter."
+          />
+        )}
+        <div className="max-w-3xl mx-auto px-4 md:px-6 py-8 space-y-6">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-[#F80602] dark:text-red-400 mb-1">
+              Live Session
+            </p>
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
+              {chapter.title}
+            </h1>
+            {chapter.description && (
+              <div className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                <Preview value={chapter.description} />
+              </div>
+            )}
+          </div>
+          {!meetAvailable ? (
+            <div
+              role="status"
+              className="rounded-md border p-6 text-center text-sm text-muted-foreground"
+            >
+              Live sessions are not available for this course right now.
+            </div>
+          ) : isInstructor ? (
+            <InstructorLiveSessions
+              courseId={params.courseId}
+              chapterId={params.chapterId}
+              meetAvailable
+            />
+          ) : (
+            <LearnerLiveSessions
+              courseId={params.courseId}
+              chapterId={params.chapterId}
+              hasAccess={hasLiveAccess}
+            />
+          )}
+          {!!purchase && <div className="flex justify-end">{progressOrEnrollButton}</div>}
         </div>
       </div>
     );

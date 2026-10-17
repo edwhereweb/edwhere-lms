@@ -58,3 +58,15 @@ describe('live session schemas', () => {
     expect(reconcileLiveSessionsSchema.safeParse({ batchSize: 0 }).success).toBe(false);
   });
 });
+
+describe('module-context live sessions', () => {
+  const courseId = 'a'.repeat(24);
+  const chapterId = 'b'.repeat(24);
+
+  it('accepts an optional chapterId and rejects malformed ones', () => {
+    const base = { courseId, title: 'Class', mode: 'INSTANT' };
+    expect(createLiveSessionSchema.safeParse({ ...base, chapterId }).success).toBe(true);
+    expect(createLiveSessionSchema.safeParse(base).success).toBe(true);
+    expect(createLiveSessionSchema.safeParse({ ...base, chapterId: 'nope' }).success).toBe(false);
+  });
+});
