@@ -71,6 +71,9 @@ model Course {
   // Admin-only toggle: permits offline sessions to be scheduled on the same day
   allowSameDayOfflineSession Boolean @default(false)
 
+  // Per-course flag for Google Meet live sessions (also requires GOOGLE_MEET_ENABLED)
+  googleMeetEnabled Boolean @default(false)
+
   categoryId  String?    @db.ObjectId
   category    Category?  @relation(fields: [categoryId], references: [id])
   attachments Attachment[]
@@ -82,6 +85,7 @@ model Course {
   messages    CourseMessage[]
   blogTagMappings BlogTagMapping[]
   batches     BatchCourse[]
+  liveSessions LiveSession[]
 
   blogPostIds     String[]   @db.ObjectId
   blogPosts       BlogPost[] @relation(fields: [blogPostIds], references: [id])
@@ -1336,4 +1340,108 @@ model ApiKey {
   updatedAt   DateTime @updatedAt
 
   @@index([isActive])
+}
+
+enum LiveSessionProvider {
+  GOOGLE_MEET
+}
+
+enum LiveSessionMode {
+  SCHEDULED
+  INSTANT
+}
+
+enum LiveSessionStatus {
+  SCHEDULED
+  LIVE
+  ENDED
+  CANCELLED
+}
+
+enum HostConfigStatus {
+  PENDING
+  READY
+  FAILED
+}
+
+enum ArtifactSyncStatus {
+  PENDING
+  READY
+  FAILED_TIMEOUT
+}
+
+enum SessionArtifactType {
+  RECORDING
+  TRANSCRIPT
+  NOTES
+}
+
+model LiveSession {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  courseId String @db.ObjectId
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  createdByUserId  String
+  instructorUserId String
+  instructorEmail  String
+
+  provider LiveSessionProvider @default(GOOGLE_MEET)
+  mode     LiveSessionMode     @default(SCHEDULED)
+  status   LiveSessionStatus   @default(SCHEDULED)
+
+  title    String
+  startsAt DateTime
+  endsAt   DateTime
+
+  joinUrl         String?
+  calendarEventId String?
+  meetSpaceName   String?
+
+  organizerMode   String @default("delegated_service_account")
+  recordingPolicy String @default("automatic")
+
+  // Strict cohost mode: learners only see joinUrl when hostConfigStatus = READY
+  hostConfigStatus HostConfigStatus @default(PENDING)
+  cohostAssignedAt DateTime?
+
+  artifactSyncStatus  ArtifactSyncStatus @default(PENDING)
+  artifactRetryCount  Int                @default(0)
+  artifactNextRetryAt DateTime?
+  artifactLastError   String?
+  artifactsCheckedAt  DateTime?
+  endedAt             DateTime?
+  // Lease so concurrent reconcile invocations don't process the same session
+  reconcileLeaseUntil DateTime?
+
+  artifacts SessionArtifact[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([courseId, startsAt])
+  @@index([status, startsAt])
+  @@index([instructorUserId])
+  @@index([artifactSyncStatus, artifactNextRetryAt])
+}
+
+model SessionArtifact {
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
+  liveSessionId String      @db.ObjectId
+  liveSession   LiveSession @relation(fields: [liveSessionId], references: [id], onDelete: Cascade)
+
+  type               SessionArtifactType
+  providerArtifactId String
+  driveFileId        String?
+  title              String?
+  mimeType           String?
+  url                String?
+  durationSec        Int?
+  availableAt        DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([liveSessionId, type, providerArtifactId])
+  @@index([liveSessionId])
+  @@index([driveFileId])
 }

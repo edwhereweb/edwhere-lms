@@ -16,6 +16,7 @@ export const isPublicRoute = createRouteMatcher([
   '/sign-up(.*)',
   '/api/webhook(.*)',
   '/api/cron/crm-enrollment-sync',
+  '/api/internal/live-sessions/reconcile',
   '/api/files(.*)',
   '/api/contact',
   '/api/health',

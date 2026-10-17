@@ -1,5 +1,10 @@
 import { z } from 'zod';
 
+const optionalString = z.preprocess(
+  (v) => (v === '' ? undefined : v),
+  z.string().min(1).optional()
+);
+
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1),
@@ -61,8 +66,45 @@ const envSchema = z.object({
     (v) => (v === '' ? undefined : v),
     z.coerce.number().int().min(1).optional()
   ),
-  CRM_SYNC_SECRET: z.preprocess((v) => (v === '' ? undefined : v), z.string().min(16).optional())
+  CRM_SYNC_SECRET: z.preprocess((v) => (v === '' ? undefined : v), z.string().min(16).optional()),
+  // Google Meet live sessions — credentials are only required when GOOGLE_MEET_ENABLED=true
+  GOOGLE_MEET_ENABLED: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((v) => v === 'true'),
+  GOOGLE_WORKSPACE_DOMAIN: optionalString,
+  GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL: optionalString,
+  GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: optionalString,
+  GOOGLE_DELEGATED_SUBJECT: optionalString,
+  GOOGLE_MEET_INTERNAL_SECRET: z.preprocess(
+    (v) => (v === '' ? undefined : v),
+    z.string().min(16).optional()
+  ),
+  GOOGLE_MEET_RECONCILE_BATCH_SIZE: z.preprocess(
+    (v) => (v === '' ? undefined : v),
+    z.coerce.number().int().min(1).max(100).default(20)
+  ),
+  GOOGLE_MEET_RECONCILE_MAX_RETRIES: z.preprocess(
+    (v) => (v === '' ? undefined : v),
+    z.coerce.number().int().min(1).default(6)
+  ),
+  GOOGLE_MEET_RECONCILE_INITIAL_DELAY_MIN: z.preprocess(
+    (v) => (v === '' ? undefined : v),
+    z.coerce.number().int().min(1).default(5)
+  ),
+  GOOGLE_MEET_RECONCILE_MAX_DELAY_MIN: z.preprocess(
+    (v) => (v === '' ? undefined : v),
+    z.coerce.number().int().min(1).default(60)
+  )
 });
+
+const GOOGLE_MEET_REQUIRED_WHEN_ENABLED = [
+  'GOOGLE_WORKSPACE_DOMAIN',
+  'GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL',
+  'GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY',
+  'GOOGLE_DELEGATED_SUBJECT',
+  'GOOGLE_MEET_INTERNAL_SECRET'
+] as const;
 
 function validateEnv() {
   const parsed = envSchema.safeParse(process.env);
@@ -74,6 +116,14 @@ function validateEnv() {
 
     console.error(`\n❌ Missing or invalid environment variables:\n${formatted}\n`);
     throw new Error('Invalid environment configuration. See above for details.');
+  }
+
+  if (parsed.data.GOOGLE_MEET_ENABLED) {
+    const missing = GOOGLE_MEET_REQUIRED_WHEN_ENABLED.filter((k) => !parsed.data[k]);
+    if (missing.length > 0) {
+      console.error(`\n❌ GOOGLE_MEET_ENABLED=true but missing: ${missing.join(', ')}\n`);
+      throw new Error('Invalid environment configuration. See above for details.');
+    }
   }
 
   return parsed.data;
