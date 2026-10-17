@@ -20,6 +20,7 @@ export const updateCourseSchema = z.object({
   categoryId: z.string().optional(),
   isWebVisible: z.boolean().optional(),
   allowSameDayOfflineSession: z.boolean().optional(),
+  googleMeetEnabled: z.boolean().optional(),
   slug: z
     .string()
     .min(1)
@@ -926,4 +927,41 @@ export const updateProfilePhoneSchema = z.object({
     .min(7, 'Phone number must be at least 7 digits')
     .max(15, 'Phone number must be at most 15 digits')
     .regex(/^\d+$/, 'Phone number must contain digits only')
+});
+
+// ── Google Meet live sessions ──────────────────────────────────────────────────
+
+const objectIdString = z.string().regex(/^[a-f\d]{24}$/i, 'Invalid id');
+
+export const liveSessionIdParamSchema = z.object({ id: objectIdString });
+
+export const courseIdParamSchema = z.object({ courseId: objectIdString });
+
+export const createLiveSessionSchema = z
+  .object({
+    courseId: objectIdString,
+    title: z.string().trim().min(1, 'Title is required').max(200),
+    mode: z.enum(['SCHEDULED', 'INSTANT']).default('SCHEDULED'),
+    startsAt: z.coerce.date().optional(),
+    endsAt: z.coerce.date().optional()
+  })
+  .superRefine((v, ctx) => {
+    if (v.mode === 'SCHEDULED') {
+      if (!v.startsAt) {
+        ctx.addIssue({ code: 'custom', path: ['startsAt'], message: 'startsAt is required' });
+      }
+      if (!v.endsAt) {
+        ctx.addIssue({ code: 'custom', path: ['endsAt'], message: 'endsAt is required' });
+      }
+    }
+    if (v.startsAt && v.endsAt && v.endsAt <= v.startsAt) {
+      ctx.addIssue({ code: 'custom', path: ['endsAt'], message: 'endsAt must be after startsAt' });
+    }
+  });
+
+export const endLiveSessionSchema = z.object({});
+
+export const reconcileLiveSessionsSchema = z.object({
+  sessionId: objectIdString.optional(),
+  batchSize: z.number().int().min(1).max(100).optional()
 });
