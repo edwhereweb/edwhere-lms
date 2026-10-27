@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { parseEnvBoolean } from '@/lib/parse-env-boolean';
+
 const optionalString = z.preprocess(
   (v) => (v === '' ? undefined : v),
   z.string().min(1).optional()
@@ -68,14 +70,8 @@ const envSchema = z.object({
   ),
   CRM_SYNC_SECRET: z.preprocess((v) => (v === '' ? undefined : v), z.string().min(16).optional()),
   // Google Meet live sessions — credentials are only required when GOOGLE_MEET_ENABLED=true
-  GOOGLE_MEET_ENABLED: z
-    .enum(['true', 'false'])
-    .default('false')
-    .transform((v) => v === 'true'),
-  GOOGLE_MEET_STRICT_COHOST: z
-    .enum(['true', 'false'])
-    .default('true')
-    .transform((v) => v === 'true'),
+  GOOGLE_MEET_ENABLED: z.unknown().transform((v) => parseEnvBoolean(v, false)),
+  GOOGLE_MEET_STRICT_COHOST: z.unknown().transform((v) => parseEnvBoolean(v, true)),
   GOOGLE_WORKSPACE_DOMAIN: optionalString,
   GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL: optionalString,
   GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: optionalString,
