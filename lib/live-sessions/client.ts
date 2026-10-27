@@ -1,5 +1,10 @@
 import axios from 'axios';
-import type { CreateLiveSessionPayload, LiveSessionItem, SessionArtifactsResponse } from './ui';
+import type {
+  CreateLiveSessionPayload,
+  LiveSessionItem,
+  PreflightResponse,
+  SessionArtifactsResponse
+} from './ui';
 
 export function getApiErrorMessage(error: unknown, fallback = 'Something went wrong'): string {
   if (axios.isAxiosError(error)) {
@@ -11,6 +16,43 @@ export function getApiErrorMessage(error: unknown, fallback = 'Something went wr
     }
   }
   return fallback;
+}
+
+export function getApiErrorDetails(
+  error: unknown,
+  fallback = 'Something went wrong'
+): { message: string; code?: string; requestId?: string } {
+  const message = getApiErrorMessage(error, fallback);
+  if (axios.isAxiosError(error)) {
+    const data = error.response?.data;
+    if (data && typeof data === 'object') {
+      const { code, requestId } = data as { code?: unknown; requestId?: unknown };
+      return {
+        message,
+        code: typeof code === 'string' ? code : undefined,
+        requestId: typeof requestId === 'string' ? requestId : undefined
+      };
+    }
+  }
+  return { message };
+}
+
+export function formatApiErrorDetails(details: {
+  message: string;
+  code?: string;
+  requestId?: string;
+}): string {
+  const parts = [details.message];
+  if (details.code) parts.push(`Code: ${details.code}`);
+  if (details.requestId) parts.push(`Reference ID: ${details.requestId}`);
+  return parts.join(' · ');
+}
+
+export async function fetchLiveSessionPreflight(courseId: string): Promise<PreflightResponse> {
+  const { data } = await axios.get<PreflightResponse>(`/api/live-sessions/preflight/${courseId}`, {
+    validateStatus: (status) => status === 200 || status === 403 || status === 404
+  });
+  return data;
 }
 
 export async function fetchCourseLiveSessions(courseId: string): Promise<LiveSessionItem[]> {

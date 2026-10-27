@@ -72,6 +72,10 @@ const envSchema = z.object({
     .enum(['true', 'false'])
     .default('false')
     .transform((v) => v === 'true'),
+  GOOGLE_MEET_STRICT_COHOST: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((v) => v === 'true'),
   GOOGLE_WORKSPACE_DOMAIN: optionalString,
   GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL: optionalString,
   GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: optionalString,

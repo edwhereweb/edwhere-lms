@@ -13,9 +13,14 @@ import {
   useCourseLiveSessions,
   useCreateLiveSession,
   useDeleteLiveSession,
-  useEndLiveSession
+  useEndLiveSession,
+  useLiveSessionPreflight
 } from '@/hooks/use-live-sessions';
-import { getApiErrorMessage } from '@/lib/live-sessions/client';
+import {
+  formatApiErrorDetails,
+  getApiErrorDetails,
+  getApiErrorMessage
+} from '@/lib/live-sessions/client';
 import {
   ARTIFACT_SYNC_LABELS,
   HOST_CONFIG_LABELS,
@@ -28,10 +33,30 @@ import {
   istLocalToIso,
   sessionStatusTone,
   validateScheduledTimes,
-  type LiveSessionItem
+  type BadgeTone,
+  type LiveSessionItem,
+  type PreflightChecks,
+  type PreflightStatus
 } from '@/lib/live-sessions/ui';
 import { SessionArtifacts } from './session-artifacts';
 import { StatusBadge } from './status-badge';
+
+const PREFLIGHT_LABELS: Record<keyof PreflightChecks, string> = {
+  auth: 'Signed in',
+  courseAccess: 'Course access',
+  courseExists: 'Course exists',
+  globalMeetEnabled: 'Platform Meet enabled',
+  courseMeetEnabled: 'Course Meet enabled',
+  instructorEmail: 'Instructor email',
+  googleConfig: 'Google configuration',
+  googleApiProbe: 'Google API probe'
+};
+
+const PREFLIGHT_TONES: Record<PreflightStatus, BadgeTone> = {
+  PASS: 'success',
+  WARN: 'warning',
+  FAIL: 'danger'
+};
 
 interface InstructorLiveSessionsProps {
   courseId: string;
@@ -49,6 +74,7 @@ export const InstructorLiveSessions = ({
     meetAvailable
   );
   const create = useCreateLiveSession(courseId);
+  const preflight = useLiveSessionPreflight(courseId);
 
   const applyOptimistic = useCallback(
     (sessionId: string) => {
@@ -98,12 +124,17 @@ export const InstructorLiveSessions = ({
     );
   }
 
+  const preflightBlocked = preflight.result ? !preflight.result.ok : false;
+  const blockedReason = preflightBlocked
+    ? 'Diagnostics found problems. Resolve them and run diagnostics again.'
+    : null;
   const trimmedTitle = title.trim();
   const sessions = filterSessionsForChapter(data ?? [], chapterId);
 
   const onSchedule = async (event: React.FormEvent) => {
     event.preventDefault();
     setFormError(null);
+    if (blockedReason) return setFormError(blockedReason);
     if (!trimmedTitle) return setFormError('Title is required');
     const timeError = validateScheduledTimes(startsAt, endsAt);
     if (timeError) return setFormError(timeError);
@@ -121,14 +152,15 @@ export const InstructorLiveSessions = ({
       setStartsAt('');
       setEndsAt('');
     } catch (e) {
-      const message = getApiErrorMessage(e);
-      setFormError(message);
-      toast.error(message);
+      const details = getApiErrorDetails(e);
+      setFormError(formatApiErrorDetails(details));
+      toast.error(details.message);
     }
   };
 
   const onInstant = async () => {
     setFormError(null);
+    if (blockedReason) return setFormError(blockedReason);
     if (!trimmedTitle) return setFormError('Title is required');
     try {
       const created = await create.mutate({
@@ -143,9 +175,9 @@ export const InstructorLiveSessions = ({
         window.open(created.joinUrl, '_blank', 'noopener,noreferrer');
       }
     } catch (e) {
-      const message = getApiErrorMessage(e);
-      setFormError(message);
-      toast.error(message);
+      const details = getApiErrorDetails(e);
+      setFormError(formatApiErrorDetails(details));
+      toast.error(details.message);
     }
   };
 
@@ -227,14 +259,61 @@ export const InstructorLiveSessions = ({
             Enable auto-recording
           </Label>
         </div>
+        <div className="space-y-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => void preflight.run()}
+            disabled={preflight.isPending}
+          >
+            {preflight.isPending && (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" aria-hidden="true" />
+            )}
+            Run diagnostics
+          </Button>
+          {preflight.error && (
+            <p role="alert" className="text-sm text-red-600">
+              {preflight.error}
+            </p>
+          )}
+          {preflight.result && (
+            <div className="space-y-2" role="status">
+              <ul className="flex flex-wrap gap-2">
+                {(Object.keys(PREFLIGHT_LABELS) as (keyof PreflightChecks)[]).map((key) => (
+                  <li key={key} className="flex items-center gap-1 text-xs">
+                    {PREFLIGHT_LABELS[key]}:
+                    <StatusBadge
+                      label={preflight.result!.checks[key]}
+                      tone={PREFLIGHT_TONES[preflight.result!.checks[key]]}
+                    />
+                  </li>
+                ))}
+              </ul>
+              {preflight.result.messages.length > 0 && (
+                <ul className="list-disc pl-5 text-sm text-muted-foreground">
+                  {preflight.result.messages.map((m) => (
+                    <li key={m}>{m}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+          {blockedReason && <p className="text-sm text-red-600">{blockedReason}</p>}
+        </div>
         <div className="flex flex-wrap gap-3">
-          <Button type="submit" disabled={create.isPending}>
+          <Button type="submit" disabled={create.isPending || preflightBlocked}>
             {create.isPending && (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" aria-hidden="true" />
             )}
             Schedule session
           </Button>
-          <Button type="button" variant="outline" onClick={onInstant} disabled={create.isPending}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onInstant}
+            disabled={create.isPending || preflightBlocked}
+          >
             <Zap className="h-4 w-4 mr-2" aria-hidden="true" />
             Start instant session
           </Button>

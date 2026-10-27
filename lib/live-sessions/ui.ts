@@ -43,6 +43,25 @@ export interface SessionArtifactsResponse {
   artifacts: SessionArtifact[];
 }
 
+export type PreflightStatus = 'PASS' | 'WARN' | 'FAIL';
+
+export interface PreflightChecks {
+  auth: 'PASS' | 'FAIL';
+  courseAccess: 'PASS' | 'FAIL';
+  courseExists: 'PASS' | 'FAIL';
+  globalMeetEnabled: 'PASS' | 'FAIL';
+  courseMeetEnabled: 'PASS' | 'FAIL';
+  instructorEmail: 'PASS' | 'FAIL';
+  googleConfig: 'PASS' | 'FAIL';
+  googleApiProbe: PreflightStatus;
+}
+
+export interface PreflightResponse {
+  ok: boolean;
+  checks: PreflightChecks;
+  messages: string[];
+}
+
 export interface CreateLiveSessionPayload {
   courseId: string;
   chapterId?: string;
