@@ -2,7 +2,7 @@ import type { LiveSession } from '@prisma/client';
 import { db } from '@/lib/db';
 import { debug } from '@/lib/debug';
 import { env } from '@/lib/env';
-import { isGoogleMeetEnabled } from '@/lib/integrations/google/auth';
+import { isGoogleMeetEnabled } from '@/lib/integrations/google/feature-flag';
 import { makeFileLinkReadable, shareFileWithUser } from '@/lib/integrations/google/drive';
 import { listSpaceArtifacts } from '@/lib/integrations/google/meet';
 import { computeBackoffMs, hasExhaustedRetries, type BackoffConfig } from './backoff';

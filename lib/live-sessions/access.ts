@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import { canEditCourse } from '@/lib/course-auth';
-import { isGoogleMeetEnabled } from '@/lib/integrations/google/auth';
+import { isGoogleMeetEnabled } from '@/lib/integrations/google/feature-flag';
 
 export function canUseMeet(course: { googleMeetEnabled: boolean }): boolean {
   return isGoogleMeetEnabled() && course.googleMeetEnabled;
