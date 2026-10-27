@@ -14,7 +14,7 @@ import {
 
 import { db } from '@/lib/db';
 import { canEditCourse } from '@/lib/course-auth';
-import { isGoogleMeetEnabled } from '@/lib/integrations/google/auth';
+import { isGoogleMeetEnabled } from '@/lib/integrations/google/feature-flag';
 import { IconBadge } from '@/components/icon-badge';
 import { Banner } from '@/components/banner';
 
@@ -30,6 +30,9 @@ import { CourseInstructorsForm } from '../_components/course-instructors-form';
 import { SeoForm } from '../_components/seo-form';
 import { WhatsAppGroupForm } from '../_components/whatsapp-group-form';
 import { GoogleMeetForm } from '../_components/google-meet-form';
+
+// Flag is read from env per request; never prerender it at build time.
+export const dynamic = 'force-dynamic';
 
 const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
   const { userId } = await auth();
@@ -163,7 +166,7 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
             <GoogleMeetForm
               courseId={course.id}
               initialEnabled={course.googleMeetEnabled}
-              globallyEnabled={isGoogleMeetEnabled()}
+              globallyEnabled={isGoogleMeetEnabled() === true}
             />
             {course.googleMeetEnabled && (
               <p className="mt-3 text-sm text-muted-foreground">

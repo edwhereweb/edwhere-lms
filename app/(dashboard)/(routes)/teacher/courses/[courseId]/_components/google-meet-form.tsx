@@ -57,8 +57,12 @@ export const GoogleMeetForm = ({
           </p>
         </div>
       </div>
-      {!globallyEnabled && (
-        <p role="status" className="text-sm mt-3 text-amber-700 dark:text-amber-400">
+      {globallyEnabled !== true && (
+        <p
+          role="status"
+          suppressHydrationWarning
+          className="text-sm mt-3 text-amber-700 dark:text-amber-400"
+        >
           Google Meet is currently turned off for the whole platform (GOOGLE_MEET_ENABLED). This
           setting is saved, but live sessions stay unavailable until it is enabled.
         </p>

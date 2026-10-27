@@ -4,11 +4,8 @@ import { db } from '@/lib/db';
 import { apiError, handleApiError } from '@/lib/api-utils';
 import { debug } from '@/lib/debug';
 import { canEditCourse } from '@/lib/course-auth';
-import {
-  GOOGLE_SCOPES,
-  getDelegatedAuthClient,
-  isGoogleMeetEnabled
-} from '@/lib/integrations/google/auth';
+import { GOOGLE_SCOPES, getDelegatedAuthClient } from '@/lib/integrations/google/auth';
+import { isGoogleMeetEnabled } from '@/lib/integrations/google/feature-flag';
 import type { PreflightChecks, PreflightResponse } from '@/lib/live-sessions/ui';
 
 function hasGoogleConfig(): boolean {
@@ -18,6 +15,8 @@ function hasGoogleConfig(): boolean {
     process.env.GOOGLE_DELEGATED_SUBJECT
   );
 }
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(_req: Request, { params }: { params: { courseId: string } }) {
   try {

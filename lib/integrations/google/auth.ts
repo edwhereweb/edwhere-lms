@@ -1,6 +1,6 @@
 import { JWT } from 'google-auth-library';
 
-import { parseEnvBoolean } from '@/lib/parse-env-boolean';
+export { isGoogleMeetEnabled } from './feature-flag';
 
 export const GOOGLE_SCOPES = {
   calendar: 'https://www.googleapis.com/auth/calendar.events',
@@ -18,10 +18,6 @@ export class GoogleApiError extends Error {
   ) {
     super(message);
   }
-}
-
-export function isGoogleMeetEnabled(): boolean {
-  return parseEnvBoolean(process.env.GOOGLE_MEET_ENABLED);
 }
 
 const clients = new Map<string, JWT>();

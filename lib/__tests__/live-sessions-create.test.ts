@@ -25,6 +25,7 @@ jest.mock('@/lib/integrations/google/calendar', () => ({
   deleteCalendarEvent: jest.fn().mockResolvedValue(undefined)
 }));
 jest.mock('@/lib/integrations/google/auth', () => {
+  const { isGoogleMeetEnabled } = jest.requireActual('@/lib/integrations/google/feature-flag');
   class GoogleConfigError extends Error {}
   class GoogleApiError extends Error {
     constructor(
@@ -38,7 +39,7 @@ jest.mock('@/lib/integrations/google/auth', () => {
     GoogleConfigError,
     GoogleApiError,
     GOOGLE_SCOPES: { meetCreate: 'scope' },
-    isGoogleMeetEnabled: () => process.env.GOOGLE_MEET_ENABLED === 'true',
+    isGoogleMeetEnabled,
     getDelegatedAuthClient: (...a: unknown[]) => mockGetClient(...a)
   };
 });
