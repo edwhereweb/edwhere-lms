@@ -5,11 +5,21 @@ import {
   createCalendarEventForMeet,
   deleteCalendarEvent
 } from '@/lib/integrations/google/calendar';
+import { GoogleApiError, GoogleConfigError } from '@/lib/integrations/google/auth';
 import { addCohost, addSpaceMembers, createInstantSpace } from '@/lib/integrations/google/meet';
 import { canUseMeet } from './access';
 import { LiveSessionError } from './errors';
+import { mapLiveSessionCreateError } from './error-map';
 
 const INSTANT_DEFAULT_DURATION_MS = 60 * 60 * 1000;
+
+export interface CreateLiveSessionOptions {
+  requestId?: string;
+}
+
+function isStrictCohost(): boolean {
+  return process.env.GOOGLE_MEET_STRICT_COHOST !== 'false';
+}
 
 export interface CreateLiveSessionInput {
   courseId: string;
@@ -82,18 +92,63 @@ async function getEnrolledStudentEmails(
 
 /**
  * Creates a Meet session and assigns the course instructor as cohost.
- * Strict mode: if cohost setup fails the Google resources are rolled back and
- * nothing is persisted, so a session never exists without a configured cohost.
+ * Strict mode (GOOGLE_MEET_STRICT_COHOST, default true): if cohost setup fails the Google
+ * resources are rolled back and nothing is persisted, so a session never exists without a
+ * configured cohost. Non-strict mode persists the session with hostConfigStatus=FAILED.
  */
-export async function createLiveSession(userId: string, input: CreateLiveSessionInput) {
+export async function createLiveSession(
+  userId: string,
+  input: CreateLiveSessionInput,
+  options: CreateLiveSessionOptions = {}
+) {
   const mode = input.mode ?? 'SCHEDULED';
+  const meta = {
+    requestId: options.requestId,
+    courseId: input.courseId,
+    actorUserId: userId,
+    mode
+  };
+  const strictCohost = isStrictCohost();
+  let stage = 'start';
+  debug('LIVE_CREATE_START', { ...meta, strictCohost });
+
+  try {
+    return await runCreate(userId, input, mode, meta, strictCohost, (s) => (stage = s));
+  } catch (error) {
+    const mapped = mapLiveSessionCreateError(error);
+    debug('LIVE_CREATE_FAILED', { ...meta, stage, code: mapped.code });
+    throw error;
+  }
+}
+
+type LogMeta = {
+  requestId?: string;
+  courseId: string;
+  actorUserId: string;
+  mode: 'SCHEDULED' | 'INSTANT';
+};
+
+async function runCreate(
+  userId: string,
+  input: CreateLiveSessionInput,
+  mode: 'SCHEDULED' | 'INSTANT',
+  meta: LogMeta,
+  strictCohost: boolean,
+  setStage: (stage: string) => void
+) {
+  setStage('authz');
   if (!(await canEditCourse(userId, input.courseId))) {
     throw new LiveSessionError('Forbidden', 403);
   }
+  debug('LIVE_CREATE_AUTHZ_OK', meta);
+
+  setStage('instructor_resolution');
   const { instructorUserId, instructorEmail, allInstructorEmails } = await resolveInstructor(
     userId,
     input.courseId
   );
+  debug('LIVE_CREATE_FEATURE_GATES_OK', meta);
+  debug('LIVE_CREATE_INSTRUCTOR_RESOLVED', { ...meta, instructorUserId });
 
   if (input.chapterId) {
     const chapter = await db.chapter.findFirst({
@@ -118,25 +173,33 @@ export async function createLiveSession(userId: string, input: CreateLiveSession
   let cohostReady = false;
 
   try {
+    setStage('google_space_create');
     // 1. Create Google Meet space with RESTRICTED access and auto-recording configured
     const space = await createInstantSpace({
       enableAutoRecording: input.enableAutoRecording
     });
     joinUrl = space.joinUrl;
     spaceName = space.spaceName;
+    debug('LIVE_CREATE_MEET_SPACE_CREATED', meta);
 
     // 2. Set up instructors as cohosts first
+    setStage('cohost_assign');
     for (const email of allInstructorEmails) {
+      const isPrimary = email.toLowerCase() === instructorEmail.trim().toLowerCase();
       try {
         await addCohost(spaceName, email);
-        if (email.toLowerCase() === instructorEmail.toLowerCase()) {
-          cohostReady = true;
-        }
+        if (isPrimary) cohostReady = true;
       } catch (error) {
-        debug('LIVE_SESSION_COHOST_FAILED', spaceName, email, error);
+        debug('LIVE_SESSION_COHOST_FAILED', spaceName, error);
+        if (isPrimary) {
+          if (strictCohost) throw error;
+          logError('LIVE_CREATE_COHOST_FAILED', error);
+        }
       }
     }
+    debug('LIVE_CREATE_COHOST_ASSIGNED', { ...meta, cohostReady, strictCohost });
 
+    setStage('members_add');
     // 3. Add enrolled students as space members (excluding instructors)
     let studentEmails: string[] = [];
     try {
@@ -147,7 +210,9 @@ export async function createLiveSession(userId: string, input: CreateLiveSession
     } catch (error) {
       debug('LIVE_SESSION_STUDENT_INVITE_FAILED', error);
     }
+    debug('LIVE_CREATE_MEMBERS_ADDED', { ...meta, studentCount: studentEmails.length });
 
+    setStage('calendar_create');
     // 4. Create Google Calendar event with email invitations for instructors and enrolled students
     try {
       eventId = await createCalendarEventForMeet({
@@ -161,8 +226,10 @@ export async function createLiveSession(userId: string, input: CreateLiveSession
     } catch (error) {
       debug('LIVE_SESSION_CALENDAR_FAILED', error);
     }
+    debug('LIVE_CREATE_CALENDAR_CREATED', { ...meta, hasEvent: !!eventId });
 
-    return await db.liveSession.create({
+    setStage('db_save');
+    const created = await db.liveSession.create({
       data: {
         courseId: input.courseId,
         chapterId: input.chapterId,
@@ -178,16 +245,24 @@ export async function createLiveSession(userId: string, input: CreateLiveSession
         joinUrl,
         calendarEventId: eventId,
         meetSpaceName: spaceName,
-        hostConfigStatus: cohostReady ? 'READY' : 'PENDING',
+        hostConfigStatus: cohostReady ? 'READY' : 'FAILED',
         cohostAssignedAt: cohostReady ? new Date() : undefined
       }
     });
+    debug('LIVE_CREATE_DB_SAVED', { ...meta, sessionId: created.id });
+    return created;
   } catch (error) {
     if (eventId) {
       await deleteCalendarEvent(eventId).catch((e) => debug('LIVE_SESSION_ROLLBACK_FAILED', e));
     }
     logError('LIVE_SESSION_CREATE', error);
     if (error instanceof LiveSessionError) throw error;
+    if (
+      error instanceof GoogleConfigError ||
+      (error instanceof GoogleApiError && (error.status === 401 || error.status === 403))
+    ) {
+      throw error;
+    }
     const detail = error instanceof Error ? `: ${error.message}` : '';
     throw new LiveSessionError(`Failed to create Google Meet session${detail}`, 502);
   }

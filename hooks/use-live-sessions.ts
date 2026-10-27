@@ -6,6 +6,7 @@ import {
   deleteLiveSessionRequest,
   endLiveSessionRequest,
   fetchCourseLiveSessions,
+  fetchLiveSessionPreflight,
   fetchSessionArtifacts,
   getApiErrorMessage
 } from '@/lib/live-sessions/client';
@@ -13,6 +14,7 @@ import {
   liveSessionKeys,
   type CreateLiveSessionPayload,
   type LiveSessionItem,
+  type PreflightResponse,
   type SessionArtifactsResponse
 } from '@/lib/live-sessions/ui';
 
@@ -191,4 +193,25 @@ export function useDeleteLiveSession(
   );
 
   return { mutate, pendingId };
+}
+
+export function useLiveSessionPreflight(courseId: string) {
+  const [result, setResult] = useState<PreflightResponse | null>(null);
+  const [isPending, setIsPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const run = useCallback(async () => {
+    setIsPending(true);
+    setError(null);
+    try {
+      setResult(await fetchLiveSessionPreflight(courseId));
+    } catch (e) {
+      setResult(null);
+      setError(getApiErrorMessage(e, 'Failed to run diagnostics'));
+    } finally {
+      setIsPending(false);
+    }
+  }, [courseId]);
+
+  return { result, isPending, error, run };
 }
