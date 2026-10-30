@@ -2,52 +2,16 @@ import { redirect } from 'next/navigation';
 import { PlusCircle } from 'lucide-react';
 import Link from 'next/link';
 
-import { db } from '@/lib/db';
 import { Button } from '@/components/ui/button';
 import { canManageBlogs } from '@/lib/blog-auth';
-import { BlogFilterGrid } from './_components/blog-filter-grid';
+import { getBlogList, type BlogListSearchParams } from '@/actions/get-blog-list';
+import { BlogFilterGrid } from '@/app/(dashboard)/(routes)/marketer/blogs/_components/blog-filter-grid';
 
-interface BlogWithRelations {
-  id: string;
-  title: string;
-  isPublished: boolean;
-  createdAt: Date;
-  slug: string;
-  author: {
-    name: string;
-  };
-  category: {
-    name: string;
-  } | null;
-}
-
-const BlogsPage = async () => {
+const BlogsPage = async ({ searchParams }: { searchParams: BlogListSearchParams }) => {
   const isAuthorized = await canManageBlogs();
   if (!isAuthorized) return redirect('/');
 
-  const blogs = (await db.blogPost.findMany({
-    include: {
-      author: true,
-      category: true
-    },
-    orderBy: {
-      createdAt: 'desc'
-    }
-  })) as unknown as BlogWithRelations[];
-
-  const categories = await db.blogCategory.findMany({
-    orderBy: { name: 'asc' }
-  });
-
-  const flatBlogs = blogs.map((b) => ({
-    id: b.id,
-    title: b.title,
-    isPublished: b.isPublished,
-    createdAt: b.createdAt,
-    category: b.category?.name ?? null,
-    author: b.author?.name ?? 'Unknown Author',
-    slug: b.slug
-  }));
+  const { blogs, categories, page, pageCount } = await getBlogList(searchParams);
 
   return (
     <div className="p-6">
@@ -61,7 +25,13 @@ const BlogsPage = async () => {
         </Link>
       </div>
 
-      <BlogFilterGrid blogs={flatBlogs} categories={categories} />
+      <BlogFilterGrid
+        blogs={blogs}
+        categories={categories}
+        page={page}
+        pageCount={pageCount}
+        basePath="/teacher"
+      />
     </div>
   );
 };

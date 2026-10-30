@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Search, MoreVertical, Pencil, ExternalLink, Power, PowerOff } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
@@ -16,6 +16,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { ListPagination } from '@/components/list-pagination';
+import { LogoSpinner } from '@/components/logo-spinner';
+import { useDebounce } from '@/hooks/use-debounce';
+import { useListParams } from '@/hooks/use-list-params';
+import { cn } from '@/lib/utils';
 
 const InputField = (props: React.InputHTMLAttributes<HTMLInputElement>) => (
   <input
@@ -37,29 +42,31 @@ interface Blog {
 interface BlogFilterGridProps {
   blogs: Blog[];
   categories: { id: string; name: string }[];
+  page: number;
+  pageCount: number;
   basePath?: string;
 }
 
 export const BlogFilterGrid = ({
   blogs,
   categories,
+  page,
+  pageCount,
   basePath = '/marketer'
 }: BlogFilterGridProps) => {
   const router = useRouter();
-  const [search, setSearch] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [selectedStatus, setSelectedStatus] = useState('all');
+  const { searchParams, setParams, isPending } = useListParams();
+  const urlSearch = searchParams.get('q') ?? '';
+  const selectedCategory = searchParams.get('category') ?? 'all';
+  const selectedStatus = searchParams.get('status') ?? 'all';
+  const [search, setSearch] = useState(urlSearch);
+  const debouncedSearch = useDebounce(search, 400);
   const [isLoading, setIsLoading] = useState<string | null>(null);
 
-  const filteredBlogs = blogs.filter((blog) => {
-    const matchesSearch = blog.title.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || blog.category === selectedCategory;
-    const matchesStatus =
-      selectedStatus === 'all' ||
-      (selectedStatus === 'published' ? blog.isPublished : !blog.isPublished);
-
-    return matchesSearch && matchesCategory && matchesStatus;
-  });
+  // Filtering and paging happen on the server; this grid only edits the URL.
+  useEffect(() => {
+    if (debouncedSearch.trim() !== urlSearch) setParams({ q: debouncedSearch.trim() || null });
+  }, [debouncedSearch, urlSearch, setParams]);
 
   const onTogglePublish = async (id: string, isPublished: boolean) => {
     try {
@@ -89,11 +96,13 @@ export const BlogFilterGrid = ({
         <select
           className="h-10 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none ring-offset-white focus:ring-2 focus:ring-slate-950 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-slate-400"
           value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
+          onChange={(e) =>
+            setParams({ category: e.target.value === 'all' ? null : e.target.value })
+          }
         >
           <option value="all">All Categories</option>
           {categories.map((cat) => (
-            <option key={cat.id} value={cat.name}>
+            <option key={cat.id} value={cat.id}>
               {cat.name}
             </option>
           ))}
@@ -101,15 +110,21 @@ export const BlogFilterGrid = ({
         <select
           className="h-10 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none ring-offset-white focus:ring-2 focus:ring-slate-950 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-slate-400"
           value={selectedStatus}
-          onChange={(e) => setSelectedStatus(e.target.value)}
+          onChange={(e) => setParams({ status: e.target.value === 'all' ? null : e.target.value })}
         >
           <option value="all">All Status</option>
           <option value="published">Published</option>
           <option value="draft">Draft</option>
         </select>
+        {isPending && <LogoSpinner size={28} className="self-center" />}
       </div>
 
-      <div className="rounded-md border bg-white dark:bg-slate-900 dark:border-slate-700 overflow-hidden">
+      <div
+        className={cn(
+          'rounded-md border bg-white dark:bg-slate-900 dark:border-slate-700 overflow-hidden transition-opacity',
+          isPending && 'opacity-60'
+        )}
+      >
         <table className="w-full text-sm">
           <thead className="bg-slate-50 dark:bg-slate-800 border-b dark:border-slate-700">
             <tr>
@@ -134,7 +149,7 @@ export const BlogFilterGrid = ({
             </tr>
           </thead>
           <tbody className="divide-y dark:divide-slate-700">
-            {filteredBlogs.map((blog) => (
+            {blogs.map((blog) => (
               <tr
                 key={blog.id}
                 className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
@@ -202,10 +217,11 @@ export const BlogFilterGrid = ({
             ))}
           </tbody>
         </table>
-        {filteredBlogs.length === 0 && (
+        {blogs.length === 0 && (
           <div className="p-20 text-center text-slate-500 dark:text-slate-400">No blogs found.</div>
         )}
       </div>
+      <ListPagination page={page} pageCount={pageCount} />
     </div>
   );
 };

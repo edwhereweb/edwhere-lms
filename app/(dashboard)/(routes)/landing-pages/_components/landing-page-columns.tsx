@@ -17,7 +17,8 @@ export interface LandingPage {
   id: string;
   title: string;
   slug: string;
-  htmlContent: string;
+  // Lists leave this out (it can be large); the editor loads it.
+  htmlContent?: string;
   isPublished: boolean;
   isApproved: boolean;
   createdBy: string;

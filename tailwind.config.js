@@ -78,8 +78,14 @@ module.exports = {
           from: { height: "var(--radix-collapsible-content-height)" },
           to: { height: 0 },
         },
+        "logo-swirl": {
+          "0%": { transform: "rotate(0deg) scale(1)" },
+          "50%": { transform: "rotate(180deg) scale(0.8)" },
+          "100%": { transform: "rotate(360deg) scale(1)" },
+        },
       },
       animation: {
+        "logo-swirl": "logo-swirl 1.8s ease-in-out infinite",
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "collapsible-down": "collapsible-down 0.2s ease-out",

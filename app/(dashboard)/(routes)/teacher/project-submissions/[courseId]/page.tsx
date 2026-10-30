@@ -13,25 +13,35 @@ export default async function ProjectSubmissionsCourseePage({ params }: Props) {
   const { userId } = await auth();
   if (!userId) return redirect('/sign-in');
 
-  const allowed = await canEditCourse(userId, params.courseId);
-  if (!allowed) return redirect('/teacher/project-submissions');
+  // Permission check and data load run in parallel; nothing renders unless allowed.
+  const [allowed, course, projectChapters] = await Promise.all([
+    canEditCourse(userId, params.courseId),
+    db.course.findUnique({ where: { id: params.courseId }, select: { title: true } }),
+    db.chapter.findMany({
+      where: { courseId: params.courseId, contentType: 'HANDS_ON_PROJECT' },
+      select: { id: true, title: true, isPublished: true },
+      orderBy: { position: 'asc' }
+    })
+  ]);
+  if (!allowed || !course) return redirect('/teacher/project-submissions');
 
-  const course = await db.course.findUnique({
-    where: { id: params.courseId },
-    select: { title: true }
+  // Count submissions by status in the database instead of loading every row.
+  const statusCounts = await db.projectSubmission.groupBy({
+    by: ['chapterId', 'status'],
+    where: { chapterId: { in: projectChapters.map((ch) => ch.id) } },
+    _count: { _all: true }
   });
-  if (!course) return redirect('/teacher/project-submissions');
-
-  const chapters = await db.chapter.findMany({
-    where: { courseId: params.courseId, contentType: 'HANDS_ON_PROJECT' },
-    select: {
-      id: true,
-      title: true,
-      isPublished: true,
-      projectSubmissions: { select: { status: true } }
-    },
-    orderBy: { position: 'asc' }
-  });
+  const countFor = (chapterId: string, status?: string) =>
+    statusCounts
+      .filter((row) => row.chapterId === chapterId && (!status || row.status === status))
+      .reduce((sum, row) => sum + row._count._all, 0);
+  const chapters = projectChapters.map((ch) => ({
+    ...ch,
+    pending: countFor(ch.id, 'PENDING'),
+    approved: countFor(ch.id, 'APPROVED'),
+    rejected: countFor(ch.id, 'REJECTED'),
+    total: countFor(ch.id)
+  }));
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
@@ -56,10 +66,7 @@ export default async function ProjectSubmissionsCourseePage({ params }: Props) {
       ) : (
         <div className="space-y-3">
           {chapters.map((ch) => {
-            const pending = ch.projectSubmissions.filter((s) => s.status === 'PENDING').length;
-            const approved = ch.projectSubmissions.filter((s) => s.status === 'APPROVED').length;
-            const rejected = ch.projectSubmissions.filter((s) => s.status === 'REJECTED').length;
-            const total = ch.projectSubmissions.length;
+            const { pending, approved, rejected, total } = ch;
 
             return (
               <Link

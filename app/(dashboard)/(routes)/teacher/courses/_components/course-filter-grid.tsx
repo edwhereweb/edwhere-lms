@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,11 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
+import { ListPagination } from '@/components/list-pagination';
+import { LogoSpinner } from '@/components/logo-spinner';
+import { useDebounce } from '@/hooks/use-debounce';
+import { useListParams } from '@/hooks/use-list-params';
+import { cn } from '@/lib/utils';
 import { TeacherCourseCard } from './teacher-course-card';
 
 interface Course {
@@ -31,26 +36,34 @@ interface Category {
 interface CourseFilterGridProps {
   courses: Course[];
   categories: Category[];
+  total: number;
+  page: number;
+  pageCount: number;
 }
 
-export function CourseFilterGrid({ courses, categories }: CourseFilterGridProps) {
-  const [search, setSearch] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('ALL');
+// Filtering and paging happen on the server; this grid only edits the URL.
+export function CourseFilterGrid({
+  courses,
+  categories,
+  total,
+  page,
+  pageCount
+}: CourseFilterGridProps) {
+  const { searchParams, setParams, isPending } = useListParams();
+  const urlSearch = searchParams.get('q') ?? '';
+  const categoryFilter = searchParams.get('category') ?? 'ALL';
+  const [search, setSearch] = useState(urlSearch);
+  const debouncedSearch = useDebounce(search, 400);
 
-  const filtered = useMemo(() => {
-    const q = search.toLowerCase();
-    return courses.filter((c) => {
-      const matchSearch = !q || c.title.toLowerCase().includes(q);
-      const matchCategory = categoryFilter === 'ALL' || c.category === categoryFilter;
-      return matchSearch && matchCategory;
-    });
-  }, [courses, search, categoryFilter]);
+  useEffect(() => {
+    if (debouncedSearch.trim() !== urlSearch) setParams({ q: debouncedSearch.trim() || null });
+  }, [debouncedSearch, urlSearch, setParams]);
 
-  const hasFilters = search || categoryFilter !== 'ALL';
+  const hasFilters = urlSearch || categoryFilter !== 'ALL';
 
   const clearFilters = () => {
     setSearch('');
-    setCategoryFilter('ALL');
+    setParams({ q: null, category: null });
   };
 
   return (
@@ -67,14 +80,17 @@ export function CourseFilterGrid({ courses, categories }: CourseFilterGridProps)
           />
         </div>
 
-        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+        <Select
+          value={categoryFilter}
+          onValueChange={(value) => setParams({ category: value === 'ALL' ? null : value })}
+        >
           <SelectTrigger className="w-full sm:w-48">
             <SelectValue placeholder="All categories" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="ALL">All categories</SelectItem>
             {categories.map((cat) => (
-              <SelectItem key={cat.id} value={cat.name}>
+              <SelectItem key={cat.id} value={cat.id}>
                 {cat.name}
               </SelectItem>
             ))}
@@ -86,17 +102,23 @@ export function CourseFilterGrid({ courses, categories }: CourseFilterGridProps)
             <X className="h-4 w-4" />
           </Button>
         )}
+        {isPending && <LogoSpinner size={28} className="self-center" />}
       </div>
 
       {/* ── Results ── */}
-      {filtered.length === 0 ? (
+      {courses.length === 0 ? (
         <div className="text-center text-sm text-muted-foreground mt-10">
           {hasFilters ? 'No courses match your search or filter.' : 'No courses found'}
         </div>
       ) : (
         <>
-          <div className="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4 gap-4">
-            {filtered.map((course) => (
+          <div
+            className={cn(
+              'grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4 gap-4 transition-opacity',
+              isPending && 'opacity-60'
+            )}
+          >
+            {courses.map((course) => (
               <TeacherCourseCard
                 key={course.id}
                 id={course.id}
@@ -111,9 +133,10 @@ export function CourseFilterGrid({ courses, categories }: CourseFilterGridProps)
           </div>
           {hasFilters && (
             <p className="mt-4 text-xs text-muted-foreground">
-              Showing {filtered.length} of {courses.length} course{courses.length !== 1 ? 's' : ''}
+              {total} matching course{total !== 1 ? 's' : ''}
             </p>
           )}
+          <ListPagination page={page} pageCount={pageCount} />
         </>
       )}
     </div>

@@ -288,13 +288,33 @@ export async function getBatchContent(
           include: {
             task: {
               include: {
-                submissions: role === 'STUDENT' ? { where: { userId: viewerUserId } } : true
+                submissions: {
+                  where: role === 'STUDENT' ? { userId: viewerUserId } : undefined,
+                  select: {
+                    id: true,
+                    userId: true,
+                    driveLink: true,
+                    marks: true,
+                    gradedBy: true,
+                    gradedAt: true,
+                    createdAt: true
+                  }
+                }
               }
             },
             session: {
               include: {
-                attendances: role === 'STUDENT' ? { where: { userId: viewerUserId } } : true,
-                uploads: role === 'STUDENT' ? { where: { status: 'APPROVED' } } : true
+                // Only the viewer's own attendance is ever shown (students); staff used to load
+                // every attendance row of every session here and discard it.
+                attendances: {
+                  where: { userId: viewerUserId },
+                  select: { status: true },
+                  take: 1
+                },
+                uploads: {
+                  where: role === 'STUDENT' ? { status: 'APPROVED' } : undefined,
+                  select: { id: true, type: true, filename: true, fileUrl: true, status: true }
+                }
               }
             }
           }

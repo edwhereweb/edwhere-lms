@@ -47,7 +47,8 @@ const getCourseBySlug = cache(async function getCourseBySlug(slug: string) {
     }
   });
 
-  if (!course) {
+  // Only try the id fallback for a valid ObjectId; anything else would make Prisma throw (500).
+  if (!course && /^[a-f\d]{24}$/i.test(slug)) {
     course = await db.course.findFirst({
       where: { id: slug, isPublished: true },
       include: {
@@ -132,32 +133,35 @@ export default async function PublicCourseDetailPage({
   const { userId } = await auth();
   const course = await getCourseBySlug(params.courseId);
   if (!course || !(course as unknown as { isWebVisible: boolean }).isWebVisible) notFound();
-  const purchase = userId
-    ? await db.purchase.findUnique({
-        where: {
-          userId_courseId: {
-            userId,
-            courseId: course.id
-          }
-        }
-      })
-    : null;
+  // Enrolment and coupon lookups don't depend on each other, so run them together.
+  const [purchase, initialCouponPreview] = await Promise.all([
+    userId
+      ? db.purchase.findUnique({
+          where: {
+            userId_courseId: {
+              userId,
+              courseId: course.id
+            }
+          },
+          select: { id: true }
+        })
+      : null,
+    course.price
+      ? resolveCouponPreviewForCourse({
+          courseId: course.id,
+          originalPriceInRupees: course.price,
+          couponCode: searchParams.coupon,
+          campaignToken: searchParams.ct,
+          campaignCookieToken: cookies().get(CAMPAIGN_COOKIE_NAME)?.value,
+          userId: userId ?? undefined
+        })
+      : null
+  ]);
 
   const baseUrl = getPublicBaseUrl({ preferPublic: true });
   const totalChapters =
     course.chapters.length + course.modules.reduce((sum, m) => sum + m.chapters.length, 0);
   const isEnrolled = Boolean(purchase);
-
-  const initialCouponPreview = course.price
-    ? await resolveCouponPreviewForCourse({
-        courseId: course.id,
-        originalPriceInRupees: course.price,
-        couponCode: searchParams.coupon,
-        campaignToken: searchParams.ct,
-        campaignCookieToken: cookies().get(CAMPAIGN_COOKIE_NAME)?.value,
-        userId: userId ?? undefined
-      })
-    : null;
 
   const initialCouponInfo =
     initialCouponPreview?.status === 'applied'

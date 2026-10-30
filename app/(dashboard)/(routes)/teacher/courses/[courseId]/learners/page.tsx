@@ -8,37 +8,43 @@ import { canEditCourse } from '@/lib/course-auth';
 import { IconBadge } from '@/components/icon-badge';
 import { LearnerRowActions } from '@/app/(dashboard)/(routes)/teacher/courses/[courseId]/learners/_components/learner-row-actions';
 import { Badge } from '@/components/ui/badge';
+import { ListPagination } from '@/components/list-pagination';
+import { getPageCount, getPagination } from '@/lib/pagination';
 
-const CourseLearnersPage = async ({ params }: { params: { courseId: string } }) => {
+const LEARNERS_PAGE_SIZE = 50;
+
+const CourseLearnersPage = async ({
+  params,
+  searchParams
+}: {
+  params: { courseId: string };
+  searchParams: { page?: string };
+}) => {
   const { userId } = await auth();
   if (!userId) return redirect('/sign-in');
 
-  // Check permissions — owner, instructor, or admin
-  const allowed = await canEditCourse(userId, params.courseId);
-  if (!allowed) return redirect('/teacher/courses');
+  const { page, skip, take } = getPagination(searchParams.page, LEARNERS_PAGE_SIZE);
+  const purchaseWhere = { courseId: params.courseId };
 
-  const course = await db.course.findUnique({
-    where: { id: params.courseId },
-    select: { id: true }
-  });
+  // Permission check and data load run in parallel; nothing renders unless allowed.
+  const [allowed, course, totalLearners, purchases] = await Promise.all([
+    canEditCourse(userId, params.courseId),
+    db.course.findUnique({ where: { id: params.courseId }, select: { id: true } }),
+    db.purchase.count({ where: purchaseWhere }),
+    db.purchase.findMany({
+      where: purchaseWhere,
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, userId: true, createdAt: true, onboardingSource: true },
+      skip,
+      take
+    })
+  ]);
 
-  if (!course) return redirect('/teacher/courses');
-
-  const purchases = await db.purchase.findMany({
-    where: {
-      courseId: params.courseId
-    },
-    orderBy: {
-      createdAt: 'desc'
-    },
-    select: { id: true, userId: true, createdAt: true, onboardingSource: true }
-  });
-
-  const enrolledUserIds = purchases.map((p) => p.userId);
+  if (!allowed || !course) return redirect('/teacher/courses');
 
   const profiles = await db.profile.findMany({
     where: {
-      userId: { in: enrolledUserIds }
+      userId: { in: purchases.map((p) => p.userId) }
     },
     select: { userId: true, name: true, email: true }
   });
@@ -83,7 +89,7 @@ const CourseLearnersPage = async ({ params }: { params: { courseId: string } }) 
       <div className="mt-8">
         <div className="flex items-center gap-x-2 mb-6">
           <IconBadge icon={Users} />
-          <h2 className="text-xl">Learner List ({learners.length})</h2>
+          <h2 className="text-xl">Learner List ({totalLearners})</h2>
         </div>
 
         {learners.length === 0 ? (
@@ -156,6 +162,7 @@ const CourseLearnersPage = async ({ params }: { params: { courseId: string } }) 
             </table>
           </div>
         )}
+        <ListPagination page={page} pageCount={getPageCount(totalLearners, LEARNERS_PAGE_SIZE)} />
       </div>
     </div>
   );

@@ -2,7 +2,6 @@ import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Eye } from 'lucide-react';
-import { isTeacher } from '@/lib/teacher';
 import getSafeProfile from '@/actions/get-safe-profile';
 import { getBatchDetail, getBatchContent } from '@/actions/get-batches';
 import { StudentBatchContent } from '../../_components/student-batch-content-view';
@@ -11,11 +10,9 @@ const PreviewPage = async ({ params }: { params: Promise<{ batchId: string }> })
   const { userId } = await auth();
   if (!userId) return redirect('/sign-in');
 
-  const isAuthorized = await isTeacher();
-  if (!isAuthorized) return redirect('/');
-
+  // One profile read covers both the role check and the page's own use.
   const profile = await getSafeProfile();
-  if (!profile) return redirect('/');
+  if (!profile || (profile.role !== 'ADMIN' && profile.role !== 'TEACHER')) return redirect('/');
 
   const { batchId } = await params;
   const [batch, modules] = await Promise.all([

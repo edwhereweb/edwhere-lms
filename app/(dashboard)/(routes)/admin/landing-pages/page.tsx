@@ -13,8 +13,21 @@ const AdminLandingPagesPage = async () => {
   if (!profile || profile.role !== 'ADMIN') return redirect('/');
 
   const pages = (await db.landingPage.findMany({
+    // List columns only; the page HTML is loaded by the editor, not the list.
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      isPublished: true,
+      isApproved: true,
+      createdBy: true,
+      approvedBy: true,
+      approvedAt: true,
+      createdAt: true,
+      updatedAt: true
+    },
     orderBy: { createdAt: 'desc' }
-  })) as unknown as LandingPage[];
+  })) as LandingPage[];
 
   return (
     <div className="p-6">

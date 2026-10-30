@@ -14,17 +14,25 @@ export interface BatchReportSummary {
 
 export async function getBatchReportsList(): Promise<BatchReportSummary[]> {
   try {
+    // Only the fields the summary uses; full feedback text and attendance rows are not loaded.
     const batches = await db.batch.findMany({
-      include: {
+      select: {
+        id: true,
+        title: true,
+        createdBy: true,
+        startDate: true,
+        endDate: true,
         modules: {
-          include: {
+          select: {
             items: {
               where: { type: 'OFFLINE_SESSION' },
-              include: {
+              select: {
                 session: {
-                  include: {
-                    feedback: true,
-                    attendances: true
+                  select: {
+                    completedAt: true,
+                    attendanceSubmittedAt: true,
+                    feedback: { select: { ieScore: true } },
+                    attendances: { select: { status: true } }
                   }
                 }
               }
@@ -137,7 +145,8 @@ export async function getBatchReportDetail(batchId: string): Promise<BatchReport
                 session: {
                   include: {
                     feedback: true,
-                    attendances: true,
+                    // Only the status feeds the attendance %; skip the rest of each row.
+                    attendances: { select: { status: true } },
                     studentFeedback: true
                   }
                 }

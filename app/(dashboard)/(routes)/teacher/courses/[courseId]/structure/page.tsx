@@ -13,31 +13,44 @@ const CourseStructurePage = async ({ params }: { params: { courseId: string } })
   const { userId } = await auth();
   if (!userId) return redirect('/sign-in');
 
-  // Check permissions — owner, instructor, or admin
-  const allowed = await canEditCourse(userId, params.courseId);
-  if (!allowed) return redirect('/teacher/courses');
+  // The structure lists only show these fields; full chapter content (HTML, embeds) is not sent.
+  const chapterSelect = {
+    id: true,
+    title: true,
+    position: true,
+    moduleId: true,
+    isPublished: true,
+    isFree: true,
+    contentType: true
+  };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const course = await (db.course.findUnique as any)({
-    where: { id: params.courseId },
-    include: {
-      modules: {
-        orderBy: { position: 'asc' },
-        include: {
-          chapters: {
-            where: { isLibraryAsset: false },
-            orderBy: { position: 'asc' }
+  // Permission check and data load run in parallel; nothing renders unless allowed.
+  const [allowed, course] = await Promise.all([
+    canEditCourse(userId, params.courseId),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (db.course.findUnique as any)({
+      where: { id: params.courseId },
+      include: {
+        modules: {
+          orderBy: { position: 'asc' },
+          include: {
+            chapters: {
+              where: { isLibraryAsset: false },
+              orderBy: { position: 'asc' },
+              select: chapterSelect
+            }
           }
+        },
+        chapters: {
+          where: { moduleId: null, isLibraryAsset: false },
+          orderBy: { position: 'asc' },
+          select: chapterSelect
         }
-      },
-      chapters: {
-        where: { moduleId: null, isLibraryAsset: false },
-        orderBy: { position: 'asc' }
       }
-    }
-  });
+    })
+  ]);
 
-  if (!course) return redirect('/teacher/courses');
+  if (!allowed || !course) return redirect('/teacher/courses');
 
   return (
     <div className="p-6">

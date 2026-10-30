@@ -1,57 +1,66 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
+import type { Prisma } from '@prisma/client';
 import { db } from '@/lib/db';
-import { isTeacher } from '@/lib/teacher';
 import getSafeProfile from '@/actions/get-safe-profile';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import Link from 'next/link';
+import { getPageCount, getPagination, getParam } from '@/lib/pagination';
 import { CourseFilterGrid } from './_components/course-filter-grid';
 
-const CoursesPage = async () => {
+const CoursesPage = async ({
+  searchParams
+}: {
+  searchParams: { q?: string; category?: string; page?: string };
+}) => {
   const session = await auth();
   const userId = session?.userId;
 
   if (!userId) return redirect('/sign-in');
 
-  const isAuthorized = await isTeacher();
-  if (!isAuthorized) return redirect('/');
-
   const profile = await getSafeProfile();
-  if (!profile) return redirect('/');
+  if (!profile || (profile.role !== 'ADMIN' && profile.role !== 'TEACHER')) return redirect('/');
 
-  const includeConfig = {
-    category: true,
-    chapters: { select: { id: true } }
+  const { page, skip, take } = getPagination(searchParams.page);
+  const q = getParam(searchParams.q);
+  const category = getParam(searchParams.category);
+
+  const where: Prisma.CourseWhereInput = {
+    ...(profile.role !== 'ADMIN' && {
+      OR: [{ userId }, { instructors: { some: { profileId: profile.id } } }]
+    }),
+    ...(q && { title: { contains: q, mode: 'insensitive' } }),
+    // Ignore malformed ids from the URL instead of letting Prisma throw.
+    ...(/^[a-f\d]{24}$/i.test(category) && { categoryId: category })
   };
 
-  let courses = [];
-
-  if (profile.role === 'ADMIN') {
-    courses = await db.course.findMany({
-      include: includeConfig,
-      orderBy: { createdAt: 'desc' }
-    });
-  } else {
-    courses = await db.course.findMany({
-      where: {
-        OR: [{ userId }, { instructors: { some: { profileId: profile.id } } }]
-      },
-      include: includeConfig,
-      orderBy: { createdAt: 'desc' }
-    });
-  }
-
-  const categories = await db.category.findMany({
-    orderBy: { name: 'asc' }
-  });
+  const [total, courses, categories] = await Promise.all([
+    db.course.count({ where }),
+    db.course.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take,
+      select: {
+        id: true,
+        title: true,
+        imageUrl: true,
+        price: true,
+        isPublished: true,
+        category: { select: { name: true } },
+        _count: { select: { chapters: true } }
+      }
+    }),
+    db.category.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true } })
+  ]);
 
   // Flatten to the shape CourseFilterGrid expects
   const flatCourses = courses.map((c) => ({
     id: c.id,
     title: c.title,
     imageUrl: c.imageUrl ?? null,
-    chaptersLength: c.chapters.length,
+    chaptersLength: c._count.chapters,
     price: c.price ?? null,
     category: c.category?.name ?? null,
     isPublished: c.isPublished
@@ -69,7 +78,13 @@ const CoursesPage = async () => {
         </Link>
       </div>
 
-      <CourseFilterGrid courses={flatCourses} categories={categories} />
+      <CourseFilterGrid
+        courses={flatCourses}
+        categories={categories}
+        total={total}
+        page={page}
+        pageCount={getPageCount(total)}
+      />
     </div>
   );
 };

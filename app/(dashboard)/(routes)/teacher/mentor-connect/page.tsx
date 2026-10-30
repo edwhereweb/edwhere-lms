@@ -1,7 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { db } from '@/lib/db';
-import { isTeacher } from '@/lib/teacher';
 import getSafeProfile from '@/actions/get-safe-profile';
 import { MentorConnectHub } from './_components/mentor-connect-hub';
 
@@ -11,11 +10,9 @@ export default async function MentorConnectPage() {
   const { userId } = await auth();
   if (!userId) return redirect('/sign-in');
 
-  const authorized = await isTeacher();
-  if (!authorized) return redirect('/');
-
+  // One profile read covers both the role check and the page's own use.
   const profile = await getSafeProfile();
-  if (!profile) return redirect('/');
+  if (!profile || (profile.role !== 'ADMIN' && profile.role !== 'TEACHER')) return redirect('/');
 
   // Get all courses this instructor owns or is assigned to
   const courses = await db.course.findMany({
@@ -25,32 +22,47 @@ export default async function MentorConnectPage() {
         : {
             OR: [{ userId }, { instructors: { some: { profileId: profile.id } } }]
           },
-    select: {
-      id: true,
-      title: true,
-      imageUrl: true,
-      messages: {
-        orderBy: { createdAt: 'desc' },
-        take: 1,
+    select: { id: true, title: true, imageUrl: true },
+    orderBy: { updatedAt: 'desc' }
+  });
+  const courseIds = courses.map((c) => c.id);
+
+  // A nested `messages: { take: 1 }` makes Prisma load every message of every course and trim
+  // in memory, so find each course's latest timestamp in the database and fetch just those.
+  const [lastReads, latestPerCourse] = await Promise.all([
+    // Get lastRead records — filter out legacy null-studentId records from old schema
+    db.mentorLastRead.findMany({
+      where: {
+        instructorId: profile.id,
+        courseId: { in: courseIds },
+        studentId: { not: null }
+      }
+    }),
+    db.courseMessage.groupBy({
+      by: ['courseId'],
+      where: { courseId: { in: courseIds } },
+      _max: { createdAt: true }
+    })
+  ]);
+  const latestFilters = latestPerCourse.flatMap((g) =>
+    g._max.createdAt ? [{ courseId: g.courseId, createdAt: g._max.createdAt }] : []
+  );
+  const latestMessages = latestFilters.length
+    ? await db.courseMessage.findMany({
+        where: { OR: latestFilters },
         select: {
           id: true,
+          courseId: true,
           content: true,
           createdAt: true,
           author: { select: { name: true, role: true } }
         }
-      }
-    },
-    orderBy: { updatedAt: 'desc' }
-  });
-
-  // Get lastRead records — filter out legacy null-studentId records from old schema
-  const lastReads = await db.mentorLastRead.findMany({
-    where: {
-      instructorId: profile.id,
-      courseId: { in: courses.map((c) => c.id) },
-      studentId: { not: null }
-    }
-  });
+      })
+    : [];
+  const lastMessageByCourse = new Map<string, (typeof latestMessages)[number]>();
+  for (const m of latestMessages) {
+    if (!lastMessageByCourse.has(m.courseId)) lastMessageByCourse.set(m.courseId, m);
+  }
 
   // Count unread messages per course (messages from non-instructors after lastReadAt)
   // in one grouped query instead of one count per course.
@@ -74,7 +86,7 @@ export default async function MentorConnectPage() {
     id: course.id,
     title: course.title,
     imageUrl: course.imageUrl,
-    lastMessage: course.messages[0] ?? null,
+    lastMessage: lastMessageByCourse.get(course.id) ?? null,
     unreadCount: unreadByCourse.get(course.id) ?? 0
   }));
 

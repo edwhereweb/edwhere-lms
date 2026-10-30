@@ -6,9 +6,12 @@ import { ArrowLeft, ExternalLink, User } from 'lucide-react';
 import { db } from '@/lib/db';
 import { canEditCourse } from '@/lib/course-auth';
 import { SubmissionReviewActions } from './_components/submission-review-actions';
+import { ListPagination } from '@/components/list-pagination';
+import { getPageCount, getPagination } from '@/lib/pagination';
 
 interface Props {
   params: { courseId: string; chapterId: string };
+  searchParams: { page?: string };
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -17,23 +20,36 @@ const STATUS_LABELS: Record<string, string> = {
   REJECTED: '❌ Rejected'
 };
 
-export default async function ProjectSubmissionsChapterPage({ params }: Props) {
+export default async function ProjectSubmissionsChapterPage({ params, searchParams }: Props) {
   const { userId } = await auth();
   if (!userId) return redirect('/sign-in');
 
-  const allowed = await canEditCourse(userId, params.courseId);
-  if (!allowed) return redirect('/teacher/project-submissions');
+  const { page, skip, take } = getPagination(searchParams.page);
+  const submissionWhere = { chapterId: params.chapterId };
 
-  const [course, chapter] = await Promise.all([
+  // Permission check and data load run in parallel; nothing renders unless allowed.
+  const [allowed, course, chapter, totalSubmissions, submissions] = await Promise.all([
+    canEditCourse(userId, params.courseId),
     db.course.findUnique({ where: { id: params.courseId }, select: { title: true } }),
-    db.chapter.findUnique({ where: { id: params.chapterId }, select: { title: true } })
+    db.chapter.findUnique({ where: { id: params.chapterId }, select: { title: true } }),
+    db.projectSubmission.count({ where: submissionWhere }),
+    db.projectSubmission.findMany({
+      where: submissionWhere,
+      orderBy: { updatedAt: 'desc' },
+      skip,
+      take,
+      select: {
+        id: true,
+        userId: true,
+        status: true,
+        driveUrl: true,
+        reviewNote: true,
+        updatedAt: true
+      }
+    })
   ]);
+  if (!allowed) return redirect('/teacher/project-submissions');
   if (!course || !chapter) return redirect(`/teacher/project-submissions/${params.courseId}`);
-
-  const submissions = await db.projectSubmission.findMany({
-    where: { chapterId: params.chapterId },
-    orderBy: { updatedAt: 'desc' }
-  });
 
   const userIds = submissions.map((s) => s.userId);
   const profiles = await db.profile.findMany({
@@ -69,7 +85,7 @@ export default async function ProjectSubmissionsChapterPage({ params }: Props) {
       </Link>
       <h1 className="text-2xl font-bold mb-2">{chapter.title}</h1>
       <p className="text-sm text-muted-foreground mb-8">
-        {submissions.length} submission{submissions.length !== 1 ? 's' : ''}
+        {totalSubmissions} submission{totalSubmissions !== 1 ? 's' : ''}
       </p>
 
       {submissions.length === 0 ? (
@@ -169,6 +185,7 @@ export default async function ProjectSubmissionsChapterPage({ params }: Props) {
           })}
         </div>
       )}
+      <ListPagination page={page} pageCount={getPageCount(totalSubmissions)} />
     </div>
   );
 }

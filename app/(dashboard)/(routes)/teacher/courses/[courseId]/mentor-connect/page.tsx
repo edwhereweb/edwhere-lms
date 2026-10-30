@@ -1,7 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { db } from '@/lib/db';
-import { isTeacher } from '@/lib/teacher';
 import getSafeProfile from '@/actions/get-safe-profile';
 import { MentorChat } from '@/app/(course)/courses/[courseId]/chat/_components/mentor-chat';
 import Link from 'next/link';
@@ -15,11 +14,9 @@ export default async function InstructorMentorConnectPage({ params }: Props) {
   const { userId } = await auth();
   if (!userId) return redirect('/sign-in');
 
-  const authorized = await isTeacher();
-  if (!authorized) return redirect('/');
-
+  // One profile read covers both the role check and the page's own use.
   const profile = await getSafeProfile();
-  if (!profile) return redirect('/');
+  if (!profile || (profile.role !== 'ADMIN' && profile.role !== 'TEACHER')) return redirect('/');
 
   const course = await db.course.findUnique({
     where: { id: params.courseId },

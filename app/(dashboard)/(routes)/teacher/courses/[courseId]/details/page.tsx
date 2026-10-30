@@ -38,26 +38,23 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
   const { userId } = await auth();
   if (!userId) return redirect('/sign-in');
 
-  // Check permissions — owner, instructor, or admin
-  const allowed = await canEditCourse(userId, params.courseId);
-  if (!allowed) return redirect('/teacher/courses');
+  // Permission check and data load run in parallel; nothing renders unless allowed.
+  // Chapters are only needed for "has a published one", so count instead of loading them.
+  const [allowed, profile, course, publishedChapterCount, categories] = await Promise.all([
+    canEditCourse(userId, params.courseId),
+    db.profile.findUnique({ where: { userId }, select: { role: true } }),
+    db.course.findUnique({
+      where: { id: params.courseId },
+      include: { attachments: { orderBy: { createdAt: 'desc' } } }
+    }),
+    db.chapter.count({ where: { courseId: params.courseId, isPublished: true } }),
+    db.category.findMany({ orderBy: { name: 'asc' } })
+  ]);
 
-  const profile = await db.profile.findUnique({ where: { userId } });
+  if (!allowed || !course) return redirect('/teacher/courses');
+
   const isAdmin = profile?.role === 'ADMIN';
-
-  const course = await db.course.findUnique({
-    where: { id: params.courseId },
-    include: {
-      chapters: { orderBy: { position: 'asc' } },
-      attachments: { orderBy: { createdAt: 'desc' } }
-    }
-  });
-
-  if (!course) return redirect('/teacher/courses');
-
-  const categories = await db.category.findMany({ orderBy: { name: 'asc' } });
-
-  const hasPublishedChapter = course.chapters.some((chapter) => chapter.isPublished);
+  const hasPublishedChapter = publishedChapterCount > 0;
 
   const requiredFields = [
     course.title,
