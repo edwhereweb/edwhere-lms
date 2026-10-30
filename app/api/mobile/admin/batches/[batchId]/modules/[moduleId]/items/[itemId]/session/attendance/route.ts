@@ -73,61 +73,62 @@ export async function POST(req: Request, { params }: Params) {
 
     const markedSet = new Set(result.data.markedStudents.map((s) => s.userId));
 
-    // Upsert PRESENT/LATE students
-    for (const student of result.data.markedStudents) {
-      await db.sessionAttendance.upsert({
-        where: {
-          sessionId_userId: {
-            sessionId: session.id,
-            userId: student.userId
-          }
-        },
-        create: {
-          sessionId: session.id,
-          userId: student.userId,
-          status: student.status,
-          remarks: student.remarks
-        },
-        update: {
-          status: student.status,
-          remarks: student.remarks
-        }
-      });
+    const absentUserIds = enrollments
+      .map((e) => e.userId)
+      .filter((enrolledUserId) => !markedSet.has(enrolledUserId));
 
-      // Update attendance streak for PRESENT/LATE students
-      await db.batchEnrollment.update({
-        where: { batchId_userId: { batchId, userId: student.userId } },
-        data: { attendanceStreak: { increment: 1 } }
-      });
-    }
-
-    // Mark absent students (enrolled but not in markedStudents)
-    for (const enrollment of enrollments) {
-      if (!markedSet.has(enrollment.userId)) {
-        await db.sessionAttendance.upsert({
+    // One transaction instead of two round trips per student (same writes, applied atomically).
+    await db.$transaction([
+      // Upsert PRESENT/LATE students and bump their attendance streak
+      ...result.data.markedStudents.flatMap((student) => [
+        db.sessionAttendance.upsert({
           where: {
             sessionId_userId: {
               sessionId: session.id,
-              userId: enrollment.userId
+              userId: student.userId
             }
           },
           create: {
             sessionId: session.id,
-            userId: enrollment.userId,
+            userId: student.userId,
+            status: student.status,
+            remarks: student.remarks
+          },
+          update: {
+            status: student.status,
+            remarks: student.remarks
+          }
+        }),
+        db.batchEnrollment.update({
+          where: { batchId_userId: { batchId, userId: student.userId } },
+          data: { attendanceStreak: { increment: 1 } }
+        })
+      ]),
+      // Mark absent students (enrolled but not in markedStudents)
+      ...absentUserIds.map((absentUserId) =>
+        db.sessionAttendance.upsert({
+          where: {
+            sessionId_userId: {
+              sessionId: session.id,
+              userId: absentUserId
+            }
+          },
+          create: {
+            sessionId: session.id,
+            userId: absentUserId,
             status: 'ABSENT'
           },
           update: {
             status: 'ABSENT'
           }
-        });
-
-        // Reset attendance streak for absent students
-        await db.batchEnrollment.update({
-          where: { batchId_userId: { batchId, userId: enrollment.userId } },
-          data: { attendanceStreak: 0 }
-        });
-      }
-    }
+        })
+      ),
+      // Reset attendance streak for absent students
+      db.batchEnrollment.updateMany({
+        where: { batchId, userId: { in: absentUserIds } },
+        data: { attendanceStreak: 0 }
+      })
+    ]);
 
     // Mark attendance as submitted on session
     await db.offlineSession.update({

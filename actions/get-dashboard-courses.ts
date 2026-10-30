@@ -19,49 +19,52 @@ type DashboardCourses = {
 
 export const getDashboardCourses = async (userId: string): Promise<DashboardCourses> => {
   try {
-    // 1. Courses acquired via direct purchase (includes resume state)
-    const purchasedCourses = await db.purchase.findMany({
-      where: { userId },
-      select: {
-        lastVisitedChapterId: true,
-        lastVisitedAt: true,
-        course: {
-          include: {
-            category: true,
-            chapters: {
-              where: { isPublished: true },
-              select: {
-                id: true,
-                title: true,
-                position: true,
-                moduleId: true,
-                module: { select: { position: true } }
+    // Both sources are independent, so fetch them in parallel.
+    const [purchasedCourses, batchEnrollments] = await Promise.all([
+      // 1. Courses acquired via direct purchase (includes resume state)
+      db.purchase.findMany({
+        where: { userId },
+        select: {
+          lastVisitedChapterId: true,
+          lastVisitedAt: true,
+          course: {
+            include: {
+              category: true,
+              chapters: {
+                where: { isPublished: true },
+                select: {
+                  id: true,
+                  title: true,
+                  position: true,
+                  moduleId: true,
+                  module: { select: { position: true } }
+                }
               }
             }
           }
         }
-      }
-    });
+      }),
 
-    // 2. Courses acquired via batch enrollment
-    const batchEnrollments = await db.batchEnrollment.findMany({
-      where: { userId },
-      select: {
-        batch: {
-          select: {
-            courses: {
-              select: {
-                course: {
-                  include: {
-                    category: true,
-                    chapters: {
-                      where: { isPublished: true },
-                      select: {
-                        id: true,
-                        title: true,
-                        position: true,
-                        moduleId: true,
-                        module: { select: { position: true } }
+      // 2. Courses acquired via batch enrollment
+      db.batchEnrollment.findMany({
+        where: { userId },
+        select: {
+          batch: {
+            select: {
+              courses: {
+                select: {
+                  course: {
+                    include: {
+                      category: true,
+                      chapters: {
+                        where: { isPublished: true },
+                        select: {
+                          id: true,
+                          title: true,
+                          position: true,
+                          moduleId: true,
+                          module: { select: { position: true } }
+                        }
                       }
                     }
                   }
@@ -70,8 +73,8 @@ export const getDashboardCourses = async (userId: string): Promise<DashboardCour
             }
           }
         }
-      }
-    });
+      })
+    ]);
 
     // Collect all batch courses into a flat list, de-duplicate by courseId
     const batchCourseMap = new Map<string, (typeof purchasedCourses)[number]['course']>();

@@ -24,15 +24,17 @@ export async function PUT(req: Request, { params }: Params) {
     const result = validateMobileBody(reorderChaptersSchema, body);
     if (!result.success) return result.response;
 
-    for (const item of result.data.list) {
-      await db.chapter.update({
-        where: { id: item.id, courseId },
-        data: {
-          position: item.position,
-          moduleId: item.moduleId ?? null
-        }
-      });
-    }
+    await Promise.all(
+      result.data.list.map((item) =>
+        db.chapter.update({
+          where: { id: item.id, courseId },
+          data: {
+            position: item.position,
+            moduleId: item.moduleId ?? null
+          }
+        })
+      )
+    );
 
     return mobileSuccess({ success: true });
   } catch (error) {

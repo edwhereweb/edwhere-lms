@@ -70,21 +70,24 @@ export async function POST(req: Request, { params }: Params) {
       });
 
       // Create Purchase records for all batch courses
-      for (const bc of batch.courses) {
-        await db.purchase.upsert({
-          where: {
-            userId_courseId: {
-              userId: profile.userId,
+      const profileUserId = profile.userId;
+      await Promise.all(
+        batch.courses.map((bc) =>
+          db.purchase.upsert({
+            where: {
+              userId_courseId: {
+                userId: profileUserId,
+                courseId: bc.courseId
+              }
+            },
+            create: {
+              userId: profileUserId,
               courseId: bc.courseId
-            }
-          },
-          create: {
-            userId: profile.userId,
-            courseId: bc.courseId
-          },
-          update: {}
-        });
-      }
+            },
+            update: {}
+          })
+        )
+      );
 
       const enrolledUserId = profile.userId;
       await enqueueAndProcessEnrollments(
