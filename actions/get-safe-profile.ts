@@ -5,8 +5,10 @@ import { SafeProfile } from '@/types';
 import { headers } from 'next/headers';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
+import { cache } from 'react';
 
-export default async function getSafeProfile() {
+// cache(): layout and page share one lookup per request instead of repeating it.
+const getSafeProfile = cache(async () => {
   try {
     const { userId } = await auth();
 
@@ -99,42 +101,14 @@ export default async function getSafeProfile() {
         // Fail-safe: never block profile creation
       });
     } else {
-      // Sync phone number from Clerk if missing in profile
-      if (!currentProfile.phoneNumber) {
-        try {
-          const clerkUser = await currentUser();
-          const clerkPhone = clerkUser?.phoneNumbers?.[0]?.phoneNumber;
-          if (clerkPhone) {
-            currentProfile = await db.profile.update({
-              where: { id: currentProfile.id },
-              data: { phoneNumber: clerkPhone },
-              select: {
-                id: true,
-                userId: true,
-                name: true,
-                imageUrl: true,
-                email: true,
-                phoneNumber: true,
-                role: true,
-                createdAt: true,
-                updatedAt: true,
-                lastLoginAt: true,
-                lastLoginIp: true
-              }
-            });
-          }
-        } catch {
-          // Safe fail-silent
-        }
-      }
-
       // Logic to conditionally update the login timestamp and IP
       const anHourAgo = new Date(Date.now() - 60 * 60 * 1000);
       const isStaleLogin = !currentProfile.lastLoginAt || currentProfile.lastLoginAt < anHourAgo;
       const isNewIp = currentProfile.lastLoginIp !== clientIp;
 
+      // Clerk is only called here (not every request) to keep page loads fast.
       if (isStaleLogin || isNewIp) {
-        // Sync latest name & avatar from Clerk so profile stays fresh after user edits
+        // Sync latest name, avatar & missing phone from Clerk so profile stays fresh after user edits
         const clerkUser = await currentUser();
         const freshName = clerkUser
           ? `${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim() ||
@@ -142,6 +116,8 @@ export default async function getSafeProfile() {
             currentProfile.name
           : currentProfile.name;
         const freshImageUrl = clerkUser?.imageUrl ?? currentProfile.imageUrl;
+        const freshPhone =
+          currentProfile.phoneNumber ?? clerkUser?.phoneNumbers?.[0]?.phoneNumber ?? null;
 
         currentProfile = await db.profile.update({
           where: { id: currentProfile.id },
@@ -149,7 +125,8 @@ export default async function getSafeProfile() {
             lastLoginAt: new Date(),
             lastLoginIp: clientIp,
             name: freshName,
-            imageUrl: freshImageUrl
+            imageUrl: freshImageUrl,
+            phoneNumber: freshPhone
           },
           select: {
             id: true,
@@ -180,4 +157,6 @@ export default async function getSafeProfile() {
     logError('GET_SAFE_PROFILE', error);
     return null;
   }
-}
+});
+
+export default getSafeProfile;
