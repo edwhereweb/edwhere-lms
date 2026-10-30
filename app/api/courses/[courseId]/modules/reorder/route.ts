@@ -17,12 +17,15 @@ export async function PUT(req: Request, { params }: { params: { courseId: string
     const validation = validateBody(reorderModulesSchema, body);
     if (!validation.success) return validation.response;
 
-    for (const item of validation.data.list) {
-      await db.module.update({
-        where: { id: item.id },
-        data: { position: item.position }
-      });
-    }
+    // courseId in the filter stops a reorder from touching modules of another course.
+    await Promise.all(
+      validation.data.list.map((item) =>
+        db.module.update({
+          where: { id: item.id, courseId: params.courseId },
+          data: { position: item.position }
+        })
+      )
+    );
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -15,17 +15,18 @@ export async function GET() {
     const profile = await currentProfile();
     if (!profile) return mobileError('NOT_FOUND', 'Profile not found', 404);
 
-    const instructorRecords = await db.courseInstructor.findMany({
-      where: { profileId: profile.id },
-      include: {
-        course: { select: { id: true, title: true } }
-      }
-    });
-
-    const ownedCourses = await db.course.findMany({
-      where: { userId },
-      select: { id: true, title: true }
-    });
+    const [instructorRecords, ownedCourses] = await Promise.all([
+      db.courseInstructor.findMany({
+        where: { profileId: profile.id },
+        include: {
+          course: { select: { id: true, title: true } }
+        }
+      }),
+      db.course.findMany({
+        where: { userId },
+        select: { id: true, title: true }
+      })
+    ]);
 
     const courseMap = new Map<string, { id: string; title: string }>();
     for (const r of instructorRecords) {
@@ -47,31 +48,32 @@ export async function GET() {
       lastReadMap.get(lr.courseId)!.set(lr.studentId, lr.lastReadAt);
     }
 
-    const results = await Promise.all(
-      Array.from(courseMap.values()).map(async (course) => {
-        const courseLastReads = lastReadMap.get(course.id);
-        let oldestRead = new Date(0);
-        if (courseLastReads && courseLastReads.size > 0) {
-          oldestRead = new Date(
-            Math.min(...Array.from(courseLastReads.values()).map((d) => d.getTime()))
-          );
-        }
+    const unreadFilters = courseIds.map((courseId) => {
+      const courseLastReads = lastReadMap.get(courseId);
+      let oldestRead = new Date(0);
+      if (courseLastReads && courseLastReads.size > 0) {
+        oldestRead = new Date(
+          Math.min(...Array.from(courseLastReads.values()).map((d) => d.getTime()))
+        );
+      }
+      return { courseId, createdAt: { gt: oldestRead } };
+    });
 
-        const unreadCount = await db.courseMessage.count({
-          where: {
-            courseId: course.id,
-            createdAt: { gt: oldestRead },
-            authorId: { not: profile.id }
-          }
-        });
+    // One grouped query instead of one count per course.
+    const unreadGroups = unreadFilters.length
+      ? await db.courseMessage.groupBy({
+          by: ['courseId'],
+          where: { OR: unreadFilters, authorId: { not: profile.id } },
+          _count: { _all: true }
+        })
+      : [];
+    const unreadByCourse = new Map(unreadGroups.map((g) => [g.courseId, g._count._all]));
 
-        return {
-          courseId: course.id,
-          courseTitle: course.title,
-          unreadCount
-        };
-      })
-    );
+    const results = Array.from(courseMap.values()).map((course) => ({
+      courseId: course.id,
+      courseTitle: course.title,
+      unreadCount: unreadByCourse.get(course.id) ?? 0
+    }));
 
     return mobileSuccess(results);
   } catch (error) {

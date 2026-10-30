@@ -28,69 +28,68 @@ const CourseLayout = async ({
     return redirect('/dashboard');
   }
 
-  const course = await db.course.findUnique({
-    where: {
-      id: params.courseId
-    },
-    include: {
-      // Include all modules (not filtering by isPublished) so students see
-      // chapters even when the parent module is in draft state.
-      // Only the chapter's own isPublished matters for student visibility.
-      modules: {
-        orderBy: { position: 'asc' },
-        include: {
-          chapters: {
-            where: { isPublished: true, isLibraryAsset: false },
-            include: {
-              userProgress: {
-                where: { userId }
-              }
-            },
-            orderBy: { position: 'asc' }
-          }
-        }
+  // Independent lookups run in parallel; the unread count needs lastRead so it follows.
+  const [course, progressCount, lastRead] = await Promise.all([
+    db.course.findUnique({
+      where: {
+        id: params.courseId
       },
-      chapters: {
-        where: {
-          isPublished: true,
-          moduleId: null,
-          isLibraryAsset: false
-        },
-        include: {
-          userProgress: {
-            where: {
-              userId
+      include: {
+        // Include all modules (not filtering by isPublished) so students see
+        // chapters even when the parent module is in draft state.
+        // Only the chapter's own isPublished matters for student visibility.
+        modules: {
+          orderBy: { position: 'asc' },
+          include: {
+            chapters: {
+              where: { isPublished: true, isLibraryAsset: false },
+              include: {
+                userProgress: {
+                  where: { userId }
+                }
+              },
+              orderBy: { position: 'asc' }
             }
           }
         },
-        orderBy: {
-          position: 'asc'
+        chapters: {
+          where: {
+            isPublished: true,
+            moduleId: null,
+            isLibraryAsset: false
+          },
+          include: {
+            userProgress: {
+              where: {
+                userId
+              }
+            }
+          },
+          orderBy: {
+            position: 'asc'
+          }
         }
       }
-    }
-  });
+    }),
+    getProgress(userId, params.courseId),
+    db.studentLastRead.findUnique({
+      where: { studentId_courseId: { studentId: safeProfile.id, courseId: params.courseId } }
+    })
+  ]);
 
   if (!course) {
     return redirect('/dashboard');
   }
 
-  const progressCount: number = await getProgress(userId, course.id);
-
   // Check unread messages for this student in Mentor Connect
-  let unreadCount = 0;
-  if (safeProfile) {
-    const lastRead = await db.studentLastRead.findUnique({
-      where: { studentId_courseId: { studentId: safeProfile.id, courseId: course.id } }
-    });
-    unreadCount = await db.courseMessage.count({
-      where: {
-        courseId: course.id,
-        threadStudentId: safeProfile.id,
-        NOT: { authorId: safeProfile.id }, // from mentors
-        ...(lastRead ? { createdAt: { gt: lastRead.lastReadAt } } : {})
-      }
-    });
-  }
+  const unreadCount = await db.courseMessage.count({
+    where: {
+      courseId: course.id,
+      threadStudentId: safeProfile.id,
+      NOT: { authorId: safeProfile.id }, // from mentors
+      ...(lastRead ? { createdAt: { gt: lastRead.lastReadAt } } : {})
+    }
+  });
 
   return (
     <>

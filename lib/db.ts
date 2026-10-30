@@ -10,6 +10,6 @@ declare const globalThis: {
 
 export const db = globalThis.prisma ?? prismaClientSingleton();
 
-if (process.env.NODE_ENV !== 'production') {
-  globalThis.prisma = db;
-}
+// Cache in every env: Next.js can evaluate this module more than once per server
+// process (separate bundles), and each extra client opens its own connection pool.
+globalThis.prisma = db;

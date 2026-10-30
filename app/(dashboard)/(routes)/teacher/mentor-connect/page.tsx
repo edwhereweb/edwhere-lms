@@ -53,26 +53,29 @@ export default async function MentorConnectPage() {
   });
 
   // Count unread messages per course (messages from non-instructors after lastReadAt)
-  const unreadCounts = await Promise.all(
-    courses.map(async (course) => {
-      const lastRead = lastReads.find((lr) => lr.courseId === course.id);
-      const count = await db.courseMessage.count({
-        where: {
-          courseId: course.id,
-          ...(lastRead ? { createdAt: { gt: lastRead.lastReadAt } } : {}),
-          NOT: { authorId: profile.id }
-        }
-      });
-      return { courseId: course.id, count };
-    })
-  );
+  // in one grouped query instead of one count per course.
+  const unreadFilters = courses.map((course) => {
+    const lastRead = lastReads.find((lr) => lr.courseId === course.id);
+    return {
+      courseId: course.id,
+      ...(lastRead ? { createdAt: { gt: lastRead.lastReadAt } } : {})
+    };
+  });
+  const unreadGroups = unreadFilters.length
+    ? await db.courseMessage.groupBy({
+        by: ['courseId'],
+        where: { OR: unreadFilters, NOT: { authorId: profile.id } },
+        _count: { _all: true }
+      })
+    : [];
+  const unreadByCourse = new Map(unreadGroups.map((g) => [g.courseId, g._count._all]));
 
   const courseData = courses.map((course) => ({
     id: course.id,
     title: course.title,
     imageUrl: course.imageUrl,
     lastMessage: course.messages[0] ?? null,
-    unreadCount: unreadCounts.find((u) => u.courseId === course.id)?.count ?? 0
+    unreadCount: unreadByCourse.get(course.id) ?? 0
   }));
 
   // Sort: courses with unread messages first

@@ -89,21 +89,23 @@ export async function POST(req: Request, { params }: Params) {
     });
 
     // Create Purchase records for all batch courses
-    for (const bc of batch.courses) {
-      await db.purchase.upsert({
-        where: {
-          userId_courseId: {
-            userId: studentUserId,
+    await Promise.all(
+      batch.courses.map((bc) =>
+        db.purchase.upsert({
+          where: {
+            userId_courseId: {
+              userId: enrolledUserId,
+              courseId: bc.courseId
+            }
+          },
+          create: {
+            userId: enrolledUserId,
             courseId: bc.courseId
-          }
-        },
-        create: {
-          userId: studentUserId,
-          courseId: bc.courseId
-        },
-        update: {}
-      });
-    }
+          },
+          update: {}
+        })
+      )
+    );
 
     await enqueueAndProcessEnrollments(
       batch.courses.map((bc) => ({ userId: enrolledUserId, courseId: bc.courseId, batchId }))

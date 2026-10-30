@@ -97,37 +97,31 @@ export async function DELETE(req: Request, { params }: { params: { courseId: str
       const pdfKey = urlToR2Key((ch as { pdfUrl?: string }).pdfUrl);
       if (pdfKey) r2KeysToDelete.push(pdfKey);
     }
-    for (const key of r2KeysToDelete) {
-      try {
-        await deleteObject(key);
-      } catch {
-        // continue — object may already be gone
-      }
-    }
+    // allSettled: a missing object must not stop the rest of the cleanup.
+    await Promise.allSettled(r2KeysToDelete.map(async (key) => deleteObject(key)));
 
     const assetIdsInCourse = Array.from(
       new Set(course.chapters.flatMap((ch) => (ch.muxData?.assetId ? [ch.muxData.assetId] : [])))
     );
 
-    for (const assetId of assetIdsInCourse) {
-      // Check if any other course is using this exact assetId
-      const isUsedElsewhere = await db.muxData.findFirst({
-        where: {
-          assetId,
-          chapter: {
-            courseId: { not: courseId }
-          }
-        }
-      });
+    // One lookup for which assets other courses still use, instead of one per asset.
+    const sharedAssets = assetIdsInCourse.length
+      ? await db.muxData.findMany({
+          where: {
+            assetId: { in: assetIdsInCourse },
+            chapter: { courseId: { not: courseId } }
+          },
+          select: { assetId: true }
+        })
+      : [];
+    const sharedAssetIds = new Set(sharedAssets.map((m) => m.assetId));
 
-      if (!isUsedElsewhere) {
-        try {
-          await getMuxVideo().Assets.del(assetId);
-        } catch {
-          // ignore - might already be deleted on Mux
-        }
-      }
-    }
+    // allSettled: an asset already deleted on Mux must not stop the rest.
+    await Promise.allSettled(
+      assetIdsInCourse
+        .filter((assetId) => !sharedAssetIds.has(assetId))
+        .map(async (assetId) => getMuxVideo().Assets.del(assetId))
+    );
 
     const deletedCourse = await db.course.delete({
       where: { id: courseId }
