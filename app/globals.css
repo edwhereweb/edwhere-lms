@@ -81,6 +81,34 @@ body,
   }
 }
 
+/* Dashboard shell only: softer canvas, white cards, rounder corners. Public pages keep root tokens. */
+.app-shell {
+  --background: 240 5% 97%;
+  --card: 0 0% 100%;
+  --accent: 240 5% 93%;
+  --muted: 240 5% 94%;
+  --secondary: 240 5% 94%;
+  --border: 240 6% 90%;
+  --input: 240 5% 58%;
+  --muted-foreground: 240 4% 38%;
+  --primary: 1 98% 42%;
+  --ring: 1 98% 42%;
+  --destructive: 0 72% 45%;
+  --radius: 0.875rem;
+}
+
+.dark .app-shell {
+  --background: 240 6% 6%;
+  --card: 240 5% 10%;
+  --accent: 240 4% 16%;
+  --muted: 240 4% 14%;
+  --secondary: 240 4% 14%;
+  --border: 240 4% 18%;
+  --input: 240 4% 40%;
+  --primary: 1 90% 46%;
+  --destructive: 0 63% 31%;
+}
+
 .ql-container {
   font-size: 16px !important;
 }

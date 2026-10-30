@@ -11,7 +11,7 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({ currentProfile, hasBatchEnrollment }) => {
   return (
-    <div className="p-4 border-b h-full flex items-center bg-background text-foreground shadow-sm">
+    <div className="p-4 border-b border-border/60 h-full flex items-center bg-background/70 backdrop-blur-xl text-foreground">
       <MobileSidebar currentProfile={currentProfile} hasBatchEnrollment={hasBatchEnrollment} />
       <NavbarRoutes currentProfile={currentProfile} />
     </div>

@@ -28,32 +28,41 @@ export const TeacherCourseCard = ({
   isPublished
 }: TeacherCourseCardProps) => {
   return (
-    <div className="group border rounded-lg p-3 h-full flex flex-col bg-neutral-50 dark:bg-neutral-900">
-      <div className="relative w-full aspect-video rounded-md overflow-hidden bg-neutral-200 dark:bg-neutral-800">
+    <div className="group h-full flex flex-col rounded-2xl border bg-card p-3 shadow-sm transition-shadow hover:shadow-md">
+      <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-muted">
         {imageUrl ? (
           <Image fill className="object-cover" alt={title} src={imageUrl} />
         ) : (
-          <div className="flex items-center justify-center h-full w-full text-neutral-400">
+          <div className="flex items-center justify-center h-full w-full text-muted-foreground">
             No Image
           </div>
         )}
       </div>
       <div className="flex flex-col pt-4 flex-grow">
         <div className="flex justify-between items-start gap-x-2">
-          <div className="text-lg font-medium line-clamp-2">{title}</div>
-          <Badge className={cn('bg-neutral-500', isPublished && 'bg-[#F80602]')}>
+          <div className="text-lg font-semibold leading-snug text-foreground line-clamp-2">
+            {title}
+          </div>
+          <Badge
+            variant="outline"
+            className={cn(
+              'shrink-0 bg-muted text-muted-foreground',
+              isPublished &&
+                'border-emerald-200 bg-emerald-100 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-300'
+            )}
+          >
             {isPublished ? 'Published' : 'Draft'}
           </Badge>
         </div>
         <p className="text-sm text-muted-foreground mt-1">{category || 'Uncategorized'}</p>
-        <div className="my-3 flex items-center gap-x-2 text-sm text-neutral-500">
+        <div className="my-3 flex items-center gap-x-2 text-sm text-muted-foreground">
           <IconBadge size="sm" icon={BookOpen} />
           <span>
             {chaptersLength} {chaptersLength === 1 ? 'Chapter' : 'Chapters'}
           </span>
         </div>
 
-        <p className="text-md font-medium text-neutral-700 dark:text-neutral-300 mb-4">
+        <p className="text-base font-semibold text-foreground mb-4">
           {price !== null ? formatPrice(price) : 'Free'}
         </p>
 

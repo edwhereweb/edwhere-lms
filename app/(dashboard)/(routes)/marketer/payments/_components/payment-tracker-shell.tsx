@@ -182,7 +182,7 @@ export function PaymentTrackerShell({ leads: initialLeads, campaigns }: PaymentT
       {/* Search and Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             className="pl-9"
             placeholder="Search leads, campaigns, phone…"
@@ -234,7 +234,7 @@ export function PaymentTrackerShell({ leads: initialLeads, campaigns }: PaymentT
       </div>
 
       {leads.length === 0 && (
-        <div className="text-center py-20 text-neutral-400">
+        <div className="text-center py-20 text-muted-foreground">
           <p className="text-lg font-medium mb-1">No closed leads yet</p>
           <p className="text-sm">Go to Leads and mark a lead as Won to get started.</p>
         </div>
@@ -244,7 +244,7 @@ export function PaymentTrackerShell({ leads: initialLeads, campaigns }: PaymentT
         visibleNeedsAttention.length === 0 &&
         visibleInProgress.length === 0 &&
         visibleFullyPaid.length === 0 && (
-          <div className="text-center py-16 text-neutral-400">
+          <div className="text-center py-16 text-muted-foreground">
             <p className="text-sm">No leads match the selected filter.</p>
           </div>
         )}
@@ -293,7 +293,7 @@ export function PaymentTrackerShell({ leads: initialLeads, campaigns }: PaymentT
           >
             <span>✅</span> Fully Paid ({visibleFullyPaid.length})
             {activeFilter === 'ALL' && (
-              <span className="text-xs font-normal text-neutral-400">
+              <span className="text-xs font-normal text-muted-foreground">
                 {paidExpanded ? '(collapse)' : '(expand)'}
               </span>
             )}

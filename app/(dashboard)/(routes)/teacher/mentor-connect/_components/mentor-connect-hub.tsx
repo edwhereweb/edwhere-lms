@@ -85,7 +85,7 @@ export function MentorConnectHub({
     return (
       <div className="rounded-xl border bg-white dark:bg-neutral-900 shadow-sm overflow-hidden">
         {courses.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-20 text-center text-neutral-400 gap-3">
+          <div className="flex flex-col items-center justify-center py-20 text-center text-muted-foreground gap-3">
             <MessageCircle className="h-12 w-12 opacity-30" />
             <p className="text-sm font-medium">No courses yet</p>
           </div>
@@ -135,12 +135,12 @@ export function MentorConnectHub({
                     {course.lastMessage.content}
                   </p>
                 ) : (
-                  <p className="text-xs text-neutral-400 italic mt-0.5">No messages yet</p>
+                  <p className="text-xs text-muted-foreground italic mt-0.5">No messages yet</p>
                 )}
               </div>
               <div className="flex flex-col items-end gap-1 shrink-0">
                 {course.lastMessage && (
-                  <span className="text-[10px] text-neutral-400">
+                  <span className="text-[10px] text-muted-foreground">
                     {format(new Date(course.lastMessage.createdAt), 'dd MMM')}
                   </span>
                 )}
@@ -175,10 +175,10 @@ export function MentorConnectHub({
 
         <div className="rounded-xl border bg-white dark:bg-neutral-900 shadow-sm overflow-hidden">
           {loadingStudents && (
-            <div className="py-10 text-center text-neutral-400 text-sm">Loading…</div>
+            <div className="py-10 text-center text-muted-foreground text-sm">Loading…</div>
           )}
           {!loadingStudents && students.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-16 text-neutral-400 gap-3">
+            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-3">
               <MessageCircle className="h-10 w-10 opacity-30" />
               <p className="text-sm">No students have messaged yet.</p>
             </div>
@@ -234,13 +234,13 @@ export function MentorConnectHub({
                       {student.lastMessage.content}
                     </p>
                   ) : (
-                    <p className="text-xs text-neutral-400 italic mt-0.5">No messages</p>
+                    <p className="text-xs text-muted-foreground italic mt-0.5">No messages</p>
                   )}
                 </div>
 
                 <div className="flex flex-col items-end gap-1 shrink-0">
                   {student.lastMessage && (
-                    <span className="text-[10px] text-neutral-400">
+                    <span className="text-[10px] text-muted-foreground">
                       {format(new Date(student.lastMessage.createdAt), 'dd MMM, h:mm a')}
                     </span>
                   )}

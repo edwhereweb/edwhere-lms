@@ -82,7 +82,7 @@ export const PlacementAccessForm = ({ profileId, placementAccess }: PlacementAcc
       <div className="mt-3 flex items-center gap-2 text-sm">
         {!hasAccess ? (
           <>
-            <XCircle className="h-4 w-4 text-slate-400" />
+            <XCircle className="h-4 w-4 text-muted-foreground" />
             <span className="text-slate-500 italic">No placement profile — access not granted</span>
           </>
         ) : isActive ? (

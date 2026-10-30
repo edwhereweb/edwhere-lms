@@ -56,7 +56,7 @@ export function PaymentDeletionsClient({ entries: initialEntries }: PaymentDelet
 
   if (entries.length === 0) {
     return (
-      <div className="text-center py-20 text-neutral-400">
+      <div className="text-center py-20 text-muted-foreground">
         <CheckCircle2 className="h-12 w-12 mx-auto mb-3 text-emerald-300" />
         <p className="text-lg font-medium">No pending deletion requests</p>
       </div>
@@ -133,7 +133,7 @@ export function PaymentDeletionsClient({ entries: initialEntries }: PaymentDelet
                   <p className="font-medium text-neutral-800 dark:text-neutral-100">
                     {entry.lead.name}
                   </p>
-                  <p className="text-xs text-neutral-400">{entry.lead.email}</p>
+                  <p className="text-xs text-muted-foreground">{entry.lead.email}</p>
                 </td>
                 <td className="px-4 py-3 font-medium">{entry.label}</td>
                 <td className="px-4 py-3">{fmt(entry.amount)}</td>
@@ -142,7 +142,7 @@ export function PaymentDeletionsClient({ entries: initialEntries }: PaymentDelet
                     {entry.deletionReason ?? '—'}
                   </p>
                 </td>
-                <td className="px-4 py-3 text-xs text-neutral-400 whitespace-nowrap">
+                <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
                   {entry.deletionRequestedAt
                     ? format(new Date(entry.deletionRequestedAt), 'dd MMM yyyy')
                     : '—'}

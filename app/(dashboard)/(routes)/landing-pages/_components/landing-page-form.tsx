@@ -101,7 +101,7 @@ export const LandingPageForm = ({ initialData }: LandingPageFormProps) => {
                   <FormLabel className="font-semibold">URL Slug</FormLabel>
                   <FormControl>
                     <div className="flex items-center gap-x-2">
-                      <span className="text-sm text-slate-400 font-mono">/pages/</span>
+                      <span className="text-sm text-muted-foreground font-mono">/pages/</span>
                       <Input disabled={isSubmitting} placeholder="summer-sale" {...field} />
                     </div>
                   </FormControl>

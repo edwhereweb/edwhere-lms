@@ -120,7 +120,7 @@ export const ProgressResetManager = ({
                       Attempts: {chapter.attemptsCount ?? 0} / {chapter.maxAttempts ?? '∞'}
                     </span>
                   )}
-                  <span className="text-[10px] uppercase font-bold text-slate-400">
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground">
                     {chapter.contentType?.replace('_', ' ') || 'Chapter'}
                   </span>
                 </div>

@@ -20,10 +20,17 @@ const sizeByVariant = {
 export const CourseProgress = ({ value, variant, size }: CourseProgressProps) => {
   return (
     <div>
-      <Progress className="h-2" value={value} variant={variant} />
+      <Progress
+        className={cn(
+          'h-2',
+          variant === 'success' && '[&>div]:bg-emerald-600 dark:[&>div]:bg-emerald-500'
+        )}
+        value={value}
+        variant={variant}
+      />
       <p
         className={cn(
-          'font-medium mt-2 text-[#F80602]',
+          'font-semibold mt-2',
           colorByVariant[variant || 'default'],
           sizeByVariant[size || 'default']
         )}

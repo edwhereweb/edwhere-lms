@@ -56,13 +56,13 @@ function entryStatusIcon(entry: LeadPaymentEntry) {
   if (entry.status === 'PAID')
     return <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0" />;
   if (entry.status === 'DELETION_REQUESTED')
-    return <Trash2 className="h-4 w-4 text-neutral-400 flex-shrink-0" />;
+    return <Trash2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />;
   if (
     entry.status === 'OVERDUE' ||
     (entry.status === 'PENDING' && entry.dueDate && isPast(new Date(entry.dueDate)))
   )
     return <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0" />;
-  return <Clock className="h-4 w-4 text-neutral-400 flex-shrink-0" />;
+  return <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />;
 }
 
 function EntryStatusBadge({ entry }: { entry: LeadPaymentEntry }) {
@@ -158,7 +158,7 @@ function AddEntryForm({ leadId, entryCount, maxAmount, onAdded }: AddEntryFormPr
             className={`text-xs font-medium ${
               maxAmount <= 0
                 ? 'text-red-500 dark:text-red-400'
-                : 'text-neutral-400 dark:text-neutral-500'
+                : 'text-muted-foreground dark:text-neutral-500'
             }`}
           >
             Remaining: ₹{maxAmount.toLocaleString('en-IN')}
@@ -309,7 +309,7 @@ function EditEntryForm({ entry, leadId, maxAmount, onDone }: EditEntryFormProps)
                 </p>
               )}
               {effectiveCap !== null && !exceedsCap && (
-                <p className="text-[11px] text-neutral-400">
+                <p className="text-[11px] text-muted-foreground">
                   Cap: ₹{effectiveCap.toLocaleString('en-IN')}
                 </p>
               )}
@@ -525,20 +525,22 @@ export function PaymentPlanPanel({ lead, open, onClose, onUpdated }: PaymentPlan
                 target="_blank"
                 rel="noopener noreferrer"
                 title="View receipt"
-                className="text-neutral-400 hover:text-neutral-600"
+                className="text-muted-foreground hover:text-neutral-600"
               >
                 <Paperclip className="h-3.5 w-3.5" />
               </a>
             )}
           </div>
-          <div className="text-xs text-neutral-400 mt-0.5 flex items-center gap-3 flex-wrap">
+          <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-3 flex-wrap">
             <span>{MODE_LABELS[entry.mode as PaymentMode] ?? entry.mode}</span>
             {entry.dueDate && <span>Due: {format(new Date(entry.dueDate), 'dd MMM yyyy')}</span>}
             {entry.paidAt && <span>Paid: {format(new Date(entry.paidAt), 'dd MMM yyyy')}</span>}
           </div>
-          {entry.note && <p className="text-xs text-neutral-400 mt-0.5 italic">{entry.note}</p>}
+          {entry.note && (
+            <p className="text-xs text-muted-foreground mt-0.5 italic">{entry.note}</p>
+          )}
           {entry.status === 'DELETION_REQUESTED' && entry.deletionReason && (
-            <p className="text-xs text-neutral-400 mt-0.5">Reason: {entry.deletionReason}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Reason: {entry.deletionReason}</p>
           )}
         </div>
 
@@ -674,17 +676,17 @@ export function PaymentPlanPanel({ lead, open, onClose, onUpdated }: PaymentPlan
             )}
             <div className="flex items-center gap-4 text-sm mt-2 flex-wrap">
               <div>
-                <span className="text-neutral-400 text-xs">Agreed</span>
+                <span className="text-muted-foreground text-xs">Agreed</span>
                 <p className="font-semibold">{agreed > 0 ? fmt(agreed) : '—'}</p>
               </div>
               <div>
-                <span className="text-neutral-400 text-xs">Paid</span>
+                <span className="text-muted-foreground text-xs">Paid</span>
                 <p className="font-semibold text-emerald-600 dark:text-emerald-400">
                   {fmt(totalPaid)}
                 </p>
               </div>
               <div>
-                <span className="text-neutral-400 text-xs">Outstanding</span>
+                <span className="text-muted-foreground text-xs">Outstanding</span>
                 <p className="font-semibold text-red-600 dark:text-red-400">
                   {outstanding > 0 ? fmt(outstanding) : '—'}
                 </p>
@@ -720,7 +722,7 @@ export function PaymentPlanPanel({ lead, open, onClose, onUpdated }: PaymentPlan
             {/* Pending deletion */}
             {grouped.pendingDeletion.length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-neutral-400 uppercase mb-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">
                   Pending Deletion Review
                 </p>
                 <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
@@ -744,7 +746,7 @@ export function PaymentPlanPanel({ lead, open, onClose, onUpdated }: PaymentPlan
             {/* Waived */}
             {grouped.waived.length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-neutral-400 uppercase mb-2">Waived</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Waived</p>
                 <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
                   {grouped.waived.map(renderEntry)}
                 </div>
@@ -752,7 +754,9 @@ export function PaymentPlanPanel({ lead, open, onClose, onUpdated }: PaymentPlan
             )}
 
             {entries.length === 0 && (
-              <p className="text-sm text-neutral-400 text-center py-6">No payment entries yet.</p>
+              <p className="text-sm text-muted-foreground text-center py-6">
+                No payment entries yet.
+              </p>
             )}
 
             {/* Add entry */}

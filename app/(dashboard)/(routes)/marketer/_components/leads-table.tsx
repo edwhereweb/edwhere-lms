@@ -394,7 +394,7 @@ export function LeadsTable({ leads, page, totalPages }: LeadsTableProps) {
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
         {/* Search */}
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             className="pl-9"
             placeholder="Search by name, email or phone…"
@@ -459,7 +459,7 @@ export function LeadsTable({ leads, page, totalPages }: LeadsTableProps) {
           <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
             {leads.length === 0 && (
               <tr>
-                <td colSpan={8} className="text-center py-12 text-neutral-400">
+                <td colSpan={8} className="text-center py-12 text-muted-foreground">
                   {hasFilters ? 'No leads match your search or filters.' : 'No leads yet.'}
                 </td>
               </tr>
@@ -521,7 +521,7 @@ export function LeadsTable({ leads, page, totalPages }: LeadsTableProps) {
           </tbody>
         </table>
         {leads.length > 0 && (
-          <div className="px-4 py-2 border-t text-xs text-neutral-400">
+          <div className="px-4 py-2 border-t text-xs text-muted-foreground">
             Showing {leads.length} lead{leads.length !== 1 ? 's' : ''}
           </div>
         )}

@@ -268,7 +268,7 @@ export const QuestionEditForm = ({
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="text-slate-400 hover:text-rose-500Shrink"
+                        className="text-muted-foreground hover:text-rose-500Shrink"
                         onClick={() => remove(index)}
                       >
                         <Trash className="h-4 w-4" />
