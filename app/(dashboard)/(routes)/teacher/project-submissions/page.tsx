@@ -28,24 +28,40 @@ export default async function ProjectSubmissionsPage() {
       imageUrl: true,
       chapters: {
         where: { contentType: 'HANDS_ON_PROJECT' },
-        select: {
-          id: true,
-          projectSubmissions: { select: { status: true } }
-        }
+        select: { id: true }
       }
     },
     orderBy: { title: 'asc' }
   });
 
+  // Count in the database instead of loading every submission row.
+  const statusCounts = await db.projectSubmission.groupBy({
+    by: ['chapterId', 'status'],
+    where: { chapterId: { in: courses.flatMap((c) => c.chapters.map((ch) => ch.id)) } },
+    _count: { _all: true }
+  });
+  const countsByChapter = new Map<string, Record<string, number>>();
+  for (const row of statusCounts) {
+    const counts = countsByChapter.get(row.chapterId) ?? {};
+    counts[row.status] = row._count._all;
+    countsByChapter.set(row.chapterId, counts);
+  }
+
   const coursesWithCounts = courses.map((course) => {
-    const allSubs = course.chapters.flatMap((ch) => ch.projectSubmissions);
+    const sum = (status?: string) =>
+      course.chapters.reduce((acc, ch) => {
+        const counts = countsByChapter.get(ch.id) ?? {};
+        return (
+          acc + (status ? (counts[status] ?? 0) : Object.values(counts).reduce((a, b) => a + b, 0))
+        );
+      }, 0);
     return {
       ...course,
       projectChapterCount: course.chapters.length,
-      pendingCount: allSubs.filter((s) => s.status === 'PENDING').length,
-      approvedCount: allSubs.filter((s) => s.status === 'APPROVED').length,
-      rejectedCount: allSubs.filter((s) => s.status === 'REJECTED').length,
-      totalCount: allSubs.length
+      pendingCount: sum('PENDING'),
+      approvedCount: sum('APPROVED'),
+      rejectedCount: sum('REJECTED'),
+      totalCount: sum()
     };
   });
 

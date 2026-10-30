@@ -18,7 +18,8 @@ const CourseLearnersPage = async ({ params }: { params: { courseId: string } }) 
   if (!allowed) return redirect('/teacher/courses');
 
   const course = await db.course.findUnique({
-    where: { id: params.courseId }
+    where: { id: params.courseId },
+    select: { id: true }
   });
 
   if (!course) return redirect('/teacher/courses');
@@ -29,7 +30,8 @@ const CourseLearnersPage = async ({ params }: { params: { courseId: string } }) 
     },
     orderBy: {
       createdAt: 'desc'
-    }
+    },
+    select: { id: true, userId: true, createdAt: true, onboardingSource: true }
   });
 
   const enrolledUserIds = purchases.map((p) => p.userId);
@@ -37,12 +39,14 @@ const CourseLearnersPage = async ({ params }: { params: { courseId: string } }) 
   const profiles = await db.profile.findMany({
     where: {
       userId: { in: enrolledUserIds }
-    }
+    },
+    select: { userId: true, name: true, email: true }
   });
+  const profileByUserId = new Map(profiles.map((p) => [p.userId, p]));
 
   // Map purchases to profiles to include enrollment date
   const learners = purchases.map((purchase) => {
-    const profile = profiles.find((p) => p.userId === purchase.userId);
+    const profile = profileByUserId.get(purchase.userId);
     const sourceValue = (purchase as { onboardingSource?: string }).onboardingSource;
     const onboardingSource: 'PAID' | 'MANUAL' | 'PAID_MANUAL' | 'UNKNOWN' =
       sourceValue === 'PAID' || sourceValue === 'MANUAL' || sourceValue === 'PAID_MANUAL'

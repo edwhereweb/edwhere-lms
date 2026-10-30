@@ -2,15 +2,13 @@
 import * as React from 'react';
 import {
   ColumnDef,
-  ColumnFiltersState,
   SortingState,
   flexRender,
   getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
   getSortedRowModel,
   useReactTable
 } from '@tanstack/react-table';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   Table,
   TableBody,
@@ -21,28 +19,53 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useDebounce } from '@/hooks/use-debounce';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  search: string;
+  page: number;
+  pageCount: number;
 }
 
-export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData, TValue>) {
+// Search and paging run on the server (URL params) so the page never loads every user.
+export function DataTable<TData, TValue>({
+  columns,
+  data,
+  search,
+  page,
+  pageCount
+}: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+  const [value, setValue] = React.useState(search);
+  const debouncedValue = useDebounce(value, 500);
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const goTo = React.useCallback(
+    (q: string, nextPage: number) => {
+      const params = new URLSearchParams();
+      if (q) params.set('q', q);
+      if (nextPage > 1) params.set('page', String(nextPage));
+      const qs = params.toString();
+      router.push(qs ? `${pathname}?${qs}` : pathname);
+    },
+    [router, pathname]
+  );
+
+  React.useEffect(() => {
+    if (debouncedValue.trim() !== search) goTo(debouncedValue.trim(), 1);
+  }, [debouncedValue, search, goTo]);
 
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
-    onColumnFiltersChange: setColumnFilters,
-    getFilteredRowModel: getFilteredRowModel(),
     state: {
-      sorting,
-      columnFilters
+      sorting
     }
   });
 
@@ -50,9 +73,9 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
     <div>
       <div className="flex items-center py-4 justify-between">
         <Input
-          placeholder="Filter users..."
-          value={(table.getColumn('name')?.getFilterValue() as string) ?? ''}
-          onChange={(event) => table.getColumn('name')?.setFilterValue(event.target.value)}
+          placeholder="Search by name or email..."
+          value={value}
+          onChange={(event) => setValue(event.target.value)}
           className="max-w-sm"
         />
       </div>
@@ -95,19 +118,22 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
         </Table>
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
+        <span className="text-sm text-muted-foreground">
+          Page {page} of {pageCount}
+        </span>
         <Button
           variant="outline"
           size="sm"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
+          onClick={() => goTo(search, page - 1)}
+          disabled={page <= 1}
         >
           Previous
         </Button>
         <Button
           variant="outline"
           size="sm"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
+          onClick={() => goTo(search, page + 1)}
+          disabled={page >= pageCount}
         >
           Next
         </Button>
