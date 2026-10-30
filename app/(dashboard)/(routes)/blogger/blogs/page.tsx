@@ -9,9 +9,10 @@ import { db } from '@/lib/db';
 import { Button } from '@/components/ui/button';
 import { canManageBlogs } from '@/lib/blog-auth';
 import { currentProfile } from '@/lib/current-profile';
+import { getBlogList, type BlogListSearchParams } from '@/actions/get-blog-list';
 import { BlogFilterGrid } from '@/app/(dashboard)/(routes)/marketer/blogs/_components/blog-filter-grid';
 
-const BloggerBlogsPage = async () => {
+const BloggerBlogsPage = async ({ searchParams }: { searchParams: BlogListSearchParams }) => {
   const { userId } = await auth();
   if (!userId) redirect('/sign-in');
 
@@ -24,25 +25,17 @@ const BloggerBlogsPage = async () => {
   // Bloggers only manage their own posts — find their BlogAuthor record first
   const author = await db.blogAuthor.findUnique({ where: { userId: profile.userId } });
 
-  const blogs = author
-    ? await db.blogPost.findMany({
-        where: { authorId: author.id },
-        include: { author: true, category: true },
-        orderBy: { createdAt: 'desc' }
-      })
-    : [];
-
-  const categories = await db.blogCategory.findMany({ orderBy: { name: 'asc' } });
-
-  const flatBlogs = blogs.map((b) => ({
-    id: b.id,
-    title: b.title,
-    isPublished: b.isPublished,
-    createdAt: b.createdAt,
-    category: b.category?.name ?? null,
-    author: b.author?.name ?? 'Unknown Author',
-    slug: b.slug
-  }));
+  const { blogs, categories, page, pageCount } = author
+    ? await getBlogList(searchParams, author.id)
+    : {
+        blogs: [],
+        categories: await db.blogCategory.findMany({
+          orderBy: { name: 'asc' },
+          select: { id: true, name: true }
+        }),
+        page: 1,
+        pageCount: 1
+      };
 
   return (
     <div className="p-6">
@@ -55,7 +48,13 @@ const BloggerBlogsPage = async () => {
           </Button>
         </Link>
       </div>
-      <BlogFilterGrid blogs={flatBlogs} categories={categories} basePath="/blogger" />
+      <BlogFilterGrid
+        blogs={blogs}
+        categories={categories}
+        page={page}
+        pageCount={pageCount}
+        basePath="/blogger"
+      />
     </div>
   );
 };

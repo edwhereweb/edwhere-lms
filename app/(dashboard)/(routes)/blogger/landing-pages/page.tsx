@@ -14,8 +14,21 @@ const BloggerLandingPagesPage = async () => {
 
   const pages = (await db.landingPage.findMany({
     where: { createdBy: userId },
+    // List columns only; the page HTML is loaded by the editor, not the list.
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      isPublished: true,
+      isApproved: true,
+      createdBy: true,
+      approvedBy: true,
+      approvedAt: true,
+      createdAt: true,
+      updatedAt: true
+    },
     orderBy: { createdAt: 'desc' }
-  })) as unknown as LandingPage[];
+  })) as LandingPage[];
 
   return (
     <div className="p-6">

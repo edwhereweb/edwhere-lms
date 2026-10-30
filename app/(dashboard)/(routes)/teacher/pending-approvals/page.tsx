@@ -19,7 +19,8 @@ const PendingApprovalsPage = async () => {
     where: { pendingApproval: true },
     include: {
       category: true,
-      chapters: { where: { isPublished: true } }
+      // Count only; full chapter content isn't needed here.
+      _count: { select: { chapters: { where: { isPublished: true } } } }
     },
     orderBy: { updatedAt: 'desc' }
   });
@@ -55,7 +56,7 @@ const PendingApprovalsPage = async () => {
                       {course.category.name}
                     </span>
                   )}
-                  <span>{course.chapters.length} published chapter(s)</span>
+                  <span>{course._count.chapters} published chapter(s)</span>
                   {course.price && <span>{formatPrice(course.price)}</span>}
                 </div>
               </div>

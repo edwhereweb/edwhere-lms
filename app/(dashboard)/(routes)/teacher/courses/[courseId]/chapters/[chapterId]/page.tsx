@@ -91,26 +91,28 @@ const ChapterIdPage: React.FC<ChapterIdPageProps> = async ({ params }) => {
     return redirect('/sign-in');
   }
 
-  const denied = await checkCourseEdit(userId, params.courseId);
-  if (denied) return redirect('/');
-
-  const chapter = await db.chapter.findUnique({
-    where: {
-      id: params.chapterId,
-      courseId: params.courseId
-    },
-    include: {
-      muxData: true,
-      quiz: {
-        include: {
-          questions: { orderBy: { createdAt: 'asc' } }
+  // Permission check and chapter load run in parallel; nothing renders unless allowed.
+  const [denied, chapter] = await Promise.all([
+    checkCourseEdit(userId, params.courseId),
+    db.chapter.findUnique({
+      where: {
+        id: params.chapterId,
+        courseId: params.courseId
+      },
+      include: {
+        muxData: true,
+        quiz: {
+          include: {
+            questions: { orderBy: { createdAt: 'asc' } }
+          }
         }
+      } as unknown as {
+        muxData: true;
+        quiz: { include: { questions: { orderBy: { createdAt: 'asc' } } } };
       }
-    } as unknown as {
-      muxData: true;
-      quiz: { include: { questions: { orderBy: { createdAt: 'asc' } } } };
-    }
-  });
+    })
+  ]);
+  if (denied) return redirect('/');
 
   if (!chapter) {
     return redirect('/teacher/courses');

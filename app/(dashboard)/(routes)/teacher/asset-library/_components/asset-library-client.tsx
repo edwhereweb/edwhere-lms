@@ -28,6 +28,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import axios from 'axios';
+import { LogoSpinner } from '@/components/logo-spinner';
 import toast from 'react-hot-toast';
 import { ConfirmModal } from '@/components/modals/confirm-modal';
 
@@ -303,7 +304,7 @@ export const AssetLibraryClient = ({ courses }: AssetLibraryClientProps) => {
             {loading ? (
               <tr>
                 <td colSpan={7} className="py-16 text-center">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mx-auto" />
+                  <LogoSpinner size={40} className="justify-center" />
                 </td>
               </tr>
             ) : !data || data.items.length === 0 ? (

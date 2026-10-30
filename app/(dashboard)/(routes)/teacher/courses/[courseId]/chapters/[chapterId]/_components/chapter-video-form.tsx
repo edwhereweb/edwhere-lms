@@ -6,7 +6,10 @@ import axios from 'axios';
 import { Video, Upload, CheckCircle2, AlertCircle, Loader2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { type Chapter, type MuxData } from '@prisma/client';
-import MuxPlayer from '@mux/mux-player-react';
+import dynamic from 'next/dynamic';
+
+// Load the large player only when a video is actually shown.
+const MuxPlayer = dynamic(() => import('@mux/mux-player-react'), { ssr: false });
 
 import { Button } from '@/components/ui/button';
 

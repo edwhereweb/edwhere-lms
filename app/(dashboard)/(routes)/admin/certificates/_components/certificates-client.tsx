@@ -26,6 +26,10 @@ import { EditCertificateModal } from './edit-modal';
 import { BulkDeleteModal } from './bulk-delete-modal';
 import toast from 'react-hot-toast';
 import { cn } from '@/lib/utils';
+import { ListPagination } from '@/components/list-pagination';
+import { LogoSpinner } from '@/components/logo-spinner';
+
+const ROWS_PER_PAGE = 25;
 
 export interface Certificate {
   id: string;
@@ -104,6 +108,7 @@ export function CertificatesClient({
   const [awardFrom, setAwardFrom] = useState('');
   const [awardTo, setAwardTo] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>('issuedDesc');
+  const [page, setPage] = useState(1);
 
   // Modals
   const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
@@ -132,6 +137,7 @@ export function CertificatesClient({
   // Clear selection when filtered set changes to avoid stale ghosts
   useEffect(() => {
     setSelected(new Set());
+    setPage(1);
   }, [search, programFilter, modeFilter, issuedFrom, issuedTo, awardFrom, awardTo, sortKey]);
 
   const programOptions = useMemo(() => {
@@ -191,8 +197,14 @@ export function CertificatesClient({
 
   // ── Selection helpers ─────────────────────────────────────────────────────
 
+  // Filters, export and bulk delete cover every filtered row; only the table is paged.
+  const pageCount = Math.max(1, Math.ceil(filtered.length / ROWS_PER_PAGE));
+  const currentPage = Math.min(page, pageCount);
+  const pageRows = filtered.slice((currentPage - 1) * ROWS_PER_PAGE, currentPage * ROWS_PER_PAGE);
+  const pageIds = pageRows.map((c) => c.id);
+
   const allFilteredIds = filtered.map((c) => c.id);
-  const allSelected = allFilteredIds.length > 0 && allFilteredIds.every((id) => selected.has(id));
+  const allSelected = pageIds.length > 0 && pageIds.every((id) => selected.has(id));
   const someSelected = allFilteredIds.some((id) => selected.has(id));
   const selectedCount = allFilteredIds.filter((id) => selected.has(id)).length;
 
@@ -209,13 +221,13 @@ export function CertificatesClient({
     if (allSelected) {
       setSelected((prev) => {
         const next = new Set(prev);
-        allFilteredIds.forEach((id) => next.delete(id));
+        pageIds.forEach((id) => next.delete(id));
         return next;
       });
     } else {
       setSelected((prev) => {
         const next = new Set(prev);
-        allFilteredIds.forEach((id) => next.add(id));
+        pageIds.forEach((id) => next.add(id));
         return next;
       });
     }
@@ -541,7 +553,7 @@ export function CertificatesClient({
       <div className="bg-card border rounded-lg shadow-sm overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center p-12">
-            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+            <LogoSpinner size={40} />
           </div>
         ) : filtered.length === 0 ? (
           <div className="p-12 text-center text-muted-foreground">
@@ -583,7 +595,7 @@ export function CertificatesClient({
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {filtered.map((cert) => {
+                {pageRows.map((cert) => {
                   const isChecked = selected.has(cert.id);
                   return (
                     <tr
@@ -673,6 +685,7 @@ export function CertificatesClient({
           </div>
         )}
       </div>
+      <ListPagination page={currentPage} pageCount={pageCount} onPageChange={setPage} />
 
       {/* Modals */}
       <IssueCertificateModal

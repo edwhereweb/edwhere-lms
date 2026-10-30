@@ -6,7 +6,11 @@ import { format } from 'date-fns';
 import { Users, Download, Loader2, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { ListPagination } from '@/components/list-pagination';
+import { LogoSpinner } from '@/components/logo-spinner';
 import toast from 'react-hot-toast';
+
+const ROWS_PER_PAGE = 25;
 
 interface Registration {
   id: string;
@@ -26,6 +30,7 @@ export function RegistrationsPanel({ webinarId }: Props) {
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     const load = async () => {
@@ -52,6 +57,11 @@ export function RegistrationsPanel({ webinarId }: Props) {
       r.phone.includes(q)
     );
   });
+
+  // Search and export cover every registration; only the table is paged.
+  const pageCount = Math.max(1, Math.ceil(filtered.length / ROWS_PER_PAGE));
+  const currentPage = Math.min(page, pageCount);
+  const pageRows = filtered.slice((currentPage - 1) * ROWS_PER_PAGE, currentPage * ROWS_PER_PAGE);
 
   const handleExport = async () => {
     setExporting(true);
@@ -109,7 +119,10 @@ export function RegistrationsPanel({ webinarId }: Props) {
           id="reg-search"
           placeholder="Search by name, email or phone…"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
           className="pl-9 h-9 text-sm"
         />
       </div>
@@ -117,7 +130,7 @@ export function RegistrationsPanel({ webinarId }: Props) {
       <div className="border border-border rounded-lg overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center p-10">
-            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            <LogoSpinner size={40} />
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center p-10 text-muted-foreground text-sm">
@@ -138,9 +151,11 @@ export function RegistrationsPanel({ webinarId }: Props) {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {filtered.map((r, i) => (
+                {pageRows.map((r, i) => (
                   <tr key={r.id} className="hover:bg-muted/30 transition-colors">
-                    <td className="px-4 py-3 text-muted-foreground text-xs">{i + 1}</td>
+                    <td className="px-4 py-3 text-muted-foreground text-xs">
+                      {(currentPage - 1) * ROWS_PER_PAGE + i + 1}
+                    </td>
                     <td className="px-4 py-3 font-medium">{r.name}</td>
                     <td className="px-4 py-3 text-muted-foreground">{r.email}</td>
                     <td className="px-4 py-3 text-muted-foreground">
@@ -160,6 +175,7 @@ export function RegistrationsPanel({ webinarId }: Props) {
           </div>
         )}
       </div>
+      <ListPagination page={currentPage} pageCount={pageCount} onPageChange={setPage} />
     </div>
   );
 }
