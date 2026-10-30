@@ -28,7 +28,7 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
     safeProfile.role === 'STUDENT' ? await studentHasBatchEnrollment(userId) : true;
 
   return (
-    <div className="h-full bg-background">
+    <div className="app-shell h-full bg-background">
       <PhoneNumberPromptModal isOpen={!safeProfile.phoneNumber} userName={safeProfile.name} />
       <div className="h-[80px] md:pl-56 fixed inset-y-0 w-full z-50">
         <Navbar currentProfile={safeProfile} hasBatchEnrollment={hasBatchEnrollment} />

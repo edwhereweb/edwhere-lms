@@ -72,11 +72,13 @@ export const BatchLeaderboard = ({ batchId, currentUserId }: BatchLeaderboardPro
                   {rank === 1 ? (
                     <Trophy className="h-6 w-6 text-yellow-500 mx-auto" />
                   ) : rank === 2 ? (
-                    <Medal className="h-6 w-6 text-slate-400 mx-auto" />
+                    <Medal className="h-6 w-6 text-muted-foreground mx-auto" />
                   ) : rank === 3 ? (
                     <Medal className="h-6 w-6 text-amber-600 mx-auto" />
                   ) : (
-                    <span className={isCurrentUser ? 'text-white' : 'text-slate-400'}>{rank}</span>
+                    <span className={isCurrentUser ? 'text-white' : 'text-muted-foreground'}>
+                      {rank}
+                    </span>
                   )}
                 </div>
 
@@ -143,7 +145,7 @@ export const BatchLeaderboard = ({ batchId, currentUserId }: BatchLeaderboardPro
                   <div
                     className={cn(
                       'text-[10px] uppercase font-medium',
-                      isCurrentUser ? 'text-indigo-200' : 'text-slate-400'
+                      isCurrentUser ? 'text-indigo-200' : 'text-muted-foreground'
                     )}
                   >
                     Accuracy

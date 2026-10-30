@@ -22,7 +22,7 @@ export const Sidebar = ({ currentProfile, hasBatchEnrollment }: SidebarProps) =>
   const showStickyProfile = isTeacherPage || isAdminPage;
 
   return (
-    <div className="h-full border-r flex flex-col overflow-y-auto bg-background text-foreground shadow-sm">
+    <div className="h-full border-r border-border/60 flex flex-col overflow-y-auto bg-card text-foreground">
       <div className="p-6">
         <Logo />
       </div>

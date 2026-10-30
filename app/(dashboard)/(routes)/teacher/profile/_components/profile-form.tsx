@@ -250,7 +250,7 @@ export const ProfileForm = ({ initialData }: ProfileFormProps) => {
                     <FormItem>
                       <FormLabel className="flex items-center gap-x-1.5">
                         <Linkedin className="h-3.5 w-3.5" /> LinkedIn URL
-                        <span className="text-slate-400 font-normal">(optional)</span>
+                        <span className="text-muted-foreground font-normal">(optional)</span>
                       </FormLabel>
                       <FormControl>
                         <Input
@@ -271,7 +271,7 @@ export const ProfileForm = ({ initialData }: ProfileFormProps) => {
                     <FormItem>
                       <FormLabel className="flex items-center gap-x-1.5">
                         <Twitter className="h-3.5 w-3.5" /> Twitter / X URL
-                        <span className="text-slate-400 font-normal">(optional)</span>
+                        <span className="text-muted-foreground font-normal">(optional)</span>
                       </FormLabel>
                       <FormControl>
                         <Input
@@ -292,7 +292,7 @@ export const ProfileForm = ({ initialData }: ProfileFormProps) => {
                     <FormItem>
                       <FormLabel className="flex items-center gap-x-1.5">
                         <Globe className="h-3.5 w-3.5" /> Website URL
-                        <span className="text-slate-400 font-normal">(optional)</span>
+                        <span className="text-muted-foreground font-normal">(optional)</span>
                       </FormLabel>
                       <FormControl>
                         <Input

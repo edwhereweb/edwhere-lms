@@ -22,24 +22,17 @@ const SidebarItem = ({ icon: Icon, label, href, nested }: SidebarItemProps) => {
     <Link
       href={href}
       className={cn(
-        'flex items-center gap-x-2 text-left text-muted-foreground text-sm font-[500] transition-all hover:text-foreground hover:bg-accent',
-        nested ? 'pl-10' : 'pl-6',
-        isActive && 'text-foreground bg-accent'
+        'flex items-center gap-x-3 rounded-full mr-3 text-left text-muted-foreground text-sm font-medium transition-colors hover:text-foreground hover:bg-accent',
+        nested ? 'ml-6 pl-4 py-2' : 'ml-3 pl-4 py-2.5',
+        isActive &&
+          'bg-primary/10 text-primary font-semibold hover:bg-primary/10 hover:text-primary'
       )}
     >
-      <div className={cn('flex items-center gap-x-2', nested ? 'py-2' : 'py-4')}>
-        <Icon
-          size={nested ? 18 : 22}
-          className={cn('text-muted-foreground', isActive && 'text-primary')}
-        />
-        {label}
-      </div>
-      <div
-        className={cn(
-          'ml-auto opacity-0 border-2',
-          isActive && 'border-primary h-full transition-all opacity-100'
-        )}
+      <Icon
+        size={nested ? 18 : 20}
+        className={cn('shrink-0', isActive ? 'text-primary' : 'text-muted-foreground')}
       />
+      {label}
     </Link>
   );
 };

@@ -37,12 +37,18 @@ export const CourseCard = ({
 
   return (
     <Link href={href}>
-      <div className="group hover:shadow-sm transition overflow-hidden border rounded-lg p-3 h-full">
-        <div className="relative w-full aspect-video rounded-md overflow-hidden">
-          <Image fill className="object-cover" alt={imageAlt || title} src={imageUrl} sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw" />
+      <div className="group h-full overflow-hidden rounded-2xl border bg-card p-3 shadow-sm transition hover:shadow-md">
+        <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-muted">
+          <Image
+            fill
+            className="object-cover"
+            alt={imageAlt || title}
+            src={imageUrl}
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+          />
         </div>
-        <div className="flex flex-col pt-2">
-          <div className="text-lg md:text-base font-medium group-hover:text-primary transition line-clamp-2">
+        <div className="flex flex-col pt-3">
+          <div className="text-lg md:text-base font-semibold leading-snug text-foreground transition-colors group-hover:text-red-700 dark:group-hover:text-red-400 line-clamp-2">
             {title}
           </div>
           <p className="text-xs text-muted-foreground">{category}</p>
@@ -63,14 +69,16 @@ export const CourseCard = ({
               />
               {/* Continue Learning CTA — only for in-progress courses with a resume point */}
               {resumeChapterId && resumeChapterTitle && progress < 100 && (
-                <div className="mt-2 flex items-center gap-1.5 text-xs text-[#F80602] dark:text-red-400 font-medium">
+                <div className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-red-700 dark:text-red-400">
                   <PlayCircle className="h-3.5 w-3.5 shrink-0" />
                   <span className="truncate">Continue: {resumeChapterTitle}</span>
                 </div>
               )}
             </>
           ) : (
-            <p className="text-md md:text-sm font-medium text-foreground">{formatPrice(price)}</p>
+            <p className="text-base md:text-sm font-semibold text-foreground">
+              {formatPrice(price)}
+            </p>
           )}
         </div>
       </div>

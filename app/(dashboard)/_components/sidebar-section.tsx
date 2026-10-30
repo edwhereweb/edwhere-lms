@@ -55,7 +55,7 @@ export const SidebarSection = ({
 
   return (
     <Collapsible open={isOpen} onOpenChange={handleToggle}>
-      <CollapsibleTrigger className="flex items-center w-full gap-x-2 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors">
+      <CollapsibleTrigger className="flex items-center w-[calc(100%-1.5rem)] mx-3 my-0.5 gap-x-2 px-4 py-2.5 rounded-full text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-colors">
         <Icon
           size={16}
           className={cn(
